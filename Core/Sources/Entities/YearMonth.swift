@@ -1,7 +1,7 @@
 import struct Foundation.Date
 import struct Foundation.Calendar
 
-public struct YearMonth {
+public struct YearMonth: Codable, Sendable, Hashable, Equatable {
     public var year: Int
     public var month: Int
     
@@ -25,4 +25,10 @@ extension YearMonth: Identifiable {
 
 extension YearMonth: SectionHeader {
     public var title: String { "\(year)年 \(month)月" }
+}
+
+extension YearMonth: Comparable {
+    public static func < (lhs: YearMonth, rhs: YearMonth) -> Bool {
+        lhs.id < rhs.id
+    }
 }
