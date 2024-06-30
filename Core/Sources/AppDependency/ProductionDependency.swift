@@ -4,6 +4,7 @@ import NoteListFeature
 import NoteFeature
 import SwiftUI
 import Entities
+import Repositories
 import Stores
 
 public enum ProductionDependency: DependencyProtocol {
@@ -23,5 +24,7 @@ public enum ProductionDependency: DependencyProtocol {
     }
     // MARK: - Stores
     @MainActor public static let folderStore = Stores.FolderStore()
-    @MainActor public static let noteStore = Stores.NoteStore()
+    @MainActor public static let noteStore = Stores.NoteStore<NoteRepository>()
+    // MARK: - Repositories
+    public typealias NoteRepository = Repositories.NoteRepository
 }

@@ -1,8 +1,13 @@
 import Foundation
-import SwiftID
 
-@StringIdentifiable(String.self)
-public struct Folder: Sendable, Hashable, Codable, Equatable {
+public struct Folder: Sendable, Hashable, Codable, Equatable, Identifiable {
+    public struct ID: StringIDProtocol {
+        public var rawValue: String
+        public init(rawValue: RawValue) {
+            self.rawValue = rawValue
+        }
+    }
+    public let id: ID
     public var name: String
     public var notes: [CalcNote]
     public var editedAt: Date

@@ -4,6 +4,7 @@ import Entities
 import CoreProtocols
 import Components
 import Combine
+import Stores
 
 struct EditAlert<T> {
     var title: String

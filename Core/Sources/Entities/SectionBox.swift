@@ -1,5 +1,4 @@
 import Foundation
-import SwiftID
 
 public protocol SectionHeader: Identifiable, Hashable, Sendable, Equatable {
     var title: String { get }

@@ -1,18 +1,25 @@
-import SwiftID
 import Foundation
 import BigInt
 
-@StringIdentifiable(String.self)
-public struct CalcNote: Sendable, Hashable, Codable, Equatable {
+public struct CalcNote: Sendable, Hashable, Codable, Equatable, Identifiable {
+    public struct ID: StringIDProtocol {
+        public var rawValue: String
+        public init(rawValue: RawValue) {
+            self.rawValue = rawValue
+        }
+    }
+    public let id: ID
     public var name: String
     public var tables: [CalcTable]
     public var editedAt: Date
+    public var createdAt: Date
     public var sum: BFraction { tables.reduce(.ZERO) { $0+$1.sum } }
-    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, tables: [CalcTable], editedAt: Date = Date()) {
+    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, tables: [CalcTable], editedAt: Date = Date(), createdAt: Date = Date()) {
         self.id = id
         self.name = name
         self.tables = tables
         self.editedAt = editedAt
+        self.createdAt = createdAt
     }
 }
 
@@ -34,7 +41,8 @@ public extension CalcNote {
                     .init(name: "水 2l", unitPrice: .init(100, 1), quantity: .init(3, 1), unitName: "本")
                 ])
             ],
-            editedAt: .dummy
+            editedAt: .dummy,
+            createdAt: .dummy
         )
     }
 }

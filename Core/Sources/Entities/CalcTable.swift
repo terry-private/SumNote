@@ -1,9 +1,14 @@
-import SwiftID
 import Foundation
 import BigInt
 
-@StringIdentifiable(String.self)
-public struct CalcTable: Sendable, Hashable, Codable, Equatable {
+public struct CalcTable: Sendable, Hashable, Codable, Equatable, Identifiable {
+    public struct ID: StringIDProtocol {
+        public var rawValue: String
+        public init(rawValue: RawValue) {
+            self.rawValue = rawValue
+        }
+    }
+    public let id: ID
     public var name: String
     public var rows: [CalcRow]
     public var sum: BFraction {
@@ -12,7 +17,7 @@ public struct CalcTable: Sendable, Hashable, Codable, Equatable {
         }
     }
 
-    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, rows: [CalcRow], editedAt: Date = Date()) {
+    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, rows: [CalcRow]) {
         self.id = id
         self.name = name
         self.rows = rows

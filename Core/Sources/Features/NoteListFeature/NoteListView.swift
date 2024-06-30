@@ -1,6 +1,8 @@
 import SwiftUI
+import Components
 import Entities
 import CoreProtocols
+import Stores
 
 public struct NoteListView<Dependency: DependencyProtocol>: View {
     @State var store = Dependency.noteStore
@@ -27,7 +29,6 @@ public struct NoteListView<Dependency: DependencyProtocol>: View {
             item: $selected,
             destination: { note in
                 Dependency.noteView(note: note)
-                    .navigationTitle(note.name)
             }
         )
         .navigationTitle("ノートリスト")

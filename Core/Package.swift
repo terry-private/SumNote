@@ -10,17 +10,13 @@ let package = Package(
     ],
     products: Module.allCases.map(\.library),
     dependencies: [
-        .package(url: "https://github.com/leif-ibsen/BigInt", from: "1.17.0"),
-        .package(url: "https://github.com/apple/swift-collections", from: "1.0.6"),
-        .package(url: "https://github.com/terry-private/swift-id.git", branch: "main")
+        .package(url: "https://github.com/leif-ibsen/BigInt", from: "1.17.0")
     ],
     targets: Module.allCases.map(\.target) + TestModule.allCases.map(\.target)
 )
 
 // MARK: 外部モジュール
 extension Target.Dependency {
-    static var orderdCollections: Self = .product(name: "OrderedCollections", package: "swift-collections")
-    static var swiftID: Self = .product(name: "SwiftID", package: "swift-id")
     static var bInt: Self = .product(name: "BigInt", package: "BigInt")
 }
 
@@ -40,13 +36,13 @@ enum Module: String, CaseIterable {
     case noteList = "NoteListFeature"
     case note = "NoteFeature"
     case appDependency = "AppDependency"
+    case repositories = "Repositories"
 
     var target: Target {
         return switch self {
         case .entities: target(
             dependencies: [
-                .bInt,
-                .swiftID
+                .bInt
             ],
             dependencyModules: []
         )
@@ -54,7 +50,8 @@ enum Module: String, CaseIterable {
         case .coreProtocols: target(
             dependencies: [],
             dependencyModules: [
-                .entities
+                .entities,
+                .repositories
             ],
             path: .core
         )
@@ -62,7 +59,8 @@ enum Module: String, CaseIterable {
             dependencies: [],
             dependencyModules: [
                 .entities,
-                .coreProtocols
+                .coreProtocols,
+                .repositories
             ],
             path: .core
         )
@@ -79,7 +77,8 @@ enum Module: String, CaseIterable {
             dependencyModules: [
                 .entities,
                 .coreProtocols,
-                .components
+                .components,
+                .stores
             ],
             path: .features
         )
@@ -88,7 +87,8 @@ enum Module: String, CaseIterable {
             dependencyModules: [
                 .entities,
                 .coreProtocols,
-                .components
+                .components,
+                .stores
             ],
             path: .features
         )
@@ -97,7 +97,8 @@ enum Module: String, CaseIterable {
             dependencyModules: [
                 .entities,
                 .coreProtocols,
-                .components
+                .components,
+                .stores
             ],
             path: .features
         )
@@ -110,6 +111,11 @@ enum Module: String, CaseIterable {
                 .noteList,
                 .note,
                 .stores
+            ]
+        )
+        case .repositories: target(
+            dependencyModules: [
+                .entities
             ]
         )
         }

@@ -1,5 +1,6 @@
 import SwiftUI
 import Entities
+import Repositories
 
 public protocol DependencyProtocol {
     
@@ -22,6 +23,9 @@ public protocol DependencyProtocol {
     
     associatedtype NoteStore: NoteStoreProtocol
     @MainActor static var noteStore: NoteStore { get }
+
+    // MARK: - Repositories
+    associatedtype NoteRepository: NoteRepositoryProtocol
 }
 
 public enum DummyDependency: DependencyProtocol {
@@ -31,4 +35,5 @@ public enum DummyDependency: DependencyProtocol {
     public static func noteView(note: CalcNote) -> some View { EmptyView() }
     public static var folderStore = DummyFolderStore()
     public static var noteStore = DummyNoteStore()
+    public typealias NoteRepository = Repositories.DummyNoteRepository
 }
