@@ -1,5 +1,5 @@
 {
-  "originHash" : "7be3fe03925ad2a35197fd5a5453624d4ad7acc2bce75db5574e7dffd37b67fe",
+  "originHash" : "f7b1d3cde643b9802ef7229da777484e259d350b9bfa0d385408047eaf60e8ea",
   "pins" : [
     {
       "identity" : "bigint",
@@ -8,24 +8,6 @@
       "state" : {
         "revision" : "ba54c8b51392627d4cc9b05a672cce558be56e04",
         "version" : "1.17.0"
-      }
-    },
-    {
-      "identity" : "swift-id",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/terry-private/swift-id.git",
-      "state" : {
-        "branch" : "main",
-        "revision" : "9fe249f8ddb9bd30381ab31e4872d5847dfe3f32"
-      }
-    },
-    {
-      "identity" : "swift-syntax",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-syntax.git",
-      "state" : {
-        "revision" : "fa8f95c2d536d6620cc2f504ebe8a6167c9fc2dd",
-        "version" : "510.0.1"
       }
     }
   ],

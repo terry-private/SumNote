@@ -5,10 +5,12 @@ public struct BFractionText: View {
     let fraction: BFraction
     let textStyle: Font.TextStyle
     let rounded: Int
-    public init(fraction: BFraction, textStyle: Font.TextStyle = .body, rounded: Int = 2) {
+    let currencyMode: Bool
+    public init(fraction: BFraction, textStyle: Font.TextStyle = .body, rounded: Int = 2, currencyMode: Bool = true) {
         self.fraction = fraction
         self.textStyle = textStyle
         self.rounded = rounded
+        self.currencyMode = currencyMode
     }
     var wholePartFont: UIFont {
         textStyle.uiFont
@@ -16,35 +18,17 @@ public struct BFractionText: View {
     var fractionalPartFont: UIFont {
         .systemFont(ofSize: wholePartFont.xHeight * wholePartFont.pointSize / wholePartFont.capHeight)
     }
-    var wholePart: String {
-        fraction.truncate().description
-    }
-    var fractionalPart: String {
-        fraction.asDecimalString(precision: rounded + wholePart.count).split(separator: ".")[1].description
-    }
-    var currencyWholePart: String {
-        let string = wholePart
-        var result = ""
-        let lastIndex = string.count - 1
-        for (index, char) in string.enumerated() {
-            if index > 0 && (lastIndex - index + 1) % 3 == 0 {
-                result.append(",")
-            }
-            result.append(char)
-        }
-        return result
-    }
     public var body: some View {
         HStack(alignment: .lastTextBaseline, spacing: 0) {
             if fraction.denominator != 1 {
                 
-                Text(currencyWholePart)
+                Text(currencyMode ? fraction.ex.currencyWholePart : fraction.ex.wholePart)
                     .font(.init(wholePartFont)) +
                 Text(".") +
-                Text(fractionalPart)
+                Text(fraction.ex.fractionalPart(rounded: rounded))
                     .font(.init(fractionalPartFont))
             } else {
-                Text(currencyWholePart)
+                Text(fraction.ex.currencyWholePart)
                     .font(.init(wholePartFont))
             }
         }
@@ -54,9 +38,31 @@ public struct BFractionText: View {
     }
 }
 
+extension BFraction {
+    func hasRepeatingDecimal() -> Bool {
+        var log2 = 0
+        var log5 = 0
+        // 分母の素因数を2と5以外のものに分解
+        var denominator = denominator
+        while denominator % 2 == 0 {
+            denominator /= 2
+            log2 += 1
+        }
+        while denominator % 5 == 0 {
+            denominator /= 5
+            log5 += 1
+        }
+        // 残りの分母が1でない場合、循環小数になる
+        return denominator != 1
+    }
+}
+
 #Preview {
     VStack {
-        BFractionText(fraction: BFraction(30000,7))
+        BFractionText(fraction: BFraction(30000,14), rounded: 4)
+            .foregroundStyle(Color.cyan)
+            .bold()
+        BFractionText(fraction: BFraction(30000,14), rounded: 4, currencyMode: false)
             .foregroundStyle(Color.cyan)
             .bold()
     }
