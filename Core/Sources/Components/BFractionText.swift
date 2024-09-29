@@ -20,15 +20,15 @@ public struct BFractionText: View {
     }
     public var body: some View {
         HStack(alignment: .lastTextBaseline, spacing: 0) {
+            let wholePart = currencyMode ? fraction.ex.currencyWholePart : fraction.ex.wholePart
             if fraction.denominator != 1 {
-                
-                Text(currencyMode ? fraction.ex.currencyWholePart : fraction.ex.wholePart)
+                Text(wholePart)
                     .font(.init(wholePartFont)) +
                 Text(".") +
                 Text(fraction.ex.fractionalPart(rounded: rounded))
                     .font(.init(fractionalPartFont))
             } else {
-                Text(fraction.ex.currencyWholePart)
+                Text(wholePart)
                     .font(.init(wholePartFont))
             }
         }

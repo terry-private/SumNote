@@ -1,7 +1,7 @@
 import CoreProtocols
-import FolderListFeature
-import NoteListFeature
-import NoteFeature
+import FolderList
+import NoteList
+import Note
 import SwiftUI
 import Entities
 import Repositories
@@ -14,13 +14,13 @@ public enum ProductionDependency: DependencyProtocol {
         }
     }
     @MainActor public static func folderListView() -> FolderListView<Self> {
-        FolderListFeature.FolderListView<Self>()
+        FolderList.FolderListView<Self>()
     }
     @MainActor public static func noteListView() -> NoteListView<Self> {
-        NoteListFeature.NoteListView<Self>()
+        NoteList.NoteListView<Self>()
     }
     @MainActor public static func noteView(note: CalcNote) -> some View {
-        NoteFeature.NoteView<Self>(note: note)
+        Note.NoteView<Self>(note: note)
     }
     // MARK: - Stores
     @MainActor public static let folderStore = Stores.FolderStore()

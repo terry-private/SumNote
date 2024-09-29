@@ -1,6 +1,6 @@
 import SwiftUI
 
-public struct CalculatorLayoutLogics {
+public enum CalculatorLayoutLogics {
     internal static let padding: CGFloat = 12.0
 
     public static func displaySize(maxSize: CGSize) -> CGSize {
@@ -27,7 +27,6 @@ public struct CalculatorLayoutLogics {
         }
         let buttonSize = (viewSize.height - spacingVCount * spacing) / buttonVCount
         let padSize = CGSize(width: buttonSize * buttonHCount + spacing * spacingHCount, height: viewSize.height)
-        print("padSize", viewSize, forWidth, padSize, buttonSize, fromSheetHeight)
         return padSize
     }
 }

@@ -4,7 +4,7 @@ import SwiftData
 
 @Model
 public final class TableModel {
-    @Attribute(.unique) public let id: String
+    @Attribute(.unique) public var id: String
     public var note: NoteModel?
     public var name: String
     public var rows: [CalcRow]

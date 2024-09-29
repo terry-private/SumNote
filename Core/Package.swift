@@ -17,50 +17,50 @@ let package = Package(
 
 // MARK: 外部モジュール
 extension Target.Dependency {
-    static var bInt: Self = .product(name: "BigInt", package: "BigInt")
+    init(_ module: Module) {
+        self = module.dependency
+    }
+    static var bInt: Self { .product(name: "BigInt", package: "BigInt") }
 }
 
 // MARK: モジュール親ディレクトリ
 enum ParentDirectory: String {
-    case core = "Core"
-    case features = "Features"
+    case core
+    case features
 }
 
 // MARK: 内部モジュール
 enum Module: String, CaseIterable {
-    case entities = "Entities"
-    case coreProtocols = "CoreProtocols"
-    case stores = "Stores"
-    case components = "Components"
-    case folderList = "FolderListFeature"
-    case noteList = "NoteListFeature"
-    case note = "NoteFeature"
-    case appDependency = "AppDependency"
-    case repositories = "Repositories"
+    case entities
+    case coreProtocols
+    case stores
+    case components
+    case folderList
+    case noteList
+    case note
+    case appDependency
+    case repositories
 
     var target: Target {
         return switch self {
         case .entities: target(
             dependencies: [
                 .bInt
-            ],
-            dependencyModules: []
+            ]
         )
         // MARK: - Core -
         case .coreProtocols: target(
-            dependencies: [],
-            dependencyModules: [
-                .entities,
-                .repositories
+            dependencies: [
+                .init(.entities),
+                .init(.repositories)
             ],
             path: .core
         )
         case .stores: target(
-            dependencies: [],
-            dependencyModules: [
-                .entities,
-                .coreProtocols,
-                .repositories
+            dependencies: [
+                .init(.entities),
+                .init(.coreProtocols),
+                .init(.repositories),
             ],
             path: .core
         )
@@ -68,54 +68,50 @@ enum Module: String, CaseIterable {
         case .components: target(
             dependencies: [
                 .bInt,
-            ],
-            dependencyModules: []
+            ]
         )
         // MARK: - Features -
         case .folderList: target(
-            dependencies: [],
-            dependencyModules: [
-                .entities,
-                .coreProtocols,
-                .components,
-                .stores
+            dependencies: [
+                .init(.entities),
+                .init(.coreProtocols),
+                .init(.components),
+                .init(.stores)
             ],
             path: .features
         )
         case .noteList: target(
-            dependencies: [],
-            dependencyModules: [
-                .entities,
-                .coreProtocols,
-                .components,
-                .stores
+            dependencies: [
+                .init(.entities),
+                .init(.coreProtocols),
+                .init(.components),
+                .init(.stores)
             ],
             path: .features
         )
         case .note: target(
-            dependencies: [],
-            dependencyModules: [
-                .entities,
-                .coreProtocols,
-                .components,
-                .stores
+            dependencies: [
+                .init(.entities),
+                .init(.coreProtocols),
+                .init(.components),
+                .init(.stores),
             ],
             path: .features
         )
         // MARK: - AppDependency -
         case .appDependency: target(
-            dependencyModules: [
-                .entities,
-                .coreProtocols,
-                .folderList,
-                .noteList,
-                .note,
-                .stores
+            dependencies: [
+                .init(.entities),
+                .init(.coreProtocols),
+                .init(.folderList),
+                .init(.noteList),
+                .init(.note),
+                .init(.stores),
             ]
         )
         case .repositories: target(
-            dependencyModules: [
-                .entities
+            dependencies: [
+                .init(.entities)
             ]
         )
         }
@@ -124,18 +120,18 @@ enum Module: String, CaseIterable {
 
 // MARK: 内部テストモジュール
 enum TestModule: String, CaseIterable {
-    case coreTests = "CoreTests"
+    case coreTests
     
     var target: Target {
         return switch self {
         case .coreTests: testTarget(
-            dependencyModules: [
-                .entities,
-                .coreProtocols,
-                .folderList,
-                .noteList,
-                .note,
-                .stores
+            dependencies: [
+                .init(.entities),
+                .init(.coreProtocols),
+                .init(.folderList),
+                .init(.noteList),
+                .init(.note),
+                .init(.stores)
             ]
         )
         }
@@ -143,12 +139,11 @@ enum TestModule: String, CaseIterable {
 }
 
 // MARK: - Extensions
-extension Module {
-    var library: Product { .library(name: rawValue, targets: [rawValue]) }
-    var dependency: Target.Dependency { .init(stringLiteral: rawValue) }
+private extension Module {
+    var library: Product { .library(name: name, targets: [name]) }
+    var dependency: Target.Dependency { .init(stringLiteral: name) }
     func target(
         dependencies: [Target.Dependency] = [],
-        dependencyModules: [Module] = [],
         path: ParentDirectory? = nil,
         exclude: [String] = [],
         sources: [String]? = nil,
@@ -157,18 +152,14 @@ extension Module {
         packageAccess: Bool = true,
         cSettings: [CSetting]? = nil,
         cxxSettings: [CXXSetting]? = nil,
-        swiftSettings: [SwiftSetting]? = [
-            .unsafeFlags([
-                "-strict-concurrency=complete"
-            ])
-        ],
+        swiftSettings: [SwiftSetting]? = [],
         linkerSettings: [LinkerSetting]? = nil,
         plugins: [Target.PluginUsage]? = nil
     ) -> Target {
         .target(
-            name: self.rawValue,
-            dependencies: dependencyModules.map(\.dependency) + dependencies,
-            path: path.map { "./Sources/\($0)/\(rawValue)" },
+            name: name,
+            dependencies: dependencies,
+            path: path.map { "./Sources/\($0.name)/\(name)" },
             exclude: exclude,
             sources: sources,
             resources: resources,
@@ -183,10 +174,9 @@ extension Module {
     }
 }
 
-extension TestModule {
+private extension TestModule {
     func testTarget(
         dependencies: [Target.Dependency] = [],
-        dependencyModules: [Module] = [],
         path: ParentDirectory? = nil,
         exclude: [String] = [],
         sources: [String]? = nil,
@@ -194,18 +184,14 @@ extension TestModule {
         packageAccess: Bool = true,
         cSettings: [CSetting]? = nil,
         cxxSettings: [CXXSetting]? = nil,
-        swiftSettings: [SwiftSetting]? = [
-            .unsafeFlags([
-                "-strict-concurrency=complete"
-            ])
-        ],
+        swiftSettings: [SwiftSetting]? = [],
         linkerSettings: [LinkerSetting]? = nil,
         plugins: [Target.PluginUsage]? = nil
     ) -> Target {
         .testTarget(
-            name: self.rawValue,
-            dependencies: dependencyModules.map(\.dependency) + dependencies,
-            path: path.map { "./Sources/\($0)/\(rawValue)" },
+            name: name,
+            dependencies: dependencies,
+            path: path.map { "./Sources/\($0.name)/\(name)" },
             exclude: exclude,
             sources: sources,
             resources: resources,
@@ -216,5 +202,11 @@ extension TestModule {
             linkerSettings: linkerSettings,
             plugins: plugins
         )
+    }
+}
+
+private extension RawRepresentable where Self.RawValue == String {
+    var name: String {
+        self.rawValue.prefix(1).uppercased() + rawValue.dropFirst()
     }
 }

@@ -9,6 +9,7 @@ enum ButtonType: Hashable, CustomStringConvertible {
     case equals
     case allClear
     case clear
+    case done
 
     static var calculationButtonTypes: [[ButtonType]] {
         [
@@ -38,26 +39,30 @@ enum ButtonType: Hashable, CustomStringConvertible {
             return "AC"
         case .clear:
             return "C"
+        case .done:
+            return "確定"
         }
     }
 
     var backgroundColor: Color {
         switch self {
         case .allClear, .clear, .backSpace, .percent:
-            return Color(.lightGray)
+            Color(.lightGray)
         case .operation, .equals:
-            return .orange
+            .orange
         case .digit, .decimal:
-            return .secondary
+            Color(.darkGray)
+        case .done:
+            .blue
         }
     }
 
     var foregroundColor: Color {
         switch self {
         case .allClear, .clear, .backSpace, .percent:
-            return .black
+            .black
         default:
-            return .white
+            .white
         }
     }
 }

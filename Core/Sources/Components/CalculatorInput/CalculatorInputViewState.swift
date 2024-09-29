@@ -18,23 +18,13 @@ enum  CurrentState {
     func fraction() -> BFraction {
         switch self {
         case .fraction(let fraction): return fraction
-        case .edit(let editingValue):
-            guard editingValue.contains(".") else {
-                return BFraction(Int(editingValue) ?? 0, 1)
+        case .edit(var editingValue):
+            print("editingValue:", editingValue)
+            if editingValue.last == "." {
+                editingValue = String(editingValue.dropLast())
             }
-            let strings = editingValue.split(separator: ".")
-            let ints = strings.map { Int($0) ?? 0 }
-            guard ints.count == 2 else {
-                return BFraction(Int(ints[0]), 1)
-            }
-            let numericPart = BFraction(ints[0], 1)
-            var nod = 1
-            for _ in (0..<strings[1].count) {
-                nod *= 10
-            }
-            let fractionPart = BFraction(ints[1], nod)
-            print("ints", ints, editingValue, nod, numericPart, fractionPart, numericPart + fractionPart)
-            return numericPart + fractionPart
+            print("editingValue:", editingValue)
+            return BFraction(editingValue) ?? BFraction(0, 1)
         }
     }
 }
@@ -44,9 +34,13 @@ enum  CurrentState {
 final class CalculatorInputViewState {
     private(set) var operating: Operating?
     private(set) var state: CurrentState
-    init(operating: Operating? = nil, state: CurrentState) {
+    let completion: (BFraction) -> Void
+    let cancel: () -> Void
+    init(operating: Operating? = nil, state: CurrentState, completion: @escaping (BFraction) -> Void, cancel: @escaping () -> Void) {
         self.operating = operating
         self.state = state
+        self.completion = completion
+        self.cancel = cancel
     }
     var buttonTypes: [[ButtonType]] {
         [
@@ -54,13 +48,13 @@ final class CalculatorInputViewState {
             [.digit(.seven), .digit(.eight), .digit(.nine), .operation(.multiplication)],
             [.digit(.four), .digit(.five), .digit(.six), .operation(.subtraction)],
             [.digit(.one), .digit(.two), .digit(.three), .operation(.addition)],
-            [.digit(.zero), .decimal, .equals]
+            [.digit(.zero), .decimal, operating == nil ? .done : .equals]
         ]
     }
     func onTap(_ buttonType: ButtonType) {
-        print(buttonType.description)
         switch buttonType {
         case .operation(let arithmeticOperation):
+            print("arithmeticOperation", arithmeticOperation)
             let fraction = if let operating {
                 if state.isZero {
                     operating.fraction
@@ -85,6 +79,7 @@ final class CalculatorInputViewState {
             state = .edit(state.display + ".")
         case .equals:
             guard let operating else { return }
+            guard operating.operation != .division || !state.fraction().isZero else { return } // 0で割ろうとするなら無視
             state = .fraction(operating.operation.operate(operating.fraction, state.fraction()))
             self.operating = nil
         case .backSpace:
@@ -97,6 +92,14 @@ final class CalculatorInputViewState {
             state = .edit("0")
         case .percent:
             state = .fraction(state.fraction()/100)
+        case .done:
+            completion(state.fraction())
         }
+    }
+    func add1() {
+        state = .fraction(state.fraction() + 1)
+    }
+    func subtract1() {
+        state = .fraction(state.fraction() - 1)
     }
 }

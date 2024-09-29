@@ -3,52 +3,79 @@ import BigInt
 
 public struct CalculatorInputView: View {
     let size: CGSize
-    @State var operating: Operating?
-    @State var result: BFraction?
-    @State var editingValue: String
+    let title: String
     @State var state: CalculatorInputViewState
-    var disPlayValue: String {
-        if let result {
-            result.asDecimalString(precision: 20)
-        } else {
-            editingValue
-        }
-    }
-    public init(value: BFraction = .init(4, 1), maxSize: CGSize = UIScreen.main.bounds.size) {
+    public init(title: String = "", value: BFraction = .init(4, 1), maxSize: CGSize = UIScreen.main.bounds.size, completion: @escaping (BFraction) -> Void, cancel: @escaping () -> Void) {
+        self.title = title
         size = CalculatorLayoutLogics.displaySize(maxSize: maxSize)
-        editingValue = value.asDouble().description
-        state = CalculatorInputViewState(state: .fraction(value))
+        state = CalculatorInputViewState(
+            state: .fraction(value),
+            completion: completion,
+            cancel: cancel
+        )
     }
     public var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Button("キャンセル") {
-                    print("Cancel")
-                }
+                Text(title)
                 Spacer()
-                Button("確定") {
-                    print("Done")
+                Button("キャンセル") {
+                    state.cancel()
                 }
             }
             .padding(10)
             .background(Color(UIColor.secondarySystemBackground))
 
             HStack {
-                Spacer()
-                if let operating = state.operating {
-                    BFractionText(fraction: operating.fraction, textStyle: .title2, rounded: 20, currencyMode: false)
-                    Text(operating.operation.description)
+                VStack(spacing: 8) {
+                    Button {
+                        state.add1()
+                    } label: {
+                        Capsule()
+                            .overlay {
+                                Text("+1")
+                                    .foregroundStyle(.white)
+                            }
+                            .frame(width: 44)
+                    }
+                    Button {
+                        state.subtract1()
+                    } label: {
+                        Capsule()
+                            .overlay {
+                                Text("-1")
+                                    .foregroundStyle(.white)
+                            }
+                            .frame(width: 44)
+                    }
                 }
-            }
-            .foregroundColor(.orange)
-            .frame(height: Font.TextStyle.title2.uiFont.lineHeight)
-            .padding(.horizontal, 10)
-
-            HStack {
+                .padding(.top, 5)
+                .padding(.bottom, -5)
+                .frame(height: Font.TextStyle.title2.uiFont.lineHeight + Font.TextStyle.largeTitle.uiFont.lineHeight + 10)
                 Spacer()
-                Text(state.state.display)
-                    .font(.largeTitle)
-                    .lineLimit(1)
+                VStack(spacing: 0) {
+                    HStack {
+                        if let operating = state.operating {
+                            BFractionText(
+                                fraction: operating.fraction,
+                                textStyle: .title2,
+                                rounded: 20,
+                                currencyMode: false
+                            )
+                            Text(operating.operation.description)
+                        }
+                    }
+                    .foregroundColor(.orange)
+                    .frame(height: Font.TextStyle.title2.uiFont.lineHeight)
+
+                    HStack {
+                        Text(state.state.display)
+                            .font(.largeTitle)
+                            .monospacedDigit()
+                            .lineLimit(1)
+                    }
+                }
+                .padding(.vertical, 5)
             }
             .padding(.horizontal, 10)
 
@@ -78,10 +105,14 @@ extension CalculatorInputView {
         let buttonCount: CGFloat = 4
         let spacingCount = buttonCount + 1
         let buttonSize = (screenWidth - (spacingCount * CalculatorLayoutLogics.padding)) / buttonCount
-        print(screenWidth, buttonSize)
-        return buttonSize
+        return max(.zero, buttonSize) // Maintain non-negative values
     }
 }
 
 #Preview {
-    CalculatorInputView(value: .init(1357, 100))}
+    CalculatorInputView(value: .init(1357, 100)) {
+        print($0)
+    } cancel: {
+        print("cancel tapped")
+    }
+}

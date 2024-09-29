@@ -22,6 +22,7 @@ public extension BFraction.Extension {
         }
         // 1以下の部分のみ扱う
         let fraction = fraction - fraction.truncate()
+        // max(log2D, log5D)が桁数になる
         var log2 = 0
         var log5 = 0
         // 分母の素因数を2と5以外のものに分解

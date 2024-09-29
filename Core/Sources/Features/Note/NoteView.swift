@@ -10,15 +10,21 @@ struct EditAlert<T> {
     var title: String
     var binding: Binding<T>
 }
+struct EditFractionState: Identifiable {
+    var id: String
+    var title: String
+    var fraction: BFraction
+    var completion: (BFraction) -> Void
+}
 
 public struct NoteView<Dependency: DependencyProtocol>: View {
     @Environment(\.editMode) private var editMode
     @State var store = Dependency.noteStore
     @State var note: CalcNote
     @State var editNameAlert: EditAlert<String>?
-    @State var editFractionAlert: EditAlert<BFraction>?
     @State var editNameAlertText: String = ""
     @State var addedTableID: CalcTable.ID?
+    @State var editFractionState: EditFractionState?
     public init(note: CalcNote) {
         _note = .init(wrappedValue: note)
     }
@@ -61,21 +67,16 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                 }
             }
         }
-        .alert(editFractionAlert?.title ?? "", isPresented: Binding(get: { editFractionAlert != nil}, set: { if !$0 { editFractionAlert = nil }})) {
-            if let editFractionAlert {
-                TextField("テキストフィールド", text: $editNameAlertText)
-                    .onReceive(Just(editNameAlertText)) { _ in
-                        let cnt = editNameAlertText.split(separator: ".").first?.count ?? 0
-                        editNameAlertText = editNameAlertText.prefix(18 + cnt).description
-                    }
-                    .keyboardType(.decimalPad)
-                Button("Cancel") {}
-                Button("OK") {
-                    if let newValue = BFraction(editNameAlertText) {
-                        editFractionAlert.binding.wrappedValue = newValue
-                    }
-                }
+        .sheet(item: $editFractionState) { state in
+            CalculatorInputView(
+                title: state.title,
+                value: state.fraction,
+                completion: state.completion
+            ) {
+                editFractionState = nil
             }
+            .presentationDetents([.height(CalculatorLayoutLogics.displaySize(maxSize: UIScreen.main.bounds.size).height)]
+            )
         }
         // MARK: - toolbar -
         .toolbar {
@@ -120,18 +121,9 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
 extension NoteView {
     func setAlert(title: String, binding: Binding<String>) {
         editNameAlert = nil
-        editFractionAlert = nil
         Task { @MainActor in
             editNameAlertText = binding.wrappedValue
             editNameAlert = .init(title: title, binding: binding)
-        }
-    }
-    func setAlert(title: String, binding: Binding<BFraction>) {
-        editNameAlert = nil
-        editFractionAlert = nil
-        Task { @MainActor in
-            editNameAlertText = binding.wrappedValue.decimalString(rounded: 18)
-            editFractionAlert = .init(title: title, binding: binding)
         }
     }
 }
@@ -153,7 +145,7 @@ extension NoteView {
             } else {
                 Section(header: header(table: $table), footer: footer(table: $table)) {
                     ForEach($table.rows) { $row in
-                        tableRow($row)
+                        tableRow(tableName: table.name, $row)
                     }
                     .onMove { indexSet, index in
                         table.rows.move(fromOffsets: indexSet, toOffset: index)
@@ -220,7 +212,7 @@ extension NoteView {
 
     // MARK: - table row -
     @ViewBuilder
-    func tableRow(_ row: Binding<CalcRow>) -> some View {
+    func tableRow(tableName: String, _ row: Binding<CalcRow>) -> some View {
         VStack {
             // MARK: - row name-
             HStack {
@@ -242,7 +234,14 @@ extension NoteView {
             // MARK: - row -
             HStack(alignment: .lastTextBaseline, spacing: 0) {
                 Button {
-                    setAlert(title: "単価を編集", binding: row.unitPrice)
+                    editFractionState = .init(
+                        id: row.wrappedValue.id.rawValue,
+                        title: "\(tableName) / \(row.wrappedValue.name) / 単価",
+                        fraction: row.wrappedValue.unitPrice
+                    ) { fraction in
+                        row.wrappedValue.unitPrice = fraction
+                        editFractionState = nil
+                    }
                 } label: {
                     BFractionText(fraction: row.wrappedValue.unitPrice)
                 }
@@ -259,7 +258,14 @@ extension NoteView {
                 Spacer()
                 
                 Button {
-                    setAlert(title: "数量を編集", binding: row.quantity)
+                    editFractionState = .init(
+                        id: row.wrappedValue.id.rawValue,
+                        title: "\(tableName) / \(row.wrappedValue.name) / 数量",
+                        fraction: row.wrappedValue.quantity
+                    ) { fraction in
+                        row.wrappedValue.quantity = fraction
+                        editFractionState = nil
+                    }
                 } label: {
                     BFractionText(fraction: row.wrappedValue.quantity)
                 }
@@ -283,65 +289,6 @@ extension NoteView {
             .buttonStyle(BorderlessButtonStyle())
             .padding(.vertical, 3)
         }
-//        Menu {
-//            Button("品名を編集", systemImage: "square.and.pencil") {
-//                setAlert(title: "品名を編集", binding: row.name)
-//            }
-//            Button("単位を編集", systemImage: "square.and.pencil") {
-//                setAlert(title: "単位を編集", binding: row.unitName)
-//            }
-//            Button("単価を編集") {
-//                setAlert(title: "単価を編集", binding: row.unitPrice)
-//            }
-//            Button("数量を編集") {
-//                setAlert(title: "数量を編集", binding: row.quantity)
-//            }
-//        } label: {
-//            VStack {
-//                // MARK: - row name-
-//                HStack {
-//                    Text(row.wrappedValue.name)
-//                        .font(.headline)
-//                    Spacer()
-//                }
-//                // MARK: - row -
-//                HStack(alignment: .lastTextBaseline, spacing: 0) {
-//                    BFractionText(fraction: row.wrappedValue.unitPrice)
-//                    
-//                    Text("円/\(row.wrappedValue.unitName)")
-//                        .font(.caption)
-//                    
-//                    Spacer()
-//                    
-//                    Text(String("x"))
-//                        .font(.caption)
-//                        .foregroundStyle(Color.secondary)
-//                    
-//                    Spacer()
-//                    
-//                    BFractionText(fraction: row.wrappedValue.quantity)
-//                    
-//                    Text(row.wrappedValue.unitName)
-//                        .font(.caption)
-//                    
-//                    Spacer()
-//                    
-//                    Text("=")
-//                        .font(.caption)
-//                        .foregroundStyle(Color.secondary)
-//                    
-//                    Spacer()
-//                    
-//                    BFractionText(fraction: row.wrappedValue.sum)
-//                    
-//                    Text("円")
-//                        .font(.caption)
-//                }
-//                .buttonStyle(BorderlessButtonStyle())
-//                .padding(.vertical, 3)
-//            }
-//            .foregroundStyle(Color.primary)
-//        }
     }
 }
 

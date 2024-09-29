@@ -4,7 +4,7 @@ import SwiftData
 
 @Model
 public final class NoteModel {
-    @Attribute(.unique) public let id: String
+    @Attribute(.unique) public var id: String
     public var name: String
     public var tables: [CalcTable]
     public var editedAt: Date

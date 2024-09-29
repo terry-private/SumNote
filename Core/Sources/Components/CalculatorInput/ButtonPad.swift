@@ -5,7 +5,7 @@ struct ButtonPad<Content: View>: View {
     private let spacing: CGFloat
     private let content: (ButtonType, CGSize) -> Content
 
-    @State var size: CGSize = .zero
+    @State var size: CGSize = UIScreen.main.bounds.size
     var buttonTypes: [[ButtonType]]
 
     init(maxWidth: CGFloat = .infinity, maxHeight: CGFloat = .infinity, spacing: CGFloat = 12, buttonTypes: [[ButtonType]], content: @escaping (ButtonType, CGSize) -> Content) {
@@ -21,11 +21,9 @@ struct ButtonPad<Content: View>: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChangeFrame {
                 size = CalculatorLayoutLogics.padSize(viewSize: $0, spacing: spacing)
-                print("onChange", $0)
             }
             .overlay {
                 VStack(spacing: CalculatorLayoutLogics.padding) {
-                    let _ = print("currentSize", size)
                     ForEach(buttonTypes, id: \.self) { row in
                         HStack(spacing: CalculatorLayoutLogics.padding) {
                             ForEach(row, id: \.self) { buttonType in
