@@ -18,8 +18,24 @@ public final class NoteModel {
     }
 }
 
-extension NoteModel {
-    var entity: CalcNote {
+extension NoteModel: EntityConvertible {
+    public convenience init(from entity: CalcNote) {
+        self.init(
+            id: entity.id.rawValue,
+            name: entity.name,
+            tables: entity.tables,
+            editedAt: entity.editedAt,
+            createdAt: entity.createdAt
+        )
+    }
+    public func update(from entity: CalcNote) {
+        self.id = entity.id.rawValue
+        self.name = entity.name
+        self.tables = entity.tables
+        self.editedAt = entity.editedAt
+        self.createdAt = entity.createdAt
+    }
+    public func toEntity() -> CalcNote {
         .init(
             id: .init(rawValue: id),
             name: name,

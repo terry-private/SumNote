@@ -52,7 +52,6 @@ enum Module: String, CaseIterable {
         case .coreProtocols: target(
             dependencies: [
                 .init(.entities),
-                .init(.repositories)
             ],
             path: .core
         )
@@ -60,7 +59,6 @@ enum Module: String, CaseIterable {
             dependencies: [
                 .init(.entities),
                 .init(.coreProtocols),
-                .init(.repositories),
             ],
             path: .core
         )
@@ -106,12 +104,14 @@ enum Module: String, CaseIterable {
                 .init(.folderList),
                 .init(.noteList),
                 .init(.note),
+                .init(.repositories),
                 .init(.stores),
             ]
         )
         case .repositories: target(
             dependencies: [
-                .init(.entities)
+                .init(.entities),
+                .init(.coreProtocols),
             ]
         )
         }

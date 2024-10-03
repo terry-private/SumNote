@@ -112,7 +112,9 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
         .navigationTitle(note.name)
         // MARK: - onChange -
         .onChange(of: note) {
-            store.update(note)
+            Task { @MainActor in
+                try await store.update(note)
+            }
         }
     }
 }

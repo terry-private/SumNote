@@ -6,9 +6,9 @@ import Observation
 public protocol NoteStoreProtocol: AnyObject {
     var notes: [CalcNote] { get }
     var yearMonthSections: [SectionBox<YearMonth, CalcNote>] { get }
-    func note(by id: CalcNote.ID) -> CalcNote?
-    func update(_ note: CalcNote)
-    func delete(_ id: CalcNote.ID)
+    func note(by id: CalcNote.ID) async throws -> CalcNote?
+    func update(_ note: CalcNote) async throws
+    func delete(_ id: CalcNote.ID) async throws
 }
 
 extension NoteStoreProtocol {

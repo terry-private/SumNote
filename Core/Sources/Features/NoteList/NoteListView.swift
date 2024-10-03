@@ -19,8 +19,10 @@ public struct NoteListView<Dependency: DependencyProtocol>: View {
                     }
                 }
                 .onDelete { indexSet in
-                    indexSet.forEach {
-                        store.delete(section.items[$0].id)
+                    Task {
+                        for index in indexSet {
+                            try await store.delete(section.items[index].id)
+                        }
                     }
                 }
             }

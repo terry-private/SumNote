@@ -1,7 +1,7 @@
 import Foundation
 import BigInt
 
-public struct CalcRow: Sendable, Hashable, Codable, Equatable, Identifiable {
+public struct CalcRow: EntityProtocol {
     public struct ID: StringIDProtocol {
         public var rawValue: String
         public init(rawValue: RawValue) {

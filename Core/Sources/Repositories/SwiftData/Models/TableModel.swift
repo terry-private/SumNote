@@ -16,8 +16,20 @@ public final class TableModel {
     }
 }
 
-extension TableModel {
-    var entity: CalcTable {
+extension TableModel: EntityConvertible {
+    public convenience init (from entity: CalcTable) {
+        self.init(
+            id: entity.id.rawValue,
+            name: entity.name,
+            rows: entity.rows
+        )
+    }
+    public func update(from entity: CalcTable) {
+        id = entity.id.rawValue
+        name = entity.name
+        rows = entity.rows
+    }
+    public func toEntity() -> CalcTable {
         .init(
             id: .init(rawValue: id),
             name: name,

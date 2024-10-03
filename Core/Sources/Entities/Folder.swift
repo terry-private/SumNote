@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Folder: Sendable, Hashable, Codable, Equatable, Identifiable {
+public struct Folder: EntityProtocol {
     public struct ID: StringIDProtocol {
         public var rawValue: String
         public init(rawValue: RawValue) {
