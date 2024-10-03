@@ -165,7 +165,7 @@ extension NoteView {
             note.tables.remove(atOffsets: indexSet)
         }
     }
-
+    
     // MARK: - header footer -
     @ViewBuilder
     func header(table: Binding<CalcTable>) -> some View {
@@ -211,7 +211,7 @@ extension NoteView {
         }
         .foregroundStyle(Color.primary)
     }
-
+    
     // MARK: - table row -
     @ViewBuilder
     func tableRow(tableName: String, _ row: Binding<CalcRow>) -> some View {
@@ -248,7 +248,7 @@ extension NoteView {
                     BFractionText(fraction: row.wrappedValue.unitPrice)
                 }
                 
-                 Text("円/\(row.wrappedValue.unitName)")
+                Text("円/\(row.wrappedValue.unitName)")
                     .font(.caption)
                 
                 Spacer()
