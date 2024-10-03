@@ -29,20 +29,8 @@ public enum NoteRepository: NoteRepositoryProtocol {
     public static func create(_ note: CalcNote) async throws {
         await database.insert(note, as: NoteModel.self)
     }
-    public static func create(_ table: CalcTable, in note: NoteModel? = nil) async throws {
-//        let model = TableModel(
-//            id: table.id.rawValue,
-//            note: note,
-//            name: table.name,
-//            rows: table.rows
-//        )
-//        await database.insert(model)
-    }
     public static func update(note: CalcNote) async throws {
         try await database.update(note, as: NoteModel.self)
-    }
-    public static func update(table: CalcTable, in note: NoteModel? = nil) async throws {
-        // TODO: wip
     }
     public static func delete(_ id: CalcNote.ID) async throws {
         try await database.delete(

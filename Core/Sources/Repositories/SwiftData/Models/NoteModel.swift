@@ -3,13 +3,13 @@ import Entities
 import SwiftData
 
 @Model
-public final class NoteModel {
-    @Attribute(.unique) public var id: String
-    public var name: String
-    public var tables: [CalcTable]
-    public var editedAt: Date
-    public var createdAt: Date
-    public init(id: String, name: String, tables: [CalcTable], editedAt: Date, createdAt: Date) {
+final class NoteModel {
+    @Attribute(.unique) var id: String
+    var name: String
+    var tables: [CalcTable]
+    var editedAt: Date
+    var createdAt: Date
+    init(id: String, name: String, tables: [CalcTable], editedAt: Date, createdAt: Date) {
         self.id = id
         self.name = name
         self.tables = tables
@@ -19,7 +19,7 @@ public final class NoteModel {
 }
 
 extension NoteModel: EntityConvertible {
-    public convenience init(from entity: CalcNote) {
+    convenience init(from entity: CalcNote) {
         self.init(
             id: entity.id.rawValue,
             name: entity.name,
@@ -28,14 +28,14 @@ extension NoteModel: EntityConvertible {
             createdAt: entity.createdAt
         )
     }
-    public func update(from entity: CalcNote) {
+    func update(from entity: CalcNote) {
         self.id = entity.id.rawValue
         self.name = entity.name
         self.tables = entity.tables
         self.editedAt = entity.editedAt
         self.createdAt = entity.createdAt
     }
-    public func toEntity() -> CalcNote {
+    func toEntity() -> CalcNote {
         .init(
             id: .init(rawValue: id),
             name: name,

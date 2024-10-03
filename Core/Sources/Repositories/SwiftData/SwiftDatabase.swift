@@ -2,8 +2,8 @@ import Foundation
 import SwiftData
 
 @ModelActor
-public actor SwiftDatabase {
-    public func delete<T: PersistentModel>(
+actor SwiftDatabase {
+    func delete<T: PersistentModel>(
         where predicate: Predicate<T>?
     ) throws {
         try modelContext.delete(model: T.self, where: predicate)
@@ -14,18 +14,18 @@ public actor SwiftDatabase {
         modelContext.insert(model)
     }
 
-    public func save() throws {
+    func save() throws {
         try modelContext.save()
     }
 
-    public func fetch<T: EntityConvertible>(
+    func fetch<T: EntityConvertible>(
         _ descriptor: FetchDescriptor<T>
     ) async throws -> [T.Entity] {
         let models = try modelContext.fetch(descriptor)
         return models.map { $0.toEntity() }
     }
 
-    public func update<Model: PersistentModel>(
+    func update<Model: PersistentModel>(
         _ entity: Model.Entity,
         as model: Model.Type
     ) async throws where Model: EntityConvertible {

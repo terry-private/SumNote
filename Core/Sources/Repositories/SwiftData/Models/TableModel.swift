@@ -3,12 +3,12 @@ import Entities
 import SwiftData
 
 @Model
-public final class TableModel {
-    @Attribute(.unique) public var id: String
-    public var note: NoteModel?
-    public var name: String
-    public var rows: [CalcRow]
-    public init(id: String, note: NoteModel? = nil, name: String, rows: [CalcRow]) {
+final class TableModel {
+    @Attribute(.unique) var id: String
+    var note: NoteModel?
+    var name: String
+    var rows: [CalcRow]
+    init(id: String, note: NoteModel? = nil, name: String, rows: [CalcRow]) {
         self.id = id
         self.note = note
         self.name = name
@@ -17,19 +17,19 @@ public final class TableModel {
 }
 
 extension TableModel: EntityConvertible {
-    public convenience init (from entity: CalcTable) {
+    convenience init (from entity: CalcTable) {
         self.init(
             id: entity.id.rawValue,
             name: entity.name,
             rows: entity.rows
         )
     }
-    public func update(from entity: CalcTable) {
+    func update(from entity: CalcTable) {
         id = entity.id.rawValue
         name = entity.name
         rows = entity.rows
     }
-    public func toEntity() -> CalcTable {
+    func toEntity() -> CalcTable {
         .init(
             id: .init(rawValue: id),
             name: name,
