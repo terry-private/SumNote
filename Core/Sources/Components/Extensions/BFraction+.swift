@@ -13,7 +13,7 @@ extension BFraction {
 public extension BFraction.Extension {
     /// 整数部分の文字列
     var wholePart: String {
-        fraction.truncate().description
+        "\(fraction.numerator.isNegative && fraction.truncate().isZero ? "-" : "")\(fraction.truncate().description)"
     }
     /// 小数点以下の文字列
     func fractionalPart(rounded: Int) -> String {

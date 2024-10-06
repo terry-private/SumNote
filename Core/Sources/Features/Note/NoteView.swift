@@ -229,6 +229,9 @@ extension NoteView {
                     Button("単位を編集", systemImage: "square.and.pencil") {
                         setAlert(title: "単位を編集", binding: row.unitName)
                     }
+                    Button("オプションを追加", systemImage: "circle.badge.plus") {
+                        row.wrappedValue.options.append(.init(name: "10% OFF", ratio: .init(9, 10)))
+                    }
                 } label: {
                     Text(row.wrappedValue.name)
                         .font(.headline)
@@ -284,16 +287,65 @@ extension NoteView {
                 Text("=")
                     .font(.caption)
                     .foregroundStyle(Color.secondary)
-                
+
                 Spacer()
                 
-                BFractionText(fraction: row.wrappedValue.sum)
-                
+                BFractionText(fraction: row.wrappedValue.subtotal)
+
                 Text("円")
                     .font(.caption)
             }
             .buttonStyle(BorderlessButtonStyle())
             .padding(.vertical, 3)
+
+            ForEach(row.options) { option in
+                HStack {
+                    Spacer()
+                    Text(String("x"))
+                        .font(.caption)
+                        .foregroundStyle(Color.secondary)
+                    Menu {
+                        Button("オプション名を編集", systemImage: "square.and.pencil") {
+                            setAlert(title: "オプション名を編集", binding: option.name)
+                        }
+                        Button("割合を編集", systemImage: "square.and.pencil") {
+                            editFractionState = .init(
+                                id: option.wrappedValue.id.rawValue,
+                                title: "\(tableName) / \(row.wrappedValue.name) / \(option.wrappedValue.name)",
+                                fraction: option.wrappedValue.ratio
+                            ) { fraction in
+                                option.wrappedValue.ratio = fraction
+                                editFractionState = nil
+                            }
+                        }
+                        Button("オプションを削除", role: .destructive) {
+                            guard let index = row.wrappedValue.options.firstIndex(of: option.wrappedValue) else { return }
+                            row.wrappedValue.options.remove(at: index)
+                        }
+
+                    } label: {
+                        HStack {
+                            BFractionText(fraction: option.wrappedValue.ratio)
+
+                            Text("(\(option.wrappedValue.name))")
+                                .font(.caption)
+                        }
+                    }
+                }
+            }
+            if !row.options.isEmpty {
+                HStack {
+                    Spacer()
+
+                    Text(String("="))
+                        .font(.caption)
+                        .foregroundStyle(Color.secondary)
+                    BFractionText(fraction: row.wrappedValue.sum)
+                    Text("円")
+                        .font(.caption)
+                }
+                .padding(.top, 3)
+            }
         }
     }
 }
