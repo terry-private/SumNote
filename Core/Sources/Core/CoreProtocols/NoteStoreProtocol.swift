@@ -8,6 +8,7 @@ public protocol NoteStoreProtocol: AnyObject {
     var yearMonthSections: [SectionBox<YearMonth, CalcNote>] { get }
     func note(by id: CalcNote.ID) async throws -> CalcNote?
     func update(_ note: CalcNote) async throws
+    func create(_ note: CalcNote) async throws
     func delete(_ id: CalcNote.ID) async throws
 }
 
@@ -41,6 +42,9 @@ public final class DummyNoteStore: NoteStoreProtocol {
     public func update(_ note: CalcNote) {
         var note = note
         note.editedAt = Date()
+        _notes[note.id] = note
+    }
+    public func create(_ note: CalcNote) {
         _notes[note.id] = note
     }
     public func delete(_ id: CalcNote.ID) {

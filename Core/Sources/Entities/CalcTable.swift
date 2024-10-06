@@ -25,6 +25,15 @@ public struct CalcTable: EntityProtocol {
 }
 
 extension CalcTable: CustomStringConvertible {
+    public func description(with indent: Int = 0) -> String {
+        var rowTexts: [String] = [name.indent(indent)]
+        for row in rows {
+            rowTexts.append(row.description(with: indent + 1))
+        }
+        rowTexts.append("合計 \(sum.currency) 円".indent(indent + 1))
+        return rowTexts.joined(separator: "\n")
+    }
+
     public var description: String {
         """
         \(name)

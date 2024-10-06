@@ -40,6 +40,10 @@ public final class NoteStore<Repository: NoteRepositoryProtocol>: NoteStoreProto
     public func refresh() async throws {
         notes = try await Repository.fetchAll()
     }
+    public func create(_ note: CalcNote) async throws {
+        try await Repository.create(note)
+        try await refresh()
+    }
     public var yearMonthSections: [SectionBox<YearMonth, CalcNote>] {
         let ymToNotes: [YearMonth: [CalcNote]] = notes
             .reduce(into: [:]) { result, note in

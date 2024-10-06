@@ -12,4 +12,10 @@ extension String {
         }
         return str
     }
+    public func indent(_ indent: Int, spaces: Int = 2) -> String {
+        String.indent(indent, spaces: spaces) + self
+    }
+    public static func indent(_ indent: Int, spaces: Int = 2) -> String {
+        String(repeating: " ", count: indent * spaces)
+    }
 }

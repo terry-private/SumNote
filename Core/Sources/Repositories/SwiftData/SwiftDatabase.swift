@@ -9,12 +9,9 @@ actor SwiftDatabase {
         try modelContext.delete(model: T.self, where: predicate)
     }
 
-    func insert<Model: PersistentModel>(_ entity: Model.Entity, as model: Model.Type) async where Model: EntityConvertible {
+    func insert<Model: PersistentModel>(_ entity: Model.Entity, as model: Model.Type) async throws where Model: EntityConvertible {
         let model = Model(from: entity)
         modelContext.insert(model)
-    }
-
-    func save() throws {
         try modelContext.save()
     }
 
@@ -37,6 +34,6 @@ actor SwiftDatabase {
             return
         }
         model.update(from: entity)
-        try save()
+        try modelContext.save()
     }
 }

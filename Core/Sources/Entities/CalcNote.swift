@@ -24,6 +24,14 @@ public struct CalcNote: EntityProtocol {
 }
 
 public extension CalcNote {
+    func description() -> String {
+        var texts: [String] = [name]
+        texts += tables.map {
+            $0.description(with: 1)
+        }
+        texts.append("総計: \(sum.currency) 円")
+        return texts.joined(separator: "\n")
+    }
     static func dummy(_ index: Int) -> Self {
         CalcNote(name: "note_\(index)", tables: (1...index).map { .dummy($0) }, editedAt: .dummy)
     }
@@ -32,7 +40,7 @@ public extension CalcNote {
             name: "BBQ",
             tables: [
                 .init(name: "肉類🍖", rows: [
-                    .init(name: "カルビ", unitPrice: .init(2885, 1000), quantity: .init(866,1), unitName: "g"),
+                    .init(name: "カルビ", unitPrice: .init(2885, 1000), quantity: .init(866,1), unitName: "g", options: [.dummy(3)]),
                     .init(name: "ロース", unitPrice: .init(29874, 10000), quantity: .init(841,1), unitName: "g"),
                     .init(name: "ウインナー (10本入)", unitPrice: .init(480,1), quantity: .init(4,1), unitName: "袋")
                 ]),

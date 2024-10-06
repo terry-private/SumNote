@@ -27,7 +27,7 @@ public enum NoteRepository: NoteRepositoryProtocol {
         ).first
     }
     public static func create(_ note: CalcNote) async throws {
-        await database.insert(note, as: NoteModel.self)
+        try await database.insert(note, as: NoteModel.self)
     }
     public static func update(note: CalcNote) async throws {
         try await database.update(note, as: NoteModel.self)
@@ -58,4 +58,3 @@ public enum NoteRepository: NoteRepositoryProtocol {
         )
     }
 }
-

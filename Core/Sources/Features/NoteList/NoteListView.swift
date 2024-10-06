@@ -34,6 +34,17 @@ public struct NoteListView<Dependency: DependencyProtocol>: View {
             }
         )
         .navigationTitle("ノートリスト")
+        .toolbar {
+            Menu {
+                Button("空のノートを追加", systemImage: "note.text.badge.plus") {
+                    Task {
+                        try await store.create(.dummy())
+                    }
+                }
+            } label: {
+                Label("menu", systemImage: "line.3.horizontal.circle")
+            }
+        }
     }
 }
 

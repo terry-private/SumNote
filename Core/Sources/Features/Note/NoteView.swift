@@ -103,6 +103,10 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                             addedTableID = newTable.id
                         }
                     }
+
+                    Button("テキストコピー", systemImage: "pencil") {
+                        UIPasteboard.general.string = note.description()
+                    }
                 } label: {
                     Label("menu", systemImage: "line.3.horizontal.circle")
                 }
@@ -175,7 +179,7 @@ extension NoteView {
                     setAlert(title: "表題を編集", binding: table.name)
                 }
                 Button("テキストコピー", systemImage: "pencil") {
-                    UIPasteboard.general.string = table.wrappedValue.description
+                    UIPasteboard.general.string = table.wrappedValue.description()
                 }
             } label: {
                 Text(table.wrappedValue.name)
