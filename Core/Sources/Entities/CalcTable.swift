@@ -30,7 +30,7 @@ extension CalcTable: CustomStringConvertible {
         for row in rows {
             rowTexts.append(row.description(with: indent + 1))
         }
-        rowTexts.append("合計 \(sum.currency) 円".indent(indent + 1))
+        rowTexts.append("合計 \(sum.ex.currencyString()) 円".indent(indent + 1))
         return rowTexts.joined(separator: "\n")
     }
 
@@ -41,7 +41,7 @@ extension CalcTable: CustomStringConvertible {
             $0.description.split(separator: "\n")
             }.joined(separator: "\n ")
         )
-        合計 \(sum.currency) 円
+        合計 \(sum.ex.currencyString()) 円
         """
     }
 }

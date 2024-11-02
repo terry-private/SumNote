@@ -1,5 +1,5 @@
 import SwiftUI
-import BigInt
+import BigIntExtensions
 
 public struct CalculatorInputView: View {
     let size: CGSize

@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-import BigInt
+import BigIntExtensions
 @testable import Entities
 @testable import Components
 

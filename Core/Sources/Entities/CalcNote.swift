@@ -1,5 +1,5 @@
 import Foundation
-import BigInt
+import BigIntExtensions
 
 public struct CalcNote: EntityProtocol {
     public struct ID: StringIDProtocol {
@@ -29,7 +29,7 @@ public extension CalcNote {
         texts += tables.map {
             $0.description(with: 1)
         }
-        texts.append("総計: \(sum.currency) 円")
+        texts.append("総計: \(sum.ex.currencyString()) 円")
         return texts.joined(separator: "\n")
     }
     static func dummy(_ index: Int) -> Self {

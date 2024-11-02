@@ -1,4 +1,4 @@
-import BigInt
+import BigIntExtensions
 import Observation
 
 struct Operating {
@@ -12,7 +12,7 @@ enum  CurrentState {
     var display: String {
         switch self {
         case .edit(let text): text
-        case .fraction(let fraction): fraction.ex.asDecimalString(max: 20)
+        case .fraction(let fraction): fraction.ex.decimalString(max: 20)
         }
     }
     func fraction() -> BFraction {

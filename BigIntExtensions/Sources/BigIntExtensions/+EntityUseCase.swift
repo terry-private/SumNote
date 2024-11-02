@@ -1,5 +1,3 @@
-import BigInt
-
 // MARK: - BInt -
 extension BInt: @unchecked @retroactive Sendable {}
 extension BInt: @retroactive RawRepresentable, Codable {
@@ -31,36 +29,9 @@ extension BFraction: Codable {
         let denominator = try values.decode(BInt.self, forKey: .denominator)
         self.init(numerator, denominator)
     }
-    
+
     enum CodingKeys: CodingKey {
         case numerator
         case denominator
-    }
-}
-
-extension BFraction {
-    public var wholePart: String {
-        truncate().description
-    }
-    public func fractionalPart(rounded: Int) -> String {
-        asDecimalString(precision: rounded + wholePart.count).split(separator: ".")[1].description
-    }
-    public func decimalString(rounded: Int) -> String {
-        asDecimalString(precision: rounded + wholePart.count).dropLast0()
-    }
-    public var currencyWholePart: String {
-        let string = wholePart
-        var result = ""
-        let lastIndex = string.count - 1
-        for (index, char) in string.enumerated() {
-            if index > 0 && (lastIndex - index + 1) % 3 == 0 {
-                result.append(",")
-            }
-            result.append(char)
-        }
-        return result
-    }
-    public var currency: String {
-        "\(currencyWholePart).\(fractionalPart(rounded: 2))".dropLast0()
     }
 }

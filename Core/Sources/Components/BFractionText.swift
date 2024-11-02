@@ -1,5 +1,5 @@
 import SwiftUI
-import BigInt
+import BigIntExtensions
 
 public struct BFractionText: View {
     let fraction: BFraction
@@ -20,12 +20,12 @@ public struct BFractionText: View {
     }
     public var body: some View {
         HStack(alignment: .lastTextBaseline, spacing: 0) {
-            let wholePart = currencyMode ? fraction.ex.currencyWholePart : fraction.ex.wholePart
+            let wholePart = currencyMode ? fraction.ex.currencyWholePartString : fraction.ex.wholePartString
             if fraction.denominator != 1 {
                 Text(wholePart)
                     .font(.init(wholePartFont)) +
                 Text(".") +
-                Text(fraction.ex.fractionalPart(rounded: rounded))
+                Text(fraction.ex.fractionalPartString(rounded: rounded))
                     .font(.init(fractionalPartFont))
             } else {
                 Text(wholePart)

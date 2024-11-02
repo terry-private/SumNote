@@ -1,5 +1,5 @@
 import Foundation
-import BigInt
+import BigIntExtensions
 
 public struct CalcRow: EntityProtocol {
     public struct ID: StringIDProtocol {
@@ -29,18 +29,18 @@ public struct CalcRow: EntityProtocol {
 
 extension CalcRow {
     public func description(with indent: Int = 0) -> String {
-        let subtotal = "\(name) \(unitPrice.currency)円/\(unitName) x \(quantity.currency)\(unitName) = \(subtotal.currency)円".indent(indent)
+        let subtotal = "\(name) \(unitPrice.ex.currencyString())円/\(unitName) x \(quantity.ex.currencyString())\(unitName) = \(subtotal.ex.currencyString())円".indent(indent)
         guard !options.isEmpty else { return subtotal }
 
         let optionDescriptions = options.map {
             $0.description(with: indent + 1)
         }
-        let sum = "= \(sum.currency)円".indent(indent + 1)
+        let sum = "= \(sum.ex.currencyString())円".indent(indent + 1)
         let rows = [subtotal] + optionDescriptions + [sum]
         return rows.joined(separator: "\n")
     }
     public var description: String {
-        "\(name)\n \(unitPrice.currency)円/\(unitName) x \(quantity.currency)\(unitName) = \(sum.currency)円"
+        "\(name)\n \(unitPrice.ex.currencyString())円/\(unitName) x \(quantity.ex.currencyString())\(unitName) = \(sum.ex.currencyString())円"
     }
 }
 

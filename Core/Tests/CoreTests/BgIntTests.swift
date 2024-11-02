@@ -1,5 +1,5 @@
 import Testing
-import BigInt
+import BigIntExtensions
 @testable import Components
 
 struct BgIntTests {

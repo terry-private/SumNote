@@ -1,5 +1,5 @@
 import Foundation
-import BigInt
+import BigIntExtensions
 
 public struct CalcOption: EntityProtocol {
     public struct ID: StringIDProtocol {
@@ -23,7 +23,7 @@ public extension CalcOption {
         description.indent(indent)
     }
     var description: String {
-        "x \(ratio.currency) (\(name))"
+        "x \(ratio.ex.currencyString()) (\(name))"
     }
     static var dummy: Self {
         .init(name: "Dummy", ratio: .init(80, 100))

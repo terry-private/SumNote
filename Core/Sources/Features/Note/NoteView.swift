@@ -1,5 +1,5 @@
 import SwiftUI
-import BigInt
+import BigIntExtensions
 import Entities
 import CoreProtocols
 import Components

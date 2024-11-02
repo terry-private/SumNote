@@ -10,7 +10,7 @@ let package = Package(
     ],
     products: Module.allCases.map(\.library),
     dependencies: [
-        .package(url: "https://github.com/leif-ibsen/BigInt", from: "1.17.0")
+        .package(path: "../BigIntExtensions")
     ],
     targets: Module.allCases.map(\.target) + TestModule.allCases.map(\.target)
 )
@@ -20,7 +20,7 @@ extension Target.Dependency {
     init(_ module: Module) {
         self = module.dependency
     }
-    static var bInt: Self { .product(name: "BigInt", package: "BigInt") }
+    static var bInt: Self { .product(name: "BigIntExtensions", package: "BigIntExtensions") }
 }
 
 // MARK: モジュール親ディレクトリ

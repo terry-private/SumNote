@@ -1,4 +1,4 @@
-import BigInt
+import BigIntExtensions
 enum ArithmeticOperation: CaseIterable, CustomStringConvertible {
     case addition, subtraction, multiplication, division
 
