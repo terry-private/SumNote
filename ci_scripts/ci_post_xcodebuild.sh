@@ -30,11 +30,14 @@ cd $CI_WORKSPACE
 
 # declare variables
 SCHEME="BigIntExtensionsTests"
-PRODUCT_NAME="SumNote"
-WORKSPACE_NAME=${PRODUCT_NAME}.xcworkspace
+echo $SCHEME
+PRODUCT_NAME="Production"
+echo $PRODUCT_NAME
+WORKSPACE_NAME="SumNote.xcworkspace"
+echo $WORKSPACE_NAME
 APP_VERSION=$(sed -n '/MARKETING_VERSION/{s/MARKETING_VERSION = //;s/;//;s/^[[:space:]]*//;p;q;}' ./${PRODUCT_NAME}.xcodeproj/project.pbxproj)
-
 echo $APP_VERSION
+
 # clean, build and test project
 xcodebuild \
   -workspace ${WORKSPACE_NAME} \
