@@ -1,7 +1,7 @@
 import Foundation
 import BigIntExtensions
 
-public struct CalcOption: EntityProtocol {
+public struct SumOption: EntityProtocol {
     public struct ID: StringIDProtocol {
         public var rawValue: String
         public init(rawValue: RawValue) {
@@ -18,7 +18,7 @@ public struct CalcOption: EntityProtocol {
     }
 }
 
-public extension CalcOption {
+public extension SumOption {
     func description(with indent: Int = 0) -> String {
         description.indent(indent)
     }

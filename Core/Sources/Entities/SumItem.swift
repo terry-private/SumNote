@@ -13,11 +13,11 @@ public struct SumItem: EntityProtocol {
     public var unitPrice: BFraction
     public var quantity: BFraction
     public var unitName: String
-    public var options: [CalcOption]
+    public var options: [SumOption]
     public var subtotal: BFraction { unitPrice * quantity }
     public var sum: BFraction { options.map(\.ratio).reduce(subtotal, *) }
 
-    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, unitPrice: BFraction, quantity: BFraction, unitName: String, options: [CalcOption] = []) {
+    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, unitPrice: BFraction, quantity: BFraction, unitName: String, options: [SumOption] = []) {
         self.id = id
         self.name = name
         self.unitPrice = unitPrice
