@@ -6,10 +6,10 @@ import SwiftData
 final class SumNoteModel {
     @Attribute(.unique) var id: String
     var name: String
-    var tables: [CalcTable]
+    var tables: [SumGroup]
     var editedAt: Date
     var createdAt: Date
-    init(id: String, name: String, tables: [CalcTable], editedAt: Date, createdAt: Date) {
+    init(id: String, name: String, tables: [SumGroup], editedAt: Date, createdAt: Date) {
         self.id = id
         self.name = name
         self.tables = tables
