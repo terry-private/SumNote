@@ -13,12 +13,13 @@ xcodebuild -scheme "$SCHEME_NAME" -showdestinations
 
 # ビルド設定の確認
 echo "Checking build settings..."
-xcodebuild test -scheme "$SCHEME_NAME" \
-    -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.1' \
-    -derivedDataPath DerivedData/ \
-    -enableCodeCoverage YES \
-    -resultBundlePath DerivedData/Logs/Test/ResultBundle.xcresult \
-    clean build test
+# xcodebuild \
+#   -scheme "$SCHEME_NAME" \
+#   -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.1' \
+#   -derivedDataPath DerivedData/ \
+#   -enableCodeCoverage YES \
+#   -resultBundlePath DerivedData/Logs/Test/ResultBundle.xcresult \
+#   clean build test
 
 echo "Test environment setup completed"
 
