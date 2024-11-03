@@ -36,8 +36,8 @@ extension SumItem {
             $0.description(with: indent + 1)
         }
         let sum = "= \(sum.ex.currencyString())円".indent(indent + 1)
-        let rows = [subtotal] + optionDescriptions + [sum]
-        return rows.joined(separator: "\n")
+        let items = [subtotal] + optionDescriptions + [sum]
+        return items.joined(separator: "\n")
     }
     public var description: String {
         "\(name)\n \(unitPrice.ex.currencyString())円/\(unitName) x \(quantity.ex.currencyString())\(unitName) = \(sum.ex.currencyString())円"

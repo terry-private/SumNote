@@ -98,7 +98,7 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                     }
                     Button("空の表を追加", systemImage: "note.text.badge.plus") {
                         withAnimation {
-                            let newTable = SumGroup(name: "表", rows: [.init(name: "品名", unitPrice: .ZERO, quantity: .ONE, unitName: "個")])
+                            let newTable = SumGroup(name: "表", items: [.init(name: "品名", unitPrice: .ZERO, quantity: .ONE, unitName: "個")])
                             note.groups.append(newTable)
                             addedTableID = newTable.id
                         }
@@ -150,14 +150,14 @@ extension NoteView {
                 }
             } else {
                 Section(header: header(table: $table), footer: footer(table: $table)) {
-                    ForEach($table.rows) { $row in
+                    ForEach($table.items) { $row in
                         tableRow(tableName: table.name, $row)
                     }
                     .onMove { indexSet, index in
-                        table.rows.move(fromOffsets: indexSet, toOffset: index)
+                        table.items.move(fromOffsets: indexSet, toOffset: index)
                     }
                     .onDelete { indexSet in
-                        table.rows.remove(atOffsets: indexSet)
+                        table.items.remove(atOffsets: indexSet)
                     }
                 }
             }
@@ -191,7 +191,7 @@ extension NoteView {
             Menu {
                 Button("空の行を追加", systemImage: "square.badge.plus") {
                     withAnimation {
-                        table.wrappedValue.rows.append(.init(name: "品名", unitPrice: .ZERO, quantity: .ONE, unitName: "個"))
+                        table.wrappedValue.items.append(.init(name: "品名", unitPrice: .ZERO, quantity: .ONE, unitName: "個"))
                     }
                 }
                 Button("テンプレートから追加", systemImage: "macwindow.badge.plus") {

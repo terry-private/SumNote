@@ -7,12 +7,12 @@ final class SumGroupModel {
     @Attribute(.unique) var id: String
     var note: SumNoteModel?
     var name: String
-    var rows: [SumItem]
-    init(id: String, note: SumNoteModel? = nil, name: String, rows: [SumItem]) {
+    var items: [SumItem]
+    init(id: String, note: SumNoteModel? = nil, name: String, items: [SumItem]) {
         self.id = id
         self.note = note
         self.name = name
-        self.rows = rows
+        self.items = items
     }
 }
 
@@ -21,19 +21,19 @@ extension SumGroupModel: EntityConvertible {
         self.init(
             id: entity.id.rawValue,
             name: entity.name,
-            rows: entity.rows
+            items: entity.items
         )
     }
     func update(from entity: SumGroup) {
         id = entity.id.rawValue
         name = entity.name
-        rows = entity.rows
+        items = entity.items
     }
     func toEntity() -> SumGroup {
         .init(
             id: .init(rawValue: id),
             name: name,
-            rows: rows
+            items: items
         )
     }
 }

@@ -39,12 +39,12 @@ public extension SumNote {
         SumNote(
             name: "BBQ",
             groups: [
-                .init(name: "肉類🍖", rows: [
+                .init(name: "肉類🍖", items: [
                     .init(name: "カルビ", unitPrice: .init(2885, 1000), quantity: .init(866,1), unitName: "g", options: [.dummy(3)]),
                     .init(name: "ロース", unitPrice: .init(29874, 10000), quantity: .init(841,1), unitName: "g"),
                     .init(name: "ウインナー (10本入)", unitPrice: .init(480,1), quantity: .init(4,1), unitName: "袋")
                 ]),
-                .init(name: "飲み物", rows: [
+                .init(name: "飲み物", items: [
                     .init(name: "ビール 350ml", unitPrice: .init(198,1), quantity: .init(24,1), unitName: "缶"),
                     .init(name: "水 2l", unitPrice: .init(100, 1), quantity: .init(3, 1), unitName: "本")
                 ])
