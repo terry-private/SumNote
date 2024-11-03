@@ -10,14 +10,14 @@ public struct SumNote: EntityProtocol {
     }
     public let id: ID
     public var name: String
-    public var tables: [SumGroup]
+    public var groups: [SumGroup]
     public var editedAt: Date
     public var createdAt: Date
-    public var sum: BFraction { tables.reduce(.ZERO) { $0+$1.sum } }
-    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, tables: [SumGroup], editedAt: Date = Date(), createdAt: Date = Date()) {
+    public var sum: BFraction { groups.reduce(.ZERO) { $0+$1.sum } }
+    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, groups: [SumGroup], editedAt: Date = Date(), createdAt: Date = Date()) {
         self.id = id
         self.name = name
-        self.tables = tables
+        self.groups = groups
         self.editedAt = editedAt
         self.createdAt = createdAt
     }
@@ -26,19 +26,19 @@ public struct SumNote: EntityProtocol {
 public extension SumNote {
     func description() -> String {
         var texts: [String] = [name]
-        texts += tables.map {
+        texts += groups.map {
             $0.description(with: 1)
         }
         texts.append("総計: \(sum.ex.currencyString()) 円")
         return texts.joined(separator: "\n")
     }
     static func dummy(_ index: Int) -> Self {
-        SumNote(name: "note_\(index)", tables: (1...index).map { .dummy($0) }, editedAt: .dummy)
+        SumNote(name: "note_\(index)", groups: (1...index).map { .dummy($0) }, editedAt: .dummy)
     }
     static func dummy() -> Self {
         SumNote(
             name: "BBQ",
-            tables: [
+            groups: [
                 .init(name: "肉類🍖", rows: [
                     .init(name: "カルビ", unitPrice: .init(2885, 1000), quantity: .init(866,1), unitName: "g", options: [.dummy(3)]),
                     .init(name: "ロース", unitPrice: .init(29874, 10000), quantity: .init(841,1), unitName: "g"),

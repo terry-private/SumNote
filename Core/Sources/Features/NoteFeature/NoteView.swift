@@ -32,7 +32,7 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
         VStack(spacing: 0) {
             ScrollViewReader { scrollProxy in
                 List {
-                    tables()
+                    groups()
                 }
                 .listStyle(.insetGrouped)
                 .onChange(of: addedTableID) {
@@ -99,7 +99,7 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                     Button("空の表を追加", systemImage: "note.text.badge.plus") {
                         withAnimation {
                             let newTable = SumGroup(name: "表", rows: [.init(name: "品名", unitPrice: .ZERO, quantity: .ONE, unitName: "個")])
-                            note.tables.append(newTable)
+                            note.groups.append(newTable)
                             addedTableID = newTable.id
                         }
                     }
@@ -137,8 +137,8 @@ extension NoteView {
 // MARK: - ViewBuilders -
 extension NoteView {
     @ViewBuilder
-    func tables() -> some View {
-        ForEach($note.tables) { $table in
+    func groups() -> some View {
+        ForEach($note.groups) { $table in
             if editMode?.wrappedValue.isEditing == true {
                 VStack {
                     HStack {
@@ -163,10 +163,10 @@ extension NoteView {
             }
         }
         .onMove { indexSet, index in
-            note.tables.move(fromOffsets: indexSet, toOffset: index)
+            note.groups.move(fromOffsets: indexSet, toOffset: index)
         }
         .onDelete { indexSet in
-            note.tables.remove(atOffsets: indexSet)
+            note.groups.remove(atOffsets: indexSet)
         }
     }
     

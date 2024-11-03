@@ -6,13 +6,13 @@ import SwiftData
 final class SumNoteModel {
     @Attribute(.unique) var id: String
     var name: String
-    var tables: [SumGroup]
+    var groups: [SumGroup]
     var editedAt: Date
     var createdAt: Date
-    init(id: String, name: String, tables: [SumGroup], editedAt: Date, createdAt: Date) {
+    init(id: String, name: String, groups: [SumGroup], editedAt: Date, createdAt: Date) {
         self.id = id
         self.name = name
-        self.tables = tables
+        self.groups = groups
         self.editedAt = editedAt
         self.createdAt = createdAt
     }
@@ -23,7 +23,7 @@ extension SumNoteModel: EntityConvertible {
         self.init(
             id: entity.id.rawValue,
             name: entity.name,
-            tables: entity.tables,
+            groups: entity.groups,
             editedAt: entity.editedAt,
             createdAt: entity.createdAt
         )
@@ -31,7 +31,7 @@ extension SumNoteModel: EntityConvertible {
     func update(from entity: SumNote) {
         self.id = entity.id.rawValue
         self.name = entity.name
-        self.tables = entity.tables
+        self.groups = entity.groups
         self.editedAt = entity.editedAt
         self.createdAt = entity.createdAt
     }
@@ -39,7 +39,7 @@ extension SumNoteModel: EntityConvertible {
         .init(
             id: .init(rawValue: id),
             name: name,
-            tables: tables,
+            groups: groups,
             editedAt: editedAt,
             createdAt: createdAt
         )

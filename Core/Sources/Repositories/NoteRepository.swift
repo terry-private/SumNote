@@ -45,10 +45,10 @@ public enum NoteRepository: NoteRepositoryProtocol {
 //                $0.id == noteID.rawValue
 //            })
 //        )).first {
-//            if let index = model.tables.firstIndex(where: {
+//            if let index = model.groups.firstIndex(where: {
 //                $0.id.rawValue == id.rawValue
 //            }) {
-//                model.tables.remove(at: index)
+//                model.groups.remove(at: index)
 //            }
 //        }
         try await database.delete(
