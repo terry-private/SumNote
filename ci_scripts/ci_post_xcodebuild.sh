@@ -13,8 +13,8 @@ echo "Organization: $SONAR_ORGANIZATION"
 
 # sonar-project.propertiesの作成
 cat > sonar-project.properties << EOF
-sonar.projectKey=${$SONAR_PROJECT_KEY}
-sonar.organization=${$SONAR_ORGANIZATION}
+sonar.projectKey=${SONAR_PROJECT_KEY}
+sonar.organization=${SONAR_ORGANIZATION}
 sonar.host.url=https://sonarcloud.io
 
 sonar.sources=$CI_PRIMARY_REPOSITORY_PATH
