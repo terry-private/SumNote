@@ -16,6 +16,8 @@ echo "Using scheme: $SCHEME_NAME"
 
 # ビルド設定の確認
 echo "Checking build settings..."
-xcodebuild -scheme "$SCHEME_NAME" -showBuildSettings | grep -i "coverage"
+xcodebuild -scheme "$SCHEME_NAME" \
+  -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=latest' \
+  -showBuildSettings | grep -i "coverage"
 
 echo "Test environment setup completed"
