@@ -218,7 +218,7 @@ extension NoteView {
     
     // MARK: - table row -
     @ViewBuilder
-    func tableRow(tableName: String, _ row: Binding<CalcRow>) -> some View {
+    func tableRow(tableName: String, _ row: Binding<SumItem>) -> some View {
         VStack {
             // MARK: - row name-
             HStack {

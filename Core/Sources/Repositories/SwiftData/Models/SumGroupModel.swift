@@ -7,8 +7,8 @@ final class SumGroupModel {
     @Attribute(.unique) var id: String
     var note: SumNoteModel?
     var name: String
-    var rows: [CalcRow]
-    init(id: String, note: SumNoteModel? = nil, name: String, rows: [CalcRow]) {
+    var rows: [SumItem]
+    init(id: String, note: SumNoteModel? = nil, name: String, rows: [SumItem]) {
         self.id = id
         self.note = note
         self.name = name

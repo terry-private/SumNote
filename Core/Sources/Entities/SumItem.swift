@@ -1,7 +1,7 @@
 import Foundation
 import BigIntExtensions
 
-public struct CalcRow: EntityProtocol {
+public struct SumItem: EntityProtocol {
     public struct ID: StringIDProtocol {
         public var rawValue: String
         public init(rawValue: RawValue) {
@@ -27,7 +27,7 @@ public struct CalcRow: EntityProtocol {
     }
 }
 
-extension CalcRow {
+extension SumItem {
     public func description(with indent: Int = 0) -> String {
         let subtotal = "\(name) \(unitPrice.ex.currencyString())円/\(unitName) x \(quantity.ex.currencyString())\(unitName) = \(subtotal.ex.currencyString())円".indent(indent)
         guard !options.isEmpty else { return subtotal }
@@ -44,8 +44,8 @@ extension CalcRow {
     }
 }
 
-public extension CalcRow {
+public extension SumItem {
     static func dummy(_ index: Int) -> Self {
-        CalcRow(id: "row_id_\(index)", name: "row_name_\(index)", unitPrice: BFraction(index, 1), quantity: BFraction(index, 1), unitName: "個", options: [.dummy(index)])
+        SumItem(id: "row_id_\(index)", name: "row_name_\(index)", unitPrice: BFraction(index, 1), quantity: BFraction(index, 1), unitName: "個", options: [.dummy(index)])
     }
 }

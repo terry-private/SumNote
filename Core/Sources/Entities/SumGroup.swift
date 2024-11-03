@@ -10,14 +10,14 @@ public struct SumGroup: EntityProtocol {
     }
     public let id: ID
     public var name: String
-    public var rows: [CalcRow]
+    public var rows: [SumItem]
     public var sum: BFraction {
         rows.reduce(.ZERO) {
             $0 + $1.sum
         }
     }
 
-    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, rows: [CalcRow]) {
+    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, rows: [SumItem]) {
         self.id = id
         self.name = name
         self.rows = rows
