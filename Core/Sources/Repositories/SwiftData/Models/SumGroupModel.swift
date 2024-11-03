@@ -3,7 +3,7 @@ import Entities
 import SwiftData
 
 @Model
-final class TableModel {
+final class SumGroupModel {
     @Attribute(.unique) var id: String
     var note: SumNoteModel?
     var name: String
@@ -16,20 +16,20 @@ final class TableModel {
     }
 }
 
-extension TableModel: EntityConvertible {
-    convenience init (from entity: CalcTable) {
+extension SumGroupModel: EntityConvertible {
+    convenience init (from entity: SumGroup) {
         self.init(
             id: entity.id.rawValue,
             name: entity.name,
             rows: entity.rows
         )
     }
-    func update(from entity: CalcTable) {
+    func update(from entity: SumGroup) {
         id = entity.id.rawValue
         name = entity.name
         rows = entity.rows
     }
-    func toEntity() -> CalcTable {
+    func toEntity() -> SumGroup {
         .init(
             id: .init(rawValue: id),
             name: name,

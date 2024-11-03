@@ -1,7 +1,7 @@
 import Foundation
 import BigInt
 
-public struct CalcTable: EntityProtocol {
+public struct SumGroup: EntityProtocol {
     public struct ID: StringIDProtocol {
         public var rawValue: String
         public init(rawValue: RawValue) {
@@ -24,7 +24,7 @@ public struct CalcTable: EntityProtocol {
     }
 }
 
-extension CalcTable: CustomStringConvertible {
+extension SumGroup: CustomStringConvertible {
     public func description(with indent: Int = 0) -> String {
         var rowTexts: [String] = [name.indent(indent)]
         for row in rows {
@@ -45,8 +45,8 @@ extension CalcTable: CustomStringConvertible {
         """
     }
 }
-public extension CalcTable {
+public extension SumGroup {
     static func dummy(_ index: Int) -> Self {
-        CalcTable(name: "table_\(index)", rows: (1...index).map { .dummy($0) })
+        SumGroup(name: "table_\(index)", rows: (1...index).map { .dummy($0) })
     }
 }

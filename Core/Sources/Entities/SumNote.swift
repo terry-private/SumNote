@@ -10,11 +10,11 @@ public struct SumNote: EntityProtocol {
     }
     public let id: ID
     public var name: String
-    public var tables: [CalcTable]
+    public var tables: [SumGroup]
     public var editedAt: Date
     public var createdAt: Date
     public var sum: BFraction { tables.reduce(.ZERO) { $0+$1.sum } }
-    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, tables: [CalcTable], editedAt: Date = Date(), createdAt: Date = Date()) {
+    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, tables: [SumGroup], editedAt: Date = Date(), createdAt: Date = Date()) {
         self.id = id
         self.name = name
         self.tables = tables

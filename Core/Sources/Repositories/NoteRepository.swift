@@ -8,7 +8,7 @@ public enum NoteRepository: NoteRepositoryProtocol {
         do {
             return .init(
                 modelContainer: try .init(
-                    for: SumNoteModel.self, TableModel.self,
+                    for: SumNoteModel.self, SumGroupModel.self,
                     storageType: .file()
                 )
             )
@@ -39,7 +39,7 @@ public enum NoteRepository: NoteRepositoryProtocol {
             }
         )
     }
-    public static func delete(_ id: CalcTable.ID, in noteID: SumNote.ID) async throws {
+    public static func delete(_ id: SumGroup.ID, in noteID: SumNote.ID) async throws {
 //        if let model = (try context.fetch(
 //            FetchDescriptor<SumNoteModel>(predicate: #Predicate {
 //                $0.id == noteID.rawValue
@@ -52,7 +52,7 @@ public enum NoteRepository: NoteRepositoryProtocol {
 //            }
 //        }
         try await database.delete(
-            where: #Predicate { (model: TableModel) -> Bool in
+            where: #Predicate { (model: SumGroupModel) -> Bool in
                 model.id == id.rawValue
             }
         )

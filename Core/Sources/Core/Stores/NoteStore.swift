@@ -30,7 +30,7 @@ public final class NoteStore<Repository: NoteRepositoryProtocol>: NoteStoreProto
         try await Repository.delete(id)
         try await refresh()
     }
-    public func delete(_ id: CalcTable.ID, in noteID: SumNote.ID) async throws {
+    public func delete(_ id: SumGroup.ID, in noteID: SumNote.ID) async throws {
         try await Repository.delete(id, in: noteID)
         try await refresh()
     }

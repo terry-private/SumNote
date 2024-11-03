@@ -23,7 +23,7 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
     @State var note: SumNote
     @State var editNameAlert: EditAlert<String>?
     @State var editNameAlertText: String = ""
-    @State var addedTableID: CalcTable.ID?
+    @State var addedTableID: SumGroup.ID?
     @State var editFractionState: EditFractionState?
     public init(note: SumNote) {
         _note = .init(wrappedValue: note)
@@ -98,7 +98,7 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                     }
                     Button("空の表を追加", systemImage: "note.text.badge.plus") {
                         withAnimation {
-                            let newTable = CalcTable(name: "表", rows: [.init(name: "品名", unitPrice: .ZERO, quantity: .ONE, unitName: "個")])
+                            let newTable = SumGroup(name: "表", rows: [.init(name: "品名", unitPrice: .ZERO, quantity: .ONE, unitName: "個")])
                             note.tables.append(newTable)
                             addedTableID = newTable.id
                         }
@@ -172,7 +172,7 @@ extension NoteView {
     
     // MARK: - header footer -
     @ViewBuilder
-    func header(table: Binding<CalcTable>) -> some View {
+    func header(table: Binding<SumGroup>) -> some View {
         HStack {
             Menu {
                 Button("表題を編集", systemImage: "square.and.pencil") {
@@ -204,7 +204,7 @@ extension NoteView {
             .padding(-20) // タップ範囲を広げてもレイアウトサイズはそのままにする
         }
     }
-    func footer(table: Binding<CalcTable>) -> some View {
+    func footer(table: Binding<SumGroup>) -> some View {
         HStack(alignment: .lastTextBaseline) {
             Spacer()
             Text("合計")

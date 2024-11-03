@@ -6,7 +6,7 @@ public protocol NoteRepositoryProtocol {
     static func create(_ note: SumNote) async throws
     static func update(note: SumNote) async throws
     static func delete(_ id: SumNote.ID) async throws
-    static func delete(_ id: CalcTable.ID, in noteID: SumNote.ID) async throws
+    static func delete(_ id: SumGroup.ID, in noteID: SumNote.ID) async throws
 }
 
 /// ダミー
@@ -24,5 +24,5 @@ public enum DummyNoteRepository: NoteRepositoryProtocol {
     public static func update(note: SumNote) throws { notes[note.id] = note }
 
     public static func delete(_ id: SumNote.ID) throws { notes[id] = nil }
-    public static func delete(_ id: CalcTable.ID, in noteID: SumNote.ID) throws { }
+    public static func delete(_ id: SumGroup.ID, in noteID: SumNote.ID) throws { }
 }
