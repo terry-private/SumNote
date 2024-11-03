@@ -35,8 +35,6 @@ PRODUCT_NAME="Production"
 echo $PRODUCT_NAME
 WORKSPACE_NAME="SumNote.xcworkspace"
 echo $WORKSPACE_NAME
-APP_VERSION=$(sed -n '/MARKETING_VERSION/{s/MARKETING_VERSION = //;s/;//;s/^[[:space:]]*//;p;q;}' ./${PRODUCT_NAME}.xcodeproj/project.pbxproj)
-echo $APP_VERSION
 
 # clean, build and test project
 xcodebuild \
