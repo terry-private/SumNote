@@ -1,7 +1,7 @@
 import Foundation
 import BigIntExtensions
 
-public struct CalcNote: EntityProtocol {
+public struct SumNote: EntityProtocol {
     public struct ID: StringIDProtocol {
         public var rawValue: String
         public init(rawValue: RawValue) {
@@ -23,7 +23,7 @@ public struct CalcNote: EntityProtocol {
     }
 }
 
-public extension CalcNote {
+public extension SumNote {
     func description() -> String {
         var texts: [String] = [name]
         texts += tables.map {
@@ -33,10 +33,10 @@ public extension CalcNote {
         return texts.joined(separator: "\n")
     }
     static func dummy(_ index: Int) -> Self {
-        CalcNote(name: "note_\(index)", tables: (1...index).map { .dummy($0) }, editedAt: .dummy)
+        SumNote(name: "note_\(index)", tables: (1...index).map { .dummy($0) }, editedAt: .dummy)
     }
     static func dummy() -> Self {
-        CalcNote(
+        SumNote(
             name: "BBQ",
             tables: [
                 .init(name: "肉類🍖", rows: [

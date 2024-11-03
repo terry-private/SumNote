@@ -19,7 +19,7 @@ public enum ProductionDependency: DependencyProtocol {
     @MainActor public static func noteListView() -> NoteListView<Self> {
         NoteListFeature.NoteListView<Self>()
     }
-    @MainActor public static func noteView(note: CalcNote) -> some View {
+    @MainActor public static func noteView(note: SumNote) -> some View {
         NoteFeature.NoteView<Self>(note: note)
     }
     // MARK: - Stores

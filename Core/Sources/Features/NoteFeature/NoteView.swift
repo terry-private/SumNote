@@ -20,12 +20,12 @@ struct EditFractionState: Identifiable {
 public struct NoteView<Dependency: DependencyProtocol>: View {
     @Environment(\.editMode) private var editMode
     @State var store = Dependency.noteStore
-    @State var note: CalcNote
+    @State var note: SumNote
     @State var editNameAlert: EditAlert<String>?
     @State var editNameAlertText: String = ""
     @State var addedTableID: CalcTable.ID?
     @State var editFractionState: EditFractionState?
-    public init(note: CalcNote) {
+    public init(note: SumNote) {
         _note = .init(wrappedValue: note)
     }
     public var body: some View {

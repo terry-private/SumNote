@@ -6,7 +6,7 @@ import Stores
 
 public struct NoteListView<Dependency: DependencyProtocol>: View {
     @State var store = Dependency.noteStore
-    @State var selected: CalcNote?
+    @State var selected: SumNote?
     public init() {}
     public var body: some View {
         List(store.yearMonthSections) { section in

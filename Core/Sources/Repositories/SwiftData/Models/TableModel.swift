@@ -5,10 +5,10 @@ import SwiftData
 @Model
 final class TableModel {
     @Attribute(.unique) var id: String
-    var note: NoteModel?
+    var note: SumNoteModel?
     var name: String
     var rows: [CalcRow]
-    init(id: String, note: NoteModel? = nil, name: String, rows: [CalcRow]) {
+    init(id: String, note: SumNoteModel? = nil, name: String, rows: [CalcRow]) {
         self.id = id
         self.note = note
         self.name = name

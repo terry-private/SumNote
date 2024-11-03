@@ -4,17 +4,17 @@ import Observation
 
 @MainActor
 public protocol NoteStoreProtocol: AnyObject {
-    var notes: [CalcNote] { get }
-    var yearMonthSections: [SectionBox<YearMonth, CalcNote>] { get }
-    func note(by id: CalcNote.ID) async throws -> CalcNote?
-    func update(_ note: CalcNote) async throws
-    func create(_ note: CalcNote) async throws
-    func delete(_ id: CalcNote.ID) async throws
+    var notes: [SumNote] { get }
+    var yearMonthSections: [SectionBox<YearMonth, SumNote>] { get }
+    func note(by id: SumNote.ID) async throws -> SumNote?
+    func update(_ note: SumNote) async throws
+    func create(_ note: SumNote) async throws
+    func delete(_ id: SumNote.ID) async throws
 }
 
 extension NoteStoreProtocol {
-    public var yearMonthSections: [SectionBox<YearMonth, CalcNote>] {
-        let ymToNotes: [YearMonth: [CalcNote]] = notes.lazy
+    public var yearMonthSections: [SectionBox<YearMonth, SumNote>] {
+        let ymToNotes: [YearMonth: [SumNote]] = notes.lazy
             .reduce(into: [:]) { result, note in
                 let yearMonth = YearMonth(date: note.editedAt)
                 result[yearMonth, default: []].append(note)
@@ -34,20 +34,20 @@ extension NoteStoreProtocol {
 @Observable
 public final class DummyNoteStore: NoteStoreProtocol {
     public init() {}
-    public var _notes: [CalcNote.ID: CalcNote] = (1...20).lazy.map { CalcNote.dummy($0) }.reduce(into: [:]) { result, note in
+    public var _notes: [SumNote.ID: SumNote] = (1...20).lazy.map { SumNote.dummy($0) }.reduce(into: [:]) { result, note in
         result[note.id] = note
     }
-    public var notes: [CalcNote] { _notes.values.lazy.sorted { $0.editedAt > $1.editedAt } }
-    public func note(by id: CalcNote.ID) -> CalcNote? { _notes[id] }
-    public func update(_ note: CalcNote) {
+    public var notes: [SumNote] { _notes.values.lazy.sorted { $0.editedAt > $1.editedAt } }
+    public func note(by id: SumNote.ID) -> SumNote? { _notes[id] }
+    public func update(_ note: SumNote) {
         var note = note
         note.editedAt = Date()
         _notes[note.id] = note
     }
-    public func create(_ note: CalcNote) {
+    public func create(_ note: SumNote) {
         _notes[note.id] = note
     }
-    public func delete(_ id: CalcNote.ID) {
+    public func delete(_ id: SumNote.ID) {
         _notes[id] = nil
     }
 }

@@ -8,7 +8,7 @@ public enum NoteRepository: NoteRepositoryProtocol {
         do {
             return .init(
                 modelContainer: try .init(
-                    for: NoteModel.self, TableModel.self,
+                    for: SumNoteModel.self, TableModel.self,
                     storageType: .file()
                 )
             )
@@ -16,32 +16,32 @@ public enum NoteRepository: NoteRepositoryProtocol {
             fatalError("can't create database: \(error.localizedDescription)")
         }
     }()
-    public static func fetchAll() async throws -> [CalcNote] {
-        try await database.fetch(FetchDescriptor<NoteModel>(sortBy: [.init(\.editedAt)]))
+    public static func fetchAll() async throws -> [SumNote] {
+        try await database.fetch(FetchDescriptor<SumNoteModel>(sortBy: [.init(\.editedAt)]))
     }
-    public static func fetch(by id: CalcNote.ID) async throws -> CalcNote? {
+    public static func fetch(by id: SumNote.ID) async throws -> SumNote? {
         try await database.fetch(
-            FetchDescriptor<NoteModel>(predicate: #Predicate {
+            FetchDescriptor<SumNoteModel>(predicate: #Predicate {
                 $0.id == id.rawValue
             })
         ).first
     }
-    public static func create(_ note: CalcNote) async throws {
-        try await database.insert(note, as: NoteModel.self)
+    public static func create(_ note: SumNote) async throws {
+        try await database.insert(note, as: SumNoteModel.self)
     }
-    public static func update(note: CalcNote) async throws {
-        try await database.update(note, as: NoteModel.self)
+    public static func update(note: SumNote) async throws {
+        try await database.update(note, as: SumNoteModel.self)
     }
-    public static func delete(_ id: CalcNote.ID) async throws {
+    public static func delete(_ id: SumNote.ID) async throws {
         try await database.delete(
-            where: #Predicate { (model: NoteModel) -> Bool in
+            where: #Predicate { (model: SumNoteModel) -> Bool in
                 model.id == id.rawValue
             }
         )
     }
-    public static func delete(_ id: CalcTable.ID, in noteID: CalcNote.ID) async throws {
+    public static func delete(_ id: CalcTable.ID, in noteID: SumNote.ID) async throws {
 //        if let model = (try context.fetch(
-//            FetchDescriptor<NoteModel>(predicate: #Predicate {
+//            FetchDescriptor<SumNoteModel>(predicate: #Predicate {
 //                $0.id == noteID.rawValue
 //            })
 //        )).first {
