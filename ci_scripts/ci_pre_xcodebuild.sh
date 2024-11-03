@@ -17,7 +17,10 @@ echo "Using scheme: $SCHEME_NAME"
 # ビルド設定の確認
 echo "Checking build settings..."
 xcodebuild test -scheme "$SCHEME_NAME" \
-  -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=latest' \
-  -showBuildSettings | grep -i "coverage"
+    -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=latest' \
+    -derivedDataPath DerivedData/ \
+    -enableCodeCoverage YES \
+    -resultBundlePath DerivedData/Logs/Test/ResultBundle.xcresult \
+    clean build test
 
 echo "Test environment setup completed"
