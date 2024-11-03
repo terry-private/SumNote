@@ -4,6 +4,13 @@ set -e
 echo $0
 
 cd $CI_WORKSPACE
+
+echo $0
+
+cd ../
+
+echo $0
+
 # declare variables
 SCHEME="BigIntExtensionsTests"
 echo $SCHEME
