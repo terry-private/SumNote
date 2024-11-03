@@ -58,7 +58,7 @@ xcrun --run llvm-cov show -instr-profile=${PROFDATA} ${BINARY} > coverage.txt
 
 # SonarCloudスキャンの実行
 sonar-scanner \
-  -Dsonar.token=${$SONAR_TOKEN} \
+  -Dsonar.token="$SONAR_TOKEN" \
   -Dsonar.working.directory=.scannerwork
   
 echo "Completed SonarCloud upload"
