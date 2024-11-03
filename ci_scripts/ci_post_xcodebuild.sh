@@ -1,6 +1,22 @@
 #!/bin/bash
 set -e
 
+echo "Setting up test environment..."
+
+# テストカバレッジを有効化
+defaults write com.apple.dt.Xcode EnableCodeCoverage YES
+defaults write com.apple.dt.XCTest EnableCodeCoverage YES
+
+# スキーム名の取得（環境変数から、もしくは自動検出）
+SCHEME_NAME=${CI_XCODE_SCHEME:-$(xcodebuild -list | grep -A 1 "Schemes:" | tail -n 1 | xargs)}
+echo "Using scheme: $SCHEME_NAME"
+
+# ビルド設定の確認
+echo "Checking build settings..."
+xcodebuild -scheme "$SCHEME_NAME" -showBuildSettings | grep -i "coverage"
+
+echo "Test environment setup completed"
+
 echo "Starting SonarCloud coverage upload process..."
 
 # 環境変数のデバッグ出力
@@ -8,34 +24,55 @@ echo "Environment variables:"
 echo "CI_DERIVED_DATA_PATH: $CI_DERIVED_DATA_PATH"
 echo "CI_PRIMARY_REPOSITORY_PATH: $CI_PRIMARY_REPOSITORY_PATH"
 
-# DerivedData/Buildディレクトリの内容を確認
-echo "Listing DerivedData/Build contents:"
-ls -la "$CI_DERIVED_DATA_PATH/Build"
+# 複数の場所で.xcresultを検索
+echo "Searching for xcresult files in multiple locations..."
+SEARCH_PATHS=(
+    "$CI_DERIVED_DATA_PATH/Logs/Test"
+    "$CI_DERIVED_DATA_PATH/Build"
+    "$CI_DERIVED_DATA_PATH"
+)
 
-# xcresultの検索（DerivedData/Build配下に限定）
-echo "Searching for xcresult files in Build directory..."
-XCRESULT_PATH=$(find "$CI_DERIVED_DATA_PATH/Build" -name "*.xcresult" -type d 2>/dev/null | head -n 1)
+XCRESULT_PATH=""
+for path in "${SEARCH_PATHS[@]}"; do
+    echo "Searching in: $path"
+    if [ -d "$path" ]; then
+        ls -la "$path"
+        FOUND_PATH=$(find "$path" -name "*.xcresult" -type d 2>/dev/null | head -n 1)
+        if [ ! -z "$FOUND_PATH" ]; then
+            XCRESULT_PATH="$FOUND_PATH"
+            echo "Found xcresult at: $XCRESULT_PATH"
+            break
+        fi
+    fi
+done
 
 if [ -z "$XCRESULT_PATH" ]; then
-    echo "Error: No .xcresult file found in Build directory. Contents of Build directory:"
-    ls -R "$CI_DERIVED_DATA_PATH/Build"
+    echo "Error: No .xcresult file found. Showing directory structure:"
+    echo "DerivedData contents:"
+    ls -R "$CI_DERIVED_DATA_PATH"
     exit 1
 fi
 
-echo "Found xcresult at: $XCRESULT_PATH"
-
 # カバレッジレポートの生成
 echo "Generating coverage report..."
-# 一時的なディレクトリを作成
 TEMP_DIR="$CI_DERIVED_DATA_PATH/sonar_temp"
 mkdir -p "$TEMP_DIR"
 COVERAGE_FILE="$TEMP_DIR/coverage.txt"
 
-xcrun xccov view --report "$XCRESULT_PATH" > "$COVERAGE_FILE" || {
-    echo "Error generating coverage report. xccov output:"
-    xcrun xccov view --report "$XCRESULT_PATH"
-    exit 1
+# カバレッジデータの抽出を詳細モードで試行
+echo "Attempting to extract coverage data..."
+xcrun xccov view --report "$XCRESULT_PATH" > "$COVERAGE_FILE" 2>&1 || {
+    echo "Warning: Standard coverage export failed, trying alternative format..."
+    xcrun xccov view --json "$XCRESULT_PATH" > "$TEMP_DIR/coverage.json" 2>&1
+    # JSONから必要なデータを抽出して変換する（必要に応じて）
+    cat "$TEMP_DIR/coverage.json" | grep -v "^null" > "$COVERAGE_FILE"
 }
+
+if [ ! -s "$COVERAGE_FILE" ]; then
+    echo "Error: Coverage file is empty. Raw xcresult contents:"
+    xcrun xcresulttool get --path "$XCRESULT_PATH" --format json
+    exit 1
+fi
 
 echo "Generated coverage report at: $COVERAGE_FILE"
 echo "Coverage report contents (first few lines):"
@@ -56,7 +93,8 @@ sonar.host.url=https://sonarcloud.io
 
 sonar.sources=${CI_PRIMARY_REPOSITORY_PATH}
 sonar.swift.coverage.reportPaths=${COVERAGE_FILE}
-sonar.exclusions=**/*.generated.swift,**/Pods/**/*,**/*.pb.swift
+sonar.exclusions=**/*.generated.swift,**/Pods/**/*,**/*.pb.swift,**/*Tests/**
+sonar.test.inclusions=**/*Tests/**
 sonar.swift.file.suffixes=.swift
 sonar.sourceEncoding=UTF-8
 sonar.projectVersion=${CI_BUILD_NUMBER}
@@ -72,11 +110,11 @@ cat "$SONAR_PROPS"
 
 # SonarCloudスキャンの実行
 echo "Running sonar-scanner..."
-cd "$TEMP_DIR"  # 作業ディレクトリを変更
+cd "$TEMP_DIR"
 sonar-scanner \
   -Dsonar.token="$SONAR_TOKEN" \
   -Dsonar.working.directory="$TEMP_DIR/.scannerwork" \
   -Dproject.settings="$SONAR_PROPS" \
-  -X  # デバッグモード
+  -X
 
 echo "Completed SonarCloud upload"
