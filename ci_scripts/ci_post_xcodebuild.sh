@@ -30,7 +30,7 @@ xcrun simctl list devices
 echo "Checking build settings..."
 xcodebuild \
   -scheme "$SCHEME_NAME" \
-  -destination "platform=iOS Simulator,id=$SIMULATOR_ID,name=$DEVICE_NAME" \
+  -destination "id=$SIMULATOR_ID" \
   clean build test
 
 echo "Starting SonarCloud coverage upload process..."
