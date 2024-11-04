@@ -104,6 +104,7 @@ sonar.swift.coverage.reportPaths=${COVERAGE_FILE}
 sonar.exclusions=**/*.generated.swift,**/Pods/**/*,**/*.pb.swift,**/*Tests/**
 sonar.test.inclusions=**/*Tests/**
 sonar.swift.file.suffixes=.swift
+sonar.scm.provider=git
 sonar.sourceEncoding=UTF-8
 sonar.projectVersion=${CI_BUILD_NUMBER}
 sonar.projectName=${CI_PROJECT_NAME}
