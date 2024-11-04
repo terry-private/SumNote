@@ -33,11 +33,12 @@ echo "⭐️ CI_XCODEBUILD_ACTION: $CI_XCODEBUILD_ACTION"
 
 # ビルド設定の確認
 echo "Checking build settings..."
-# ls /Volumes/workspace/repository/ci_scripts
-# if ! ls /Volumes/workspace/repository/ci_scripts/*.xcodeproj /Volumes/workspace/repository/ci_scripts/*.xcworkspace /Volumes/workspace/repository/ci_scripts/*.swiftpm 1> /dev/null 2>&1; then
-#     echo "No Xcode project, workspace, or package found in /Volumes/workspace/repository/ci_scripts."
-#     exit 0
-# fi
+ls /Volumes/workspace/repository/ci_scripts
+# CI_XCODEBUILD_ACTIONが"test-without-building"の場合は早期終了
+if [ "$CI_XCODEBUILD_ACTION" = "test-without-building" ]; then
+    echo "CI_XCODEBUILD_ACTION is set to 'test-without-building'. Exiting without building."
+    exit 0
+fi
 
 # ビルドとテストの実行
 xcodebuild \
