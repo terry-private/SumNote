@@ -83,8 +83,8 @@ if [ ! -s "$COVERAGE_FILE" ]; then
 fi
 
 echo "Generated coverage report at: $COVERAGE_FILE"
-echo "Coverage report contents (first few lines):"
-head -n 5 "$COVERAGE_FILE"
+echo "Coverage report contents (full):"
+cat "$COVERAGE_FILE"
 
 # sonar-scannerのインストール
 echo "Installing sonar-scanner..."
