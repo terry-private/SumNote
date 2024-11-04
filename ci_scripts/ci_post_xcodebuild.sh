@@ -10,11 +10,11 @@ cd "$CI_PRIMARY_REPOSITORY_PATH"
 SCHEME_NAME=${CI_XCODE_SCHEME:-$(xcodebuild -list | grep -A 1 "Schemes:" | tail -n 1 | xargs)}
 echo "Using scheme: $SCHEME_NAME"
 
-DEVICE_NAME="iPhone 16"
+DEVICE_NAME="iPhone 16 Plus"
 
 # シミュレーターの一覧を取得
 xcrun simctl list devices
-SIMULATOR_ID=$(xcrun simctl list devices | grep $DEVICE_NAME | grep -oE '([0-9A-F-]{36})' | head -n 1)
+SIMULATOR_ID=$(xcrun simctl list devices | grep 'iPhone 16 Plus' | grep -oE '([0-9A-F-]{36})' | head -n 1)
 echo "SIMULATOR_ID: $SIMULATOR_ID"
 
 if [ -z "$SIMULATOR_ID" ]; then
