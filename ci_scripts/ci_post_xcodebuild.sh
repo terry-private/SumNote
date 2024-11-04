@@ -12,6 +12,12 @@ echo "Using scheme: $SCHEME_NAME"
 
 # シミュレーターの一覧を取得
 SIMULATOR_ID=$(xcrun simctl list devices | grep 'iPhone 16 Pro (18.1)' | grep -oE '([0-9A-F-]{36})' | head -n 1)
+echo "SIMULATOR_ID: $SIMULATOR_ID"
+
+if [ -z "$SIMULATOR_ID" ]; then
+    echo "Error: Simulator ID for 'iPhone 16 Pro (18.1)' not found."
+    exit 1
+fi
 
 # ビルド設定の確認
 echo "Checking build settings..."
