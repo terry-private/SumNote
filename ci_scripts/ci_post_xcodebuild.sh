@@ -28,7 +28,7 @@ RESULT_BUNDLE_PATH=$CI_DERIVED_DATA_PATH/Logs/Test/ResultBundle.xcresult
 
 # ビルド設定の確認
 echo "Checking build settings..."
-if [ ! -d "/Volumes/workspace/repository/ci_scripts" ]; then
+if ls /Volumes/workspace/repository/ci_scripts/*.xcodeproj /Volumes/workspace/repository/ci_scripts/*.xcworkspace /Volumes/workspace/repository/ci_scripts/*.swiftpm 1> /dev/null 2>&1; then
   echo "ci_scripts directory not found. Exiting script."
   exit 0
 fi
