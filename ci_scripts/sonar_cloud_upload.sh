@@ -67,32 +67,29 @@ if [ -z "$PROFDATA_FILE" ]; then
 fi
 echo "Found profdata file: $PROFDATA_FILE"
 
-# Binary ファイルの検索（複数の場所を確認）
+# Binary ファイルの検索（修正版）
 echo "Searching for binary file..."
 
-# 可能性のあるパスを列挙
-BINARY_PATHS=(
-    "$CI_DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator/SumNote.app/SumNote"
-    "$CI_DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator/*.app/SumNote"
-    "$CI_DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator/*.app/*"
-    "$CI_DERIVED_DATA_PATH/Build/Products/*/*.app/SumNote"
-)
+# アプリケーション名を設定
+APP_NAME="Production"
+DEBUG_DIR="$CI_DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
 
-BINARY_FILE=""
-for path in "${BINARY_PATHS[@]}"; do
-    echo "Checking path: $path"
-    found_file=$(find $(dirname "$path") -name $(basename "$path") -type f 2>/dev/null | head -n 1)
-    if [ ! -z "$found_file" ]; then
-        BINARY_FILE="$found_file"
-        break
+# バイナリファイルの検索（新しい検索方法）
+BINARY_FILE="$DEBUG_DIR/$APP_NAME.app/$APP_NAME"
+
+if [ ! -f "$BINARY_FILE" ]; then
+    echo "Binary file not found at expected location: $BINARY_FILE"
+    echo "Searching in alternative locations..."
+    
+    # 代替の検索方法
+    BINARY_FILE=$(find "$DEBUG_DIR" -type f -name "$APP_NAME" ! -path "*/\.*" | head -n 1)
+    
+    if [ -z "$BINARY_FILE" ]; then
+        echo "Error: Binary file not found"
+        echo "Debug directory contents:"
+        ls -R "$DEBUG_DIR"
+        exit 1
     fi
-done
-
-if [ -z "$BINARY_FILE" ]; then
-    echo "Listing contents of Build/Products directory:"
-    ls -R "$CI_DERIVED_DATA_PATH/Build/Products"
-    echo "Error: No binary file found"
-    exit 1
 fi
 
 echo "Found binary file: $BINARY_FILE"
@@ -163,7 +160,7 @@ sonar.swift.file.suffixes=.swift
 sonar.scm.provider=git
 sonar.sourceEncoding=UTF-8
 sonar.projectVersion=${CI_BUILD_NUMBER:-1.0.0}
-sonar.projectName=SumNote
+sonar.projectName=${APP_NAME}
 
 # デバッグ設定
 sonar.verbose=true
