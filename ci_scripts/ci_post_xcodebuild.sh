@@ -11,11 +11,12 @@ SCHEME_NAME=${CI_XCODE_SCHEME:-$(xcodebuild -list | grep -A 1 "Schemes:" | tail 
 echo "Using scheme: $SCHEME_NAME"
 
 # シミュレーターの一覧を取得
-SIMULATOR_ID=$(xcrun simctl list devices | grep 'iPhone 16 Pro (18.1)' | grep -oE '([0-9A-F-]{36})' | head -n 1)
+SIMULATOR_ID=$(xcrun simctl list devices | grep 'iPhone 16 Pro' | grep -oE '([0-9A-F-]{36})' | head -n 1)
 echo "SIMULATOR_ID: $SIMULATOR_ID"
 
 if [ -z "$SIMULATOR_ID" ]; then
-    echo "Error: Simulator ID for 'iPhone 16 Pro (18.1)' not found."
+    echo "Error: Simulator ID for 'iPhone 16 Pro' not found."
+    xcrun simctl list devices
     exit 1
 fi
 
