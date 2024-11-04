@@ -11,16 +11,16 @@ SCHEME_NAME=${CI_XCODE_SCHEME:-$(xcodebuild -list | grep -A 1 "Schemes:" | tail 
 echo "Using scheme: $SCHEME_NAME"
 
 # ビルド設定の確認
-echo "Checking build settings..."
-xcodebuild \
-  -scheme "$SCHEME_NAME" \
-  -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.1' \
-  -derivedDataPath DerivedData/ \
-  -enableCodeCoverage YES \
-  -resultBundlePath DerivedData/Logs/Test/ResultBundle.xcresult \
-  clean build test
+# echo "Checking build settings..."
+# xcodebuild \
+#   -scheme "$SCHEME_NAME" \
+#   -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.1' \
+#   -derivedDataPath DerivedData/ \
+#   -enableCodeCoverage YES \
+#   -resultBundlePath DerivedData/Logs/Test/ResultBundle.xcresult \
+#   clean build test
 
-echo "Test environment setup completed"
+# echo "Test environment setup completed"
 
 echo "Starting SonarCloud coverage upload process..."
 
@@ -29,6 +29,7 @@ echo "Environment variables:"
 echo "CI_DERIVED_DATA_PATH: $CI_DERIVED_DATA_PATH"
 echo "CI_PRIMARY_REPOSITORY_PATH: $CI_PRIMARY_REPOSITORY_PATH"
 echo "Current directory: $(pwd)"
+echo "CI_RESULT_BUNDLE_PATH: $CI_RESULT_BUNDLE_PATH"
 
 # 複数の場所で.xcresultを検索
 echo "Searching for xcresult files in multiple locations..."
@@ -36,6 +37,7 @@ SEARCH_PATHS=(
     "$CI_DERIVED_DATA_PATH/Logs/Test"
     "$CI_DERIVED_DATA_PATH/Build"
     "$CI_DERIVED_DATA_PATH"
+    "$CI_RESULT_BUNDLE_PATH"
 )
 
 XCRESULT_PATH=""
