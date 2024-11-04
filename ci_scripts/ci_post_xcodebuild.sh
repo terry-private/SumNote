@@ -31,35 +31,7 @@ echo "CI_PRIMARY_REPOSITORY_PATH: $CI_PRIMARY_REPOSITORY_PATH"
 echo "Current directory: $(pwd)"
 echo "CI_RESULT_BUNDLE_PATH: $CI_RESULT_BUNDLE_PATH"
 
-# 複数の場所で.xcresultを検索
-echo "Searching for xcresult files in multiple locations..."
-SEARCH_PATHS=(
-    "$CI_DERIVED_DATA_PATH/Logs/Test"
-    "$CI_DERIVED_DATA_PATH/Build"
-    "$CI_DERIVED_DATA_PATH"
-    "$CI_RESULT_BUNDLE_PATH"
-)
-
-XCRESULT_PATH=""
-for path in "${SEARCH_PATHS[@]}"; do
-    echo "Searching in: $path"
-    if [ -d "$path" ]; then
-        ls -la "$path"
-        FOUND_PATH=$(find "$path" -name "*.xcresult" -type d 2>/dev/null | head -n 1)
-        if [ ! -z "$FOUND_PATH" ]; then
-            XCRESULT_PATH="$FOUND_PATH"
-            echo "Found xcresult at: $XCRESULT_PATH"
-            break
-        fi
-    fi
-done
-
-if [ -z "$XCRESULT_PATH" ]; then
-    echo "Error: No .xcresult file found. Showing directory structure:"
-    echo "DerivedData contents:"
-    ls -R "$CI_DERIVED_DATA_PATH"
-    exit 1
-fi
+XCRESULT_PATH="$CI_RESULT_BUNDLE_PATH"
 
 # カバレッジレポートの生成
 echo "Generating coverage report..."
@@ -69,12 +41,15 @@ COVERAGE_FILE="$TEMP_DIR/coverage.txt"
 
 # カバレッジデータの抽出
 echo "Extracting coverage data..."
-xcrun xccov view --report "$XCRESULT_PATH" > "$COVERAGE_FILE" 2>&1 || {
-    echo "Warning: Standard coverage export failed, trying alternative format..."
-    xcrun xccov view --json "$XCRESULT_PATH" > "$TEMP_DIR/coverage.json" 2>&1
-    # JSONから必要なデータを抽出
+if ! xcrun xccov view --report "$XCRESULT_PATH" > "$COVERAGE_FILE"; then
+    echo "Warning: Standard coverage export failed with error code $?. Trying alternative format..."
+    xcrun xccov view --json "$XCRESULT_PATH" > "$TEMP_DIR/coverage.json" || {
+        echo "Error: Both standard and JSON coverage exports failed."
+        exit 1
+    }
     cat "$TEMP_DIR/coverage.json" | grep -v "^null" > "$COVERAGE_FILE"
-}
+fi
+
 
 if [ ! -s "$COVERAGE_FILE" ]; then
     echo "Error: Coverage file is empty. Raw xcresult contents:"
