@@ -43,99 +43,45 @@ xcrun simctl boot $SIMULATOR_ID
 RESULT_BUNDLE_PATH=$CI_DERIVED_DATA_PATH/Logs/Test/ResultBundle.xcresult
 echo "RESULT_BUNDLE_PATH: $RESULT_BUNDLE_PATH"
 
-# ビルドとテストの実行
+# ビルドとテストの実行（カバレッジを有効に）
 xcodebuild \
   -scheme "$SCHEME_NAME" \
   -destination "id=$SIMULATOR_ID" \
   -derivedDataPath $CI_DERIVED_DATA_PATH \
   -enableCodeCoverage YES \
   -resultBundlePath $RESULT_BUNDLE_PATH \
-  clean build test
+  clean test
 
 TEMP_DIR="$CI_DERIVED_DATA_PATH/sonar_temp"
 mkdir -p "$TEMP_DIR"
 COVERAGE_FILE="$TEMP_DIR/coverage.xml"
 
-# カバレッジデータの抽出と変換
-echo "Extracting coverage data..."
-
-# Profdata ファイルの検索
-PROFDATA_FILE=$(find "$CI_DERIVED_DATA_PATH" -name "*.profdata" | head -n 1)
-if [ -z "$PROFDATA_FILE" ]; then
-    echo "Error: No .profdata file found"
-    exit 1
-fi
-echo "Found profdata file: $PROFDATA_FILE"
-
-# Binary ファイルの検索（修正版）
-echo "Searching for binary file..."
-
-# アプリケーション名を設定
-APP_NAME="Production"
-DEBUG_DIR="$CI_DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
-
-# バイナリファイルの検索（新しい検索方法）
-BINARY_FILE="$DEBUG_DIR/$APP_NAME.app/$APP_NAME"
-
-if [ ! -f "$BINARY_FILE" ]; then
-    echo "Binary file not found at expected location: $BINARY_FILE"
-    echo "Searching in alternative locations..."
-    
-    # 代替の検索方法
-    BINARY_FILE=$(find "$DEBUG_DIR" -type f -name "$APP_NAME" ! -path "*/\.*" | head -n 1)
-    
-    if [ -z "$BINARY_FILE" ]; then
-        echo "Error: Binary file not found"
-        echo "Debug directory contents:"
-        ls -R "$DEBUG_DIR"
-        exit 1
-    fi
-fi
-
-echo "Found binary file: $BINARY_FILE"
-
-# バイナリファイルの実行権限を確認
-if [ ! -x "$BINARY_FILE" ]; then
-    echo "Adding executable permission to binary file"
-    chmod +x "$BINARY_FILE"
-fi
-
-# カバレッジデータをXML形式に変換
 echo "Converting coverage data to SonarCloud format..."
 echo '<?xml version="1.0" ?>' > "$COVERAGE_FILE"
 echo '<coverage version="1">' >> "$COVERAGE_FILE"
 
-# llvm-covを使用してカバレッジ情報を取得
-xcrun llvm-cov show "$BINARY_FILE" \
-    -instr-profile="$PROFDATA_FILE" \
-    -format=text > "$TEMP_DIR/raw_coverage.txt"
+# xcresultからカバレッジデータを抽出
+echo "Extracting coverage data from xcresult..."
+xcrun xccov view --report --json "$RESULT_BUNDLE_PATH" > "$TEMP_DIR/coverage.json"
 
 # カバレッジデータの処理
-while IFS= read -r line; do
-    if [[ $line =~ ^[[:space:]]*([0-9]+)\|.*$ ]]; then
-        file_path=$(echo "$line" | awk -F'|' '{print $2}' | xargs)
-        line_number=$(echo "$line" | awk -F'|' '{print $1}' | tr -d ' ')
-        execution_count=$(echo "$line" | awk '{print $NF}')
+jq -r '.targets[] | select(.name != null) | .files[] | select(.path != null) | .path as $path | .functions[] | .coveredLines as $covered | .executableLines as $total | "\($path)|\($covered)|\($total)"' "$TEMP_DIR/coverage.json" | while IFS='|' read -r file_path covered_lines total_lines; do
+    if [[ "$file_path" == *".swift" ]] && [[ ! "$file_path" == *"Test"* ]]; then
+        echo "  <file path=\"$file_path\">" >> "$COVERAGE_FILE"
         
-        if [[ "$file_path" == *".swift" ]] && [[ ! "$file_path" == *"Test"* ]]; then
-            covered="false"
-            if [ "$execution_count" -gt "0" ]; then
-                covered="true"
-            fi
-            
-            if [ ! -f "$COVERAGE_FILE.${file_path}" ]; then
-                echo "  <file path=\"$file_path\">" > "$COVERAGE_FILE.${file_path}"
-            fi
-            echo "    <lineToCover lineNumber=\"$line_number\" covered=\"$covered\"/>" >> "$COVERAGE_FILE.${file_path}"
+        # 行ごとのカバレッジ情報を生成
+        if [ "$total_lines" -gt 0 ]; then
+            for line in $(seq 1 $total_lines); do
+                covered="false"
+                if [ "$line" -le "$covered_lines" ]; then
+                    covered="true"
+                fi
+                echo "    <lineToCover lineNumber=\"$line\" covered=\"$covered\"/>" >> "$COVERAGE_FILE"
+            done
         fi
+        
+        echo "  </file>" >> "$COVERAGE_FILE"
     fi
-done < "$TEMP_DIR/raw_coverage.txt"
-
-# ファイルごとのカバレッジ情報を結合
-for partial in "$COVERAGE_FILE".*; do
-    cat "$partial" >> "$COVERAGE_FILE"
-    echo "  </file>" >> "$COVERAGE_FILE"
-    rm "$partial"
 done
 
 echo '</coverage>' >> "$COVERAGE_FILE"
@@ -160,7 +106,7 @@ sonar.swift.file.suffixes=.swift
 sonar.scm.provider=git
 sonar.sourceEncoding=UTF-8
 sonar.projectVersion=${CI_BUILD_NUMBER:-1.0.0}
-sonar.projectName=${APP_NAME}
+sonar.projectName=Production
 
 # デバッグ設定
 sonar.verbose=true
