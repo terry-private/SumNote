@@ -19,6 +19,8 @@ if [ -z "$SIMULATOR_ID" ]; then
     exit 1
 fi
 
+xcrun simctl boot $SIMULATOR_ID
+
 xcrun simctl list devices
 
 # ビルド設定の確認
