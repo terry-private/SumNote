@@ -1,128 +1,101 @@
 #!/bin/bash
 set -e
 
-# CI_XCODEBUILD_ACTIONが"test-without-building"の場合は早期終了
+# CI_XCODEBUILD_ACTIONのチェック
 if [ "$CI_XCODEBUILD_ACTION" = "test-without-building" ]; then
     echo "CI_XCODEBUILD_ACTION is set to 'test-without-building'. Exiting without building."
     exit 0
 fi
 
-echo "Setting up test environment..."
+# 必要なツールのインストール
+brew install sonar-scanner jq || {
+    echo "Failed to install sonar-scanner or jq"
+    exit 1
+}
 
-# プロジェクトのルートディレクトリに移動
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 
-# スキーム名の取得
-SCHEME_NAME=${CI_XCODE_SCHEME:-$(xcodebuild -list | grep -A 1 "Schemes:" | tail -n 1 | xargs)}
+# スキーム名の取得（簡略化）
+SCHEME_NAME=${CI_XCODE_SCHEME:-$(xcodebuild -list | awk '/Schemes:/{getline; print $1}')}
 echo "Using scheme: $SCHEME_NAME"
 
+# シミュレーター設定
 DEVICE_NAME="iPhone 16 Plus"
+SIMULATOR_ID=$(xcrun simctl list devices | grep "$DEVICE_NAME" | grep -oE '[0-9A-F-]{36}' | head -n 1)
 
-# シミュレーターの一覧を取得
-SIMULATOR_ID=$(xcrun simctl list devices | grep 'iPhone 16 Plus' | grep -oE '([0-9A-F-]{36})' | head -n 1)
-echo "SIMULATOR_ID: $SIMULATOR_ID"
-
-if [ -z "$SIMULATOR_ID" ]; then
+[ -z "$SIMULATOR_ID" ] && {
     echo "Error: Simulator ID for $DEVICE_NAME not found."
     exit 1
-fi
+}
 
 xcrun simctl boot $SIMULATOR_ID
 
-# xcresultファイルのパスを指定
+# テスト実行
 RESULT_BUNDLE_PATH=$CI_DERIVED_DATA_PATH/Logs/Test/ResultBundle.xcresult
-echo "RESULT_BUNDLE_PATH: $RESULT_BUNDLE_PATH"
-
-# ビルド設定の確認
-echo "Checking build settings..."
-
-# ビルドとテストの実行
 xcodebuild \
   -scheme "$SCHEME_NAME" \
   -destination "id=$SIMULATOR_ID" \
   -derivedDataPath $CI_DERIVED_DATA_PATH \
   -enableCodeCoverage YES \
   -resultBundlePath $RESULT_BUNDLE_PATH \
-  clean build test
+  clean test
 
-echo "Starting SonarCloud coverage upload process..."
-
-# 環境変数のデバッグ出力
-echo "Environment variables:"
-echo "CI_DERIVED_DATA_PATH: $CI_DERIVED_DATA_PATH"
-echo "CI_PRIMARY_REPOSITORY_PATH: $CI_PRIMARY_REPOSITORY_PATH"
-echo "Current directory: $(pwd)"
-echo "RESULT_BUNDLE_PATH: $RESULT_BUNDLE_PATH"
-
-XCRESULT_PATH="$RESULT_BUNDLE_PATH"
-
-echo "XCRESULT_PATH content:"
-ls -la "$XCRESULT_PATH"
-
-# カバレッジレポートの生成
-echo "Generating coverage report..."
+# SonarCloud用の一時ディレクトリとファイル設定
 TEMP_DIR="$CI_DERIVED_DATA_PATH/sonar_temp"
 mkdir -p "$TEMP_DIR"
-COVERAGE_FILE="$TEMP_DIR/coverage.txt"
+COVERAGE_FILE="$TEMP_DIR/coverage.xml"
 
-# カバレッジデータの抽出
-echo "Extracting coverage data..."
-if ! xcrun xccov view --report "$XCRESULT_PATH" > "$COVERAGE_FILE"; then
-    echo "Warning: Standard coverage export failed with error code $?. Trying alternative format..."
-    xcrun xccov view --json "$XCRESULT_PATH" > "$TEMP_DIR/coverage.json" || {
-        echo "Error: Both standard and JSON coverage exports failed."
-        exit 1
-    }
-    cat "$TEMP_DIR/coverage.json" | grep -v "^null" > "$COVERAGE_FILE"
-fi
+# カバレッジレポート生成
+{
+    echo '<?xml version="1.0" ?>'
+    echo '<coverage version="1">'
+    
+    xcrun xccov view --report --json "$RESULT_BUNDLE_PATH" > "$TEMP_DIR/coverage.json"
+    
+    jq -r '.targets[] | select(.name != null) | .files[] | select(.path != null and (.path | endswith(".swift")) and (.path | contains("Test") | not)) | 
+        .path as $path | .functions[] | 
+        "\($path)|\(.coveredLines)|\(.executableLines)"' "$TEMP_DIR/coverage.json" | while IFS='|' read -r file_path covered_lines total_lines; do
+        echo "  <file path=\"$file_path\">"
+        for line in $(seq 1 $total_lines); do
+            covered=$([[ $line -le $covered_lines ]] && echo "true" || echo "false")
+            echo "    <lineToCover lineNumber=\"$line\" covered=\"$covered\"/>"
+        done
+        echo "  </file>"
+    done
+    
+    echo '</coverage>'
+} > "$COVERAGE_FILE"
 
-if [ ! -s "$COVERAGE_FILE" ]; then
-    echo "Error: Coverage file is empty. Raw xcresult contents:"
-    xcrun xcresulttool get --path "$XCRESULT_PATH" --format json
-    exit 1
-fi
-
-echo "Generated coverage report at: $COVERAGE_FILE"
-echo "Coverage report contents (first few lines):"
-head -n 5 "$COVERAGE_FILE"
-
-# sonar-scannerのインストール
-echo "Installing sonar-scanner..."
-brew install sonar-scanner
-
-# sonar-project.propertiesの作成
-echo "Creating sonar-project.properties..."
-SONAR_PROPS="$TEMP_DIR/sonar-project.properties"
-
-cat > "$SONAR_PROPS" << EOF
+# sonar-project.properties生成
+cat > "$TEMP_DIR/sonar-project.properties" << EOF
 sonar.projectKey=${SONAR_PROJECT_KEY}
 sonar.organization=${SONAR_ORGANIZATION}
 sonar.host.url=https://sonarcloud.io
-
 sonar.sources=${CI_PRIMARY_REPOSITORY_PATH}
-sonar.swift.coverage.reportPaths=${COVERAGE_FILE}
+sonar.swift.coverage.reportPath=${COVERAGE_FILE}
+sonar.coverageReportPaths=${COVERAGE_FILE}
 sonar.exclusions=**/*.generated.swift,**/Pods/**/*,**/*.pb.swift,**/*Tests/**
 sonar.test.inclusions=**/*Tests/**
 sonar.swift.file.suffixes=.swift
+sonar.scm.provider=git
 sonar.sourceEncoding=UTF-8
-sonar.projectVersion=${CI_BUILD_NUMBER}
-sonar.projectName=${CI_PROJECT_NAME}
-
-# デバッグ設定
+sonar.projectVersion=${CI_BUILD_NUMBER:-1.0.0}
+sonar.projectName=Production
 sonar.verbose=true
 EOF
 
-echo "Created sonar-project.properties at: $SONAR_PROPS"
-echo "Content of sonar-project.properties:"
-cat "$SONAR_PROPS"
+# SonarCloudスキャン実行
+export PATH="$PATH:/usr/local/bin"
+command -v sonar-scanner >/dev/null 2>&1 || {
+    echo "Error: sonar-scanner not found in PATH (PATH: $PATH)"
+    exit 1
+}
 
-# SonarCloudスキャンの実行
-echo "Running sonar-scanner..."
-cd "$TEMP_DIR"
 sonar-scanner \
   -Dsonar.token="$SONAR_TOKEN" \
   -Dsonar.working.directory="$TEMP_DIR/.scannerwork" \
-  -Dproject.settings="$SONAR_PROPS" \
+  -Dproject.settings="$TEMP_DIR/sonar-project.properties" \
+  -Dsonar.scm.disabled=true \
   -X
 
-echo "Completed SonarCloud upload"
+echo "Successfully uploaded coverage to SonarCloud"
