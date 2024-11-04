@@ -10,17 +10,18 @@ cd "$CI_PRIMARY_REPOSITORY_PATH"
 SCHEME_NAME=${CI_XCODE_SCHEME:-$(xcodebuild -list | grep -A 1 "Schemes:" | tail -n 1 | xargs)}
 echo "Using scheme: $SCHEME_NAME"
 
-# ビルド設定の確認
-# echo "Checking build settings..."
-# xcodebuild \
-#   -scheme "$SCHEME_NAME" \
-#   -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.1' \
-#   -derivedDataPath DerivedData/ \
-#   -enableCodeCoverage YES \
-#   -resultBundlePath DerivedData/Logs/Test/ResultBundle.xcresult \
-#   clean build test
+# シミュレーターの一覧を取得
+SIMULATOR_ID=$(xcrun simctl list devices | grep 'iPhone 16 Pro (18.1)' | grep -oE '([0-9A-F-]{36})' | head -n 1)
 
-# echo "Test environment setup completed"
+# ビルド設定の確認
+echo "Checking build settings..."
+xcodebuild \
+  -scheme "$SCHEME_NAME" \
+  -destination 'platform=iOS Simulator,id=$SIMULATOR_ID,name=iPhone 16 Pro,OS=18.1' \
+  -derivedDataPath DerivedData/ \
+  -enableCodeCoverage YES \
+  -resultBundlePath DerivedData/Logs/Test/ResultBundle.xcresult \
+  clean build test
 
 echo "Starting SonarCloud coverage upload process..."
 
