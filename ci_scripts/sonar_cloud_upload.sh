@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# デバッグ出力を有効化
+set -x
+
 # 必要なツールのインストール
 echo "Installing required tools..."
 brew install sonar-scanner jq || {
@@ -64,13 +67,41 @@ if [ -z "$PROFDATA_FILE" ]; then
 fi
 echo "Found profdata file: $PROFDATA_FILE"
 
-# Binary ファイルの検索
-BINARY_FILE=$(find "$CI_DERIVED_DATA_PATH" -name "SumNote" -type f -perm +111 | head -n 1)
+# Binary ファイルの検索（複数の場所を確認）
+echo "Searching for binary file..."
+
+# 可能性のあるパスを列挙
+BINARY_PATHS=(
+    "$CI_DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator/SumNote.app/SumNote"
+    "$CI_DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator/*.app/SumNote"
+    "$CI_DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator/*.app/*"
+    "$CI_DERIVED_DATA_PATH/Build/Products/*/*.app/SumNote"
+)
+
+BINARY_FILE=""
+for path in "${BINARY_PATHS[@]}"; do
+    echo "Checking path: $path"
+    found_file=$(find $(dirname "$path") -name $(basename "$path") -type f 2>/dev/null | head -n 1)
+    if [ ! -z "$found_file" ]; then
+        BINARY_FILE="$found_file"
+        break
+    fi
+done
+
 if [ -z "$BINARY_FILE" ]; then
+    echo "Listing contents of Build/Products directory:"
+    ls -R "$CI_DERIVED_DATA_PATH/Build/Products"
     echo "Error: No binary file found"
     exit 1
 fi
+
 echo "Found binary file: $BINARY_FILE"
+
+# バイナリファイルの実行権限を確認
+if [ ! -x "$BINARY_FILE" ]; then
+    echo "Adding executable permission to binary file"
+    chmod +x "$BINARY_FILE"
+fi
 
 # カバレッジデータをXML形式に変換
 echo "Converting coverage data to SonarCloud format..."
