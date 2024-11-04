@@ -119,7 +119,7 @@ cat "$SONAR_PROPS"
 
 # SonarCloudスキャンの実行
 echo "Running sonar-scanner..."
-cd "$TEMP_DIR"
+cd "$CI_PRIMARY_REPOSITORY_PATH"
 sonar-scanner \
   -Dsonar.token="$SONAR_TOKEN" \
   -Dsonar.working.directory="$TEMP_DIR/.scannerwork" \
