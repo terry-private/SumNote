@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+# 必要なツールのインストール
+echo "Installing required tools..."
+brew install sonar-scanner jq || {
+    echo "Failed to install sonar-scanner or jq"
+    exit 1
+}
+
 # CI_XCODEBUILD_ACTIONが"test-without-building"の場合は早期終了
 if [ "$CI_XCODEBUILD_ACTION" = "test-without-building" ]; then
     echo "CI_XCODEBUILD_ACTION is set to 'test-without-building'. Exiting without building."
@@ -46,33 +53,42 @@ TEMP_DIR="$CI_DERIVED_DATA_PATH/sonar_temp"
 mkdir -p "$TEMP_DIR"
 COVERAGE_FILE="$TEMP_DIR/coverage.xml"
 
-# カバレッジデータをSonarCloud形式に変換
+# カバレッジデータの抽出と変換
+echo "Extracting coverage data..."
+
+# まずJSONフォーマットでカバレッジデータを取得
+COVERAGE_JSON="$TEMP_DIR/coverage.json"
+xcrun xccov view --json "$RESULT_BUNDLE_PATH" > "$COVERAGE_JSON"
+
+if [ ! -s "$COVERAGE_JSON" ]; then
+    echo "Error: Failed to generate coverage JSON"
+    exit 1
+fi
+
+# カバレッジデータをXML形式に変換
 echo "Converting coverage data to SonarCloud format..."
 echo '<?xml version="1.0" ?>' > "$COVERAGE_FILE"
 echo '<coverage version="1">' >> "$COVERAGE_FILE"
 
-# xccovからJSONデータを取得して変換
-xcrun xccov view --json "$RESULT_BUNDLE_PATH" | jq -r '.targets[] | select(.name | contains("Test") | not) | .files[]' | while read -r file; do
-    file_path=$(echo "$file" | jq -r '.path')
-    file_coverage=$(echo "$file" | jq -r '.coverage')
+# JSONからファイルごとのカバレッジ情報を抽出
+jq -r '.targets[] | select(.name | contains("Test") | not) | .files[]' "$COVERAGE_JSON" | while read -r file_json; do
+    file_path=$(echo "$file_json" | jq -r '.path')
     
     if [[ "$file_path" == *".swift" ]]; then
+        echo "Processing file: $file_path"
         echo "  <file path=\"$file_path\">" >> "$COVERAGE_FILE"
         
-        # 行ごとのカバレッジデータを取得
-        line_coverage=$(xcrun xccov view --file "$file_path" "$RESULT_BUNDLE_PATH")
-        line_number=1
-        
-        echo "$line_coverage" | while read -r line; do
-            if [[ $line =~ ^[0-9]+: ]]; then
-                coverage_count=$(echo "$line" | cut -d: -f1)
-                if [ "$coverage_count" != "0" ]; then
-                    echo "    <lineToCover lineNumber=\"$line_number\" covered=\"true\" branchCover=\"true\"/>" >> "$COVERAGE_FILE"
-                else
-                    echo "    <lineToCover lineNumber=\"$line_number\" covered=\"false\" branchCover=\"false\"/>" >> "$COVERAGE_FILE"
+        # ファイルの行カバレッジ情報を取得
+        xcrun xccov view --file "$file_path" "$RESULT_BUNDLE_PATH" 2>/dev/null | \
+        while IFS=: read -r line_coverage line_content; do
+            line_number=$(echo "$line_content" | awk '{print NR}')
+            if [[ $line_coverage =~ ^[0-9]+$ ]]; then
+                covered="false"
+                if [ "$line_coverage" -gt "0" ]; then
+                    covered="true"
                 fi
+                echo "    <lineToCover lineNumber=\"$line_number\" covered=\"$covered\"/>" >> "$COVERAGE_FILE"
             fi
-            line_number=$((line_number + 1))
         done
         
         echo "  </file>" >> "$COVERAGE_FILE"
@@ -81,7 +97,12 @@ done
 
 echo '</coverage>' >> "$COVERAGE_FILE"
 
-# sonar-project.propertiesの更新
+echo "Coverage report generated at: $COVERAGE_FILE"
+echo "Coverage report contents (first 10 lines):"
+head -n 10 "$COVERAGE_FILE"
+
+# sonar-project.propertiesの作成
+echo "Creating sonar-project.properties..."
 cat > "$TEMP_DIR/sonar-project.properties" << EOF
 sonar.projectKey=${SONAR_PROJECT_KEY}
 sonar.organization=${SONAR_ORGANIZATION}
@@ -102,7 +123,16 @@ sonar.projectName=${CI_PROJECT_NAME}
 sonar.verbose=true
 EOF
 
+# PATH設定の確認と更新
+export PATH="$PATH:/usr/local/bin"
+which sonar-scanner || {
+    echo "Error: sonar-scanner not found in PATH"
+    echo "Current PATH: $PATH"
+    exit 1
+}
+
 # SonarCloudスキャンの実行
+echo "Running sonar-scanner..."
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 sonar-scanner \
   -Dsonar.token="$SONAR_TOKEN" \
