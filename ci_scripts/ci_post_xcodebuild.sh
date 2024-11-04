@@ -13,7 +13,6 @@ echo "Using scheme: $SCHEME_NAME"
 DEVICE_NAME="iPhone 16 Plus"
 
 # シミュレーターの一覧を取得
-xcrun simctl list devices
 SIMULATOR_ID=$(xcrun simctl list devices | grep 'iPhone 16 Plus' | grep -oE '([0-9A-F-]{36})' | head -n 1)
 echo "SIMULATOR_ID: $SIMULATOR_ID"
 
@@ -24,12 +23,17 @@ fi
 
 xcrun simctl boot $SIMULATOR_ID
 
-xcrun simctl list devices
 
 RESULT_BUNDLE_PATH=$CI_DERIVED_DATA_PATH/Logs/Test/ResultBundle.xcresult
 
 # ビルド設定の確認
 echo "Checking build settings..."
+if [ ! -d "/Volumes/workspace/repository/ci_scripts" ]; then
+  echo "ci_scripts directory not found. Exiting script."
+  exit 0
+fi
+
+# ビルドとテストの実行
 xcodebuild \
   -scheme "$SCHEME_NAME" \
   -destination "id=$SIMULATOR_ID" \
