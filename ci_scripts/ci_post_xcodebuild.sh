@@ -16,15 +16,16 @@ echo "SIMULATOR_ID: $SIMULATOR_ID"
 
 if [ -z "$SIMULATOR_ID" ]; then
     echo "Error: Simulator ID for 'iPhone 16 Pro' not found."
-    xcrun simctl list devices
     exit 1
 fi
+
+xcrun simctl list devices
 
 # ビルド設定の確認
 echo "Checking build settings..."
 xcodebuild \
   -scheme "$SCHEME_NAME" \
-  -destination "platform=iOS Simulator,id=$SIMULATOR_ID,name=iPhone 16 Pro,OS=18.1" \
+  -destination "platform=iOS Simulator,id=$SIMULATOR_ID,name=iPhone 16 Pro" \
   -derivedDataPath DerivedData/ \
   -enableCodeCoverage YES \
   -resultBundlePath DerivedData/Logs/Test/ResultBundle.xcresult \
