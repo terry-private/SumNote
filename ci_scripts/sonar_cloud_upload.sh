@@ -124,6 +124,7 @@ sonar-scanner \
   -Dsonar.token="$SONAR_TOKEN" \
   -Dsonar.working.directory="$TEMP_DIR/.scannerwork" \
   -Dproject.settings="$SONAR_PROPS" \
+  -Dsonar.scm.disabled=true \
   -X
 
 echo "Completed SonarCloud upload"
