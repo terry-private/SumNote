@@ -9,17 +9,16 @@ cd "$CI_PRIMARY_REPOSITORY_PATH"
 # スキーム名の取得
 SCHEME_NAME=${CI_XCODE_SCHEME:-$(xcodebuild -list | grep -A 1 "Schemes:" | tail -n 1 | xargs)}
 echo "Using scheme: $SCHEME_NAME"
-xcodebuild -scheme "$SCHEME_NAME" -showdestinations
 
 # ビルド設定の確認
 echo "Checking build settings..."
-# xcodebuild \
-#   -scheme "$SCHEME_NAME" \
-#   -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.1' \
-#   -derivedDataPath DerivedData/ \
-#   -enableCodeCoverage YES \
-#   -resultBundlePath DerivedData/Logs/Test/ResultBundle.xcresult \
-#   clean build test
+xcodebuild \
+  -scheme "$SCHEME_NAME" \
+  -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.1' \
+  -derivedDataPath DerivedData/ \
+  -enableCodeCoverage YES \
+  -resultBundlePath DerivedData/Logs/Test/ResultBundle.xcresult \
+  clean build test
 
 echo "Test environment setup completed"
 
