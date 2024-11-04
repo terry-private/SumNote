@@ -56,43 +56,58 @@ COVERAGE_FILE="$TEMP_DIR/coverage.xml"
 # カバレッジデータの抽出と変換
 echo "Extracting coverage data..."
 
-# まずJSONフォーマットでカバレッジデータを取得
-COVERAGE_JSON="$TEMP_DIR/coverage.json"
-xcrun xccov view --json "$RESULT_BUNDLE_PATH" > "$COVERAGE_JSON"
-
-if [ ! -s "$COVERAGE_JSON" ]; then
-    echo "Error: Failed to generate coverage JSON"
+# Profdata ファイルの検索
+PROFDATA_FILE=$(find "$CI_DERIVED_DATA_PATH" -name "*.profdata" | head -n 1)
+if [ -z "$PROFDATA_FILE" ]; then
+    echo "Error: No .profdata file found"
     exit 1
 fi
+echo "Found profdata file: $PROFDATA_FILE"
+
+# Binary ファイルの検索
+BINARY_FILE=$(find "$CI_DERIVED_DATA_PATH" -name "SumNote" -type f -perm +111 | head -n 1)
+if [ -z "$BINARY_FILE" ]; then
+    echo "Error: No binary file found"
+    exit 1
+fi
+echo "Found binary file: $BINARY_FILE"
 
 # カバレッジデータをXML形式に変換
 echo "Converting coverage data to SonarCloud format..."
 echo '<?xml version="1.0" ?>' > "$COVERAGE_FILE"
 echo '<coverage version="1">' >> "$COVERAGE_FILE"
 
-# JSONからファイルごとのカバレッジ情報を抽出
-jq -r '.targets[] | select(.name | contains("Test") | not) | .files[]' "$COVERAGE_JSON" | while read -r file_json; do
-    file_path=$(echo "$file_json" | jq -r '.path')
-    
-    if [[ "$file_path" == *".swift" ]]; then
-        echo "Processing file: $file_path"
-        echo "  <file path=\"$file_path\">" >> "$COVERAGE_FILE"
+# llvm-covを使用してカバレッジ情報を取得
+xcrun llvm-cov show "$BINARY_FILE" \
+    -instr-profile="$PROFDATA_FILE" \
+    -format=text > "$TEMP_DIR/raw_coverage.txt"
+
+# カバレッジデータの処理
+while IFS= read -r line; do
+    if [[ $line =~ ^[[:space:]]*([0-9]+)\|.*$ ]]; then
+        file_path=$(echo "$line" | awk -F'|' '{print $2}' | xargs)
+        line_number=$(echo "$line" | awk -F'|' '{print $1}' | tr -d ' ')
+        execution_count=$(echo "$line" | awk '{print $NF}')
         
-        # ファイルの行カバレッジ情報を取得
-        xcrun xccov view --file "$file_path" "$RESULT_BUNDLE_PATH" 2>/dev/null | \
-        while IFS=: read -r line_coverage line_content; do
-            line_number=$(echo "$line_content" | awk '{print NR}')
-            if [[ $line_coverage =~ ^[0-9]+$ ]]; then
-                covered="false"
-                if [ "$line_coverage" -gt "0" ]; then
-                    covered="true"
-                fi
-                echo "    <lineToCover lineNumber=\"$line_number\" covered=\"$covered\"/>" >> "$COVERAGE_FILE"
+        if [[ "$file_path" == *".swift" ]] && [[ ! "$file_path" == *"Test"* ]]; then
+            covered="false"
+            if [ "$execution_count" -gt "0" ]; then
+                covered="true"
             fi
-        done
-        
-        echo "  </file>" >> "$COVERAGE_FILE"
+            
+            if [ ! -f "$COVERAGE_FILE.${file_path}" ]; then
+                echo "  <file path=\"$file_path\">" > "$COVERAGE_FILE.${file_path}"
+            fi
+            echo "    <lineToCover lineNumber=\"$line_number\" covered=\"$covered\"/>" >> "$COVERAGE_FILE.${file_path}"
+        fi
     fi
+done < "$TEMP_DIR/raw_coverage.txt"
+
+# ファイルごとのカバレッジ情報を結合
+for partial in "$COVERAGE_FILE".*; do
+    cat "$partial" >> "$COVERAGE_FILE"
+    echo "  </file>" >> "$COVERAGE_FILE"
+    rm "$partial"
 done
 
 echo '</coverage>' >> "$COVERAGE_FILE"
@@ -116,8 +131,8 @@ sonar.test.inclusions=**/*Tests/**
 sonar.swift.file.suffixes=.swift
 sonar.scm.provider=git
 sonar.sourceEncoding=UTF-8
-sonar.projectVersion=${CI_BUILD_NUMBER}
-sonar.projectName=${CI_PROJECT_NAME}
+sonar.projectVersion=${CI_BUILD_NUMBER:-1.0.0}
+sonar.projectName=SumNote
 
 # デバッグ設定
 sonar.verbose=true
