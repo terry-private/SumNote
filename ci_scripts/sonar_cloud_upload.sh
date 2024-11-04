@@ -33,9 +33,6 @@ xcrun simctl boot $SIMULATOR_ID
 RESULT_BUNDLE_PATH=$CI_DERIVED_DATA_PATH/Logs/Test/ResultBundle.xcresult
 echo "RESULT_BUNDLE_PATH: $RESULT_BUNDLE_PATH"
 
-# ビルド設定の確認
-echo "Checking build settings..."
-
 # ビルドとテストの実行
 xcodebuild \
   -scheme "$SCHEME_NAME" \
@@ -45,62 +42,54 @@ xcodebuild \
   -resultBundlePath $RESULT_BUNDLE_PATH \
   clean build test
 
-echo "Starting SonarCloud coverage upload process..."
-
-# 環境変数のデバッグ出力
-echo "Environment variables:"
-echo "CI_DERIVED_DATA_PATH: $CI_DERIVED_DATA_PATH"
-echo "CI_PRIMARY_REPOSITORY_PATH: $CI_PRIMARY_REPOSITORY_PATH"
-echo "Current directory: $(pwd)"
-echo "RESULT_BUNDLE_PATH: $RESULT_BUNDLE_PATH"
-
-XCRESULT_PATH="$RESULT_BUNDLE_PATH"
-
-echo "XCRESULT_PATH content:"
-ls -la "$XCRESULT_PATH"
-
-# カバレッジレポートの生成
-echo "Generating coverage report..."
 TEMP_DIR="$CI_DERIVED_DATA_PATH/sonar_temp"
 mkdir -p "$TEMP_DIR"
-COVERAGE_FILE="$TEMP_DIR/coverage.txt"
+COVERAGE_FILE="$TEMP_DIR/coverage.xml"
 
-# カバレッジデータの抽出
-echo "Extracting coverage data..."
-if ! xcrun xccov view --report "$XCRESULT_PATH" > "$COVERAGE_FILE"; then
-    echo "Warning: Standard coverage export failed with error code $?. Trying alternative format..."
-    xcrun xccov view --json "$XCRESULT_PATH" > "$TEMP_DIR/coverage.json" || {
-        echo "Error: Both standard and JSON coverage exports failed."
-        exit 1
-    }
-    cat "$TEMP_DIR/coverage.json" | grep -v "^null" > "$COVERAGE_FILE"
-fi
+# カバレッジデータをSonarCloud形式に変換
+echo "Converting coverage data to SonarCloud format..."
+echo '<?xml version="1.0" ?>' > "$COVERAGE_FILE"
+echo '<coverage version="1">' >> "$COVERAGE_FILE"
 
-if [ ! -s "$COVERAGE_FILE" ]; then
-    echo "Error: Coverage file is empty. Raw xcresult contents:"
-    xcrun xcresulttool get --path "$XCRESULT_PATH" --format json
-    exit 1
-fi
+# xccovからJSONデータを取得して変換
+xcrun xccov view --json "$RESULT_BUNDLE_PATH" | jq -r '.targets[] | select(.name | contains("Test") | not) | .files[]' | while read -r file; do
+    file_path=$(echo "$file" | jq -r '.path')
+    file_coverage=$(echo "$file" | jq -r '.coverage')
+    
+    if [[ "$file_path" == *".swift" ]]; then
+        echo "  <file path=\"$file_path\">" >> "$COVERAGE_FILE"
+        
+        # 行ごとのカバレッジデータを取得
+        line_coverage=$(xcrun xccov view --file "$file_path" "$RESULT_BUNDLE_PATH")
+        line_number=1
+        
+        echo "$line_coverage" | while read -r line; do
+            if [[ $line =~ ^[0-9]+: ]]; then
+                coverage_count=$(echo "$line" | cut -d: -f1)
+                if [ "$coverage_count" != "0" ]; then
+                    echo "    <lineToCover lineNumber=\"$line_number\" covered=\"true\" branchCover=\"true\"/>" >> "$COVERAGE_FILE"
+                else
+                    echo "    <lineToCover lineNumber=\"$line_number\" covered=\"false\" branchCover=\"false\"/>" >> "$COVERAGE_FILE"
+                fi
+            fi
+            line_number=$((line_number + 1))
+        done
+        
+        echo "  </file>" >> "$COVERAGE_FILE"
+    fi
+done
 
-echo "Generated coverage report at: $COVERAGE_FILE"
-echo "Coverage report contents (full):"
-cat "$COVERAGE_FILE"
+echo '</coverage>' >> "$COVERAGE_FILE"
 
-# sonar-scannerのインストール
-echo "Installing sonar-scanner..."
-brew install sonar-scanner
-
-# sonar-project.propertiesの作成
-echo "Creating sonar-project.properties..."
-SONAR_PROPS="$TEMP_DIR/sonar-project.properties"
-
-cat > "$SONAR_PROPS" << EOF
+# sonar-project.propertiesの更新
+cat > "$TEMP_DIR/sonar-project.properties" << EOF
 sonar.projectKey=${SONAR_PROJECT_KEY}
 sonar.organization=${SONAR_ORGANIZATION}
 sonar.host.url=https://sonarcloud.io
 
 sonar.sources=${CI_PRIMARY_REPOSITORY_PATH}
-sonar.swift.coverage.reportPaths=${COVERAGE_FILE}
+sonar.swift.coverage.reportPath=${COVERAGE_FILE}
+sonar.coverageReportPaths=${COVERAGE_FILE}
 sonar.exclusions=**/*.generated.swift,**/Pods/**/*,**/*.pb.swift,**/*Tests/**
 sonar.test.inclusions=**/*Tests/**
 sonar.swift.file.suffixes=.swift
@@ -113,17 +102,12 @@ sonar.projectName=${CI_PROJECT_NAME}
 sonar.verbose=true
 EOF
 
-echo "Created sonar-project.properties at: $SONAR_PROPS"
-echo "Content of sonar-project.properties:"
-cat "$SONAR_PROPS"
-
 # SonarCloudスキャンの実行
-echo "Running sonar-scanner..."
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 sonar-scanner \
   -Dsonar.token="$SONAR_TOKEN" \
   -Dsonar.working.directory="$TEMP_DIR/.scannerwork" \
-  -Dproject.settings="$SONAR_PROPS" \
+  -Dproject.settings="$TEMP_DIR/sonar-project.properties" \
   -Dsonar.scm.disabled=true \
   -X
 
