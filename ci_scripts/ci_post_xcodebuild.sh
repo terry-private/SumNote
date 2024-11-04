@@ -27,6 +27,9 @@ xcrun simctl boot $SIMULATOR_ID
 RESULT_BUNDLE_PATH=$CI_DERIVED_DATA_PATH/Logs/Test/ResultBundle.xcresult
 DATE=`date '+%Y-%m-%d %H:%M:%S %z'`
 echo "⭐️ $DATE"
+echo "⭐️ CI_WORKFLOW: $CI_WORKFLOW"
+echo "⭐️ CI_XCODE_PROJECT: $CI_XCODE_PROJECT"
+echo "⭐️ CI_XCODEBUILD_ACTION: $CI_XCODEBUILD_ACTION"
 
 # ビルド設定の確認
 echo "Checking build settings..."
@@ -35,7 +38,7 @@ echo "Checking build settings..."
 #     echo "No Xcode project, workspace, or package found in /Volumes/workspace/repository/ci_scripts."
 #     exit 0
 # fi
-cd $CI_WORKSPACE
+
 # ビルドとテストの実行
 xcodebuild \
   -scheme "$SCHEME_NAME" \
