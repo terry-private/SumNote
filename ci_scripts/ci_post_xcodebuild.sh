@@ -26,11 +26,16 @@ xcrun simctl boot $SIMULATOR_ID
 
 xcrun simctl list devices
 
+RESULT_BUNDLE_PATH=$CI_DERIVED_DATA_PATH/Logs/Test/ResultBundle.xcresult
+
 # ビルド設定の確認
 echo "Checking build settings..."
 xcodebuild \
   -scheme "$SCHEME_NAME" \
   -destination "id=$SIMULATOR_ID" \
+  -derivedDataPath $CI_DERIVED_DATA_PATH \
+  -enableCodeCoverage YES \
+  -resultBundlePath $RESULT_BUNDLE_PATH \
   clean build test
 
 echo "Starting SonarCloud coverage upload process..."
@@ -40,9 +45,9 @@ echo "Environment variables:"
 echo "CI_DERIVED_DATA_PATH: $CI_DERIVED_DATA_PATH"
 echo "CI_PRIMARY_REPOSITORY_PATH: $CI_PRIMARY_REPOSITORY_PATH"
 echo "Current directory: $(pwd)"
-echo "CI_RESULT_BUNDLE_PATH: $CI_RESULT_BUNDLE_PATH"
+echo "RESULT_BUNDLE_PATH: $RESULT_BUNDLE_PATH"
 
-XCRESULT_PATH="$CI_RESULT_BUNDLE_PATH"
+XCRESULT_PATH="$RESULT_BUNDLE_PATH"
 
 echo "XCRESULT_PATH content:"
 ls -la "$XCRESULT_PATH"
