@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "5F614165-0E05-4CE5-9FCA-EDCC6D4790E1",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:..\/BigIntExtensions",
+        "identifier" : "BigIntExtensionsTests",
+        "name" : "BigIntExtensionsTests"
+      }
+    }
+  ],
+  "version" : 1
+}
