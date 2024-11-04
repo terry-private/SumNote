@@ -17,7 +17,7 @@ SIMULATOR_ID=$(xcrun simctl list devices | grep 'iPhone 16 Pro (18.1)' | grep -o
 echo "Checking build settings..."
 xcodebuild \
   -scheme "$SCHEME_NAME" \
-  -destination 'platform=iOS Simulator,id=$SIMULATOR_ID,name=iPhone 16 Pro,OS=18.1' \
+  -destination "platform=iOS Simulator,id=$SIMULATOR_ID,name=iPhone 16 Pro,OS=18.1" \
   -derivedDataPath DerivedData/ \
   -enableCodeCoverage YES \
   -resultBundlePath DerivedData/Logs/Test/ResultBundle.xcresult \
