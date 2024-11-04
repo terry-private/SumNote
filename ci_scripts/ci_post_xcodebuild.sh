@@ -33,6 +33,9 @@ echo "CI_RESULT_BUNDLE_PATH: $CI_RESULT_BUNDLE_PATH"
 
 XCRESULT_PATH="$CI_RESULT_BUNDLE_PATH"
 
+echo "XCRESULT_PATH content:"
+ls -la "$XCRESULT_PATH"
+
 # カバレッジレポートの生成
 echo "Generating coverage report..."
 TEMP_DIR="$CI_DERIVED_DATA_PATH/sonar_temp"
