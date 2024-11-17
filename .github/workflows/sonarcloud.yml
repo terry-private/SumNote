@@ -1,35 +1,49 @@
-name: SonarCloud Analysis
+name: SonarCloud analysis
 on:
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      pull_request_number:
+        description: 'Pull Request number'
+        required: true
 
 jobs:
   sonarcloud:
     name: SonarCloud
-    runs-on: ubuntu-latest  # コード解析のみなのでmacOSは不要
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # SonarCloudの解析のために全履歴を取得
-      
-      - name: Get App Version
-        id: app_version
-        run: |
-          # Info.plistからバージョン情報を取得
-          VERSION=$(grep -A1 'CFBundleShortVersionString' **/Info.plist | tail -1 | sed 's/.*<string>\(.*\)<\/string>.*/\1/')
-          BUILD=$(grep -A1 'CFBundleVersion' **/Info.plist | tail -1 | sed 's/.*<string>\(.*\)<\/string>.*/\1/')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "build=$BUILD" >> $GITHUB_OUTPUT
-
+          fetch-depth: 0
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
-          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
         with:
           args: >
-            -Dsonar.projectVersion=${{ github.sha }}
-            -Dsonar.analysis.appVersion=${{ steps.app_version.outputs.version }}
-            -Dsonar.analysis.buildNumber=${{ steps.app_version.outputs.build }}
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+            -Dsonar.sources=.
+            -Dsonar.swift.file.suffixes=.swift
+            -Dsonar.exclusions=**/*.generated.swift,**/Pods/**/*,**/*.pb.swift,**/*Tests/**
+            -Dsonar.test.inclusions=**/*Tests/**
+            -Dsonar.scm.provider=git
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.verbose=true
+      - name: SonarCloud Quality Gate check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Add PR comment
+        uses: actions/github-script@v6
+        if: always()
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: ${{ github.event.inputs.pull_request_number }},
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              body: 'SonarCloud analysis completed. Check the results at: https://sonarcloud.io/dashboard?id=${{ secrets.SONAR_PROJECT_KEY }}'
+            })
+            
