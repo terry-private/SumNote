@@ -5,60 +5,29 @@ on:
 
 jobs:
   sonarcloud:
-    runs-on: macos-latest
+    name: SonarCloud
+    runs-on: ubuntu-latest  # コード解析のみなのでmacOSは不要
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # 全履歴を取得（SonarCloudの解析に必要）
+          fetch-depth: 0  # SonarCloudの解析のために全履歴を取得
       
-      - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
-      
-      - name: Install Dependencies
-        run: brew install sonar-scanner jq
-      
-      - name: Build and Test
+      - name: Get App Version
+        id: app_version
         run: |
-          DEVICE_NAME="iPhone 14"
-          SIMULATOR_ID=$(xcrun simctl list devices | grep "$DEVICE_NAME" | grep -oE '[0-9A-F-]{36}' | head -n 1)
-          
-          RESULT_BUNDLE_PATH="DerivedData/Logs/Test/ResultBundle.xcresult"
-          
-          xcodebuild test \
-            -scheme "${{ env.SCHEME_NAME }}" \
-            -destination "id=$SIMULATOR_ID" \
-            -derivedDataPath DerivedData \
-            -enableCodeCoverage YES \
-            -resultBundlePath "$RESULT_BUNDLE_PATH"
-      
-      - name: Generate Coverage Report
-        run: |
-          TEMP_DIR="DerivedData/sonar_temp"
-          mkdir -p "$TEMP_DIR"
-          COVERAGE_FILE="$TEMP_DIR/coverage.xml"
-          
-          # カバレッジレポート生成（既存のスクリプトの該当部分を使用）
-          {
-            echo '<?xml version="1.0" ?>'
-            echo '<coverage version="1">'
-            # ... (既存のカバレッジレポート生成ロジック) ...
-            echo '</coverage>'
-          } > "$COVERAGE_FILE"
-          
-          # 環境変数をエクスポート
-          echo "COVERAGE_FILE=$COVERAGE_FILE" >> $GITHUB_ENV
-          echo "PROJECT_ROOT=$GITHUB_WORKSPACE" >> $GITHUB_ENV
-      
+          # Info.plistからバージョン情報を取得
+          VERSION=$(grep -A1 'CFBundleShortVersionString' **/Info.plist | tail -1 | sed 's/.*<string>\(.*\)<\/string>.*/\1/')
+          BUILD=$(grep -A1 'CFBundleVersion' **/Info.plist | tail -1 | sed 's/.*<string>\(.*\)<\/string>.*/\1/')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build=$BUILD" >> $GITHUB_OUTPUT
+
       - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
-          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
-        run: |
-          sonar-scanner \
-            -Dsonar.token="$SONAR_TOKEN" \
-            -Dsonar.projectVersion="${GITHUB_SHA}" \
-            -Dsonar.working.directory="DerivedData/.scannerwork"
+        with:
+          args: >
+            -Dsonar.projectVersion=${{ github.sha }}
+            -Dsonar.analysis.appVersion=${{ steps.app_version.outputs.version }}
+            -Dsonar.analysis.buildNumber=${{ steps.app_version.outputs.build }}
