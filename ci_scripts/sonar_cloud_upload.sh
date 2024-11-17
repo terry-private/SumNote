@@ -43,7 +43,10 @@ xcodebuild \
 # SonarCloud用の一時ディレクトリとファイル設定
 TEMP_DIR="$CI_DERIVED_DATA_PATH/sonar_temp"
 mkdir -p "$TEMP_DIR"
-COVERAGE_FILE="$TEMP_DIR/coverage.xml"
+
+export PROJECT_ROOT="$CI_PRIMARY_REPOSITORY_PATH"
+export COVERAGE_FILE="$TEMP_DIR/coverage.xml"
+export SONAR_PROJECT_VERSION="${CI_BUILD_NUMBER:-1.0.0}"
 
 # カバレッジレポート生成
 {
@@ -91,10 +94,17 @@ command -v sonar-scanner >/dev/null 2>&1 || {
     exit 1
 }
 
+# バージョン情報の取得
+VERSION=$(xcodebuild -showBuildSettings | grep MARKETING_VERSION | tr -d '[A-Z_= ]')
+BUILD=$(xcodebuild -showBuildSettings | grep CURRENT_PROJECT_VERSION | tr -d '[A-Z_= ]')
+COMMIT_HASH=$(git rev-parse --short HEAD)
+
 sonar-scanner \
   -Dsonar.token="$SONAR_TOKEN" \
+  -Dsonar.projectVersion="$COMMIT_HASH" \
+  -Dsonar.analysis.appVersion="$VERSION" \
+  -Dsonar.analysis.buildNumber="$BUILD" \
   -Dsonar.working.directory="$TEMP_DIR/.scannerwork" \
-  -Dproject.settings="$TEMP_DIR/sonar-project.properties" \
   -Dsonar.scm.disabled=true \
   -X
 
