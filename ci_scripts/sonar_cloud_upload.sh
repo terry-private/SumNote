@@ -80,7 +80,7 @@ sonar.swift.file.suffixes=.swift
 sonar.scm.provider=git
 sonar.sourceEncoding=UTF-8
 sonar.projectVersion=${CI_BUILD_NUMBER:-1.0.0}
-sonar.projectName=Production
+sonar.projectName=SumNote
 sonar.verbose=true
 EOF
 
