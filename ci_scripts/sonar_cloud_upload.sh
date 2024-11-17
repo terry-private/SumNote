@@ -69,24 +69,6 @@ export SONAR_PROJECT_VERSION="${CI_BUILD_NUMBER:-1.0.0}"
     echo '</coverage>'
 } > "$COVERAGE_FILE"
 
-# sonar-project.properties生成
-cat > "$TEMP_DIR/sonar-project.properties" << EOF
-sonar.projectKey=${SONAR_PROJECT_KEY}
-sonar.organization=${SONAR_ORGANIZATION}
-sonar.host.url=https://sonarcloud.io
-sonar.sources=${CI_PRIMARY_REPOSITORY_PATH}
-sonar.swift.coverage.reportPath=${COVERAGE_FILE}
-sonar.coverageReportPaths=${COVERAGE_FILE}
-sonar.exclusions=**/*.generated.swift,**/Pods/**/*,**/*.pb.swift,**/*Tests/**
-sonar.test.inclusions=**/*Tests/**
-sonar.swift.file.suffixes=.swift
-sonar.scm.provider=git
-sonar.sourceEncoding=UTF-8
-sonar.projectVersion=${CI_BUILD_NUMBER:-1.0.0}
-sonar.projectName=Production
-sonar.verbose=true
-EOF
-
 # SonarCloudスキャン実行
 export PATH="$PATH:/usr/local/bin"
 command -v sonar-scanner >/dev/null 2>&1 || {
