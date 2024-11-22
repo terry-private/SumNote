@@ -15,9 +15,9 @@ brew install sonar-scanner jq || {
 
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 
-# バージョン情報の取得
-MARKETING_VERSION=$(xcodebuild -workspace "$WORKSPACE_PATH" -showBuildSettings | grep MARKETING_VERSION | awk '{print $3}')
-CURRENT_PROJECT_VERSION=$(xcodebuild -workspace "$WORKSPACE_PATH" -showBuildSettings | grep CURRENT_PROJECT_VERSION | awk '{print $3}')
+# バージョン情報の取得（スキームを指定）
+MARKETING_VERSION=$(xcodebuild -workspace "$WORKSPACE_PATH" -scheme "$SCHEME_NAME" -showBuildSettings | grep MARKETING_VERSION | awk '{print $3}')
+CURRENT_PROJECT_VERSION=$(xcodebuild -workspace "$WORKSPACE_PATH" -scheme "$SCHEME_NAME" -showBuildSettings | grep CURRENT_PROJECT_VERSION | awk '{print $3}')
 APP_VERSION="${MARKETING_VERSION}(${CURRENT_PROJECT_VERSION})"
 
 echo "Using app version: $APP_VERSION"
