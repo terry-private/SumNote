@@ -38,6 +38,9 @@ jobs:
           # PRコメントのカスタマイズ
           sonar.pullrequest.comment.metrics=true
           sonar.pullrequest.decoration.metrics=complexity,cognitive_complexity,function_complexity
+          
+          # JSONレポートの出力設定
+          sonar.reportPaths=sonar-report.json
           EOF
           
       - name: SonarCloud Scan
