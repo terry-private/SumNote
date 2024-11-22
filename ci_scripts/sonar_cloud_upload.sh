@@ -15,19 +15,24 @@ brew install sonar-scanner jq || {
 
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 
+# バージョン情報の取得（スキームを指定）
+APP_VERSION=$(sed -n '/MARKETING_VERSION/{s/MARKETING_VERSION = //;s/;//;s/^[[:space:]]*//;p;q;}' ./Production/Production.xcodeproj/project.pbxproj)
+
+echo "Using app version: $APP_VERSION"
+
 # スキーム名の取得（簡略化）
 SCHEME_NAME=${CI_XCODE_SCHEME:-$(xcodebuild -list | awk '/Schemes:/{getline; print $1}')}
 echo "Using scheme: $SCHEME_NAME"
 
 # シミュレーター設定
-DEVICE_NAME="iPhone 16 Plus"
-SIMULATOR_ID=$(xcrun simctl list devices | grep "$DEVICE_NAME" | grep -oE '[0-9A-F-]{36}' | head -n 1)
+SIMULATOR_ID=$(xcrun simctl list devices | grep "$COVERAGE_BUILD_DEVICE_NAME" | grep -oE '[0-9A-F-]{36}' | head -n 1)
 
 [ -z "$SIMULATOR_ID" ] && {
-    echo "Error: Simulator ID for $DEVICE_NAME not found."
+    echo "Error: $COVERAGE_BUILD_DEVICE_NAME <Simulator ID: $SIMULATOR_ID> not found."
     exit 1
 }
 
+echo "Boot $COVERAGE_BUILD_DEVICE_NAME <Simulator ID: $SIMULATOR_ID>"
 xcrun simctl boot $SIMULATOR_ID
 
 # テスト実行
@@ -74,12 +79,12 @@ sonar.host.url=https://sonarcloud.io
 sonar.sources=${CI_PRIMARY_REPOSITORY_PATH}
 sonar.swift.coverage.reportPath=${COVERAGE_FILE}
 sonar.coverageReportPaths=${COVERAGE_FILE}
-sonar.exclusions=**/*.generated.swift,**/Pods/**/*,**/*.pb.swift,**/*Tests/**
+sonar.exclusions=**/*.generated.swift,**/Pods/**/*,**/*.pb.swift,**/*Tests/**,**Package.swift
 sonar.test.inclusions=**/*Tests/**
 sonar.swift.file.suffixes=.swift
 sonar.scm.provider=git
 sonar.sourceEncoding=UTF-8
-sonar.projectVersion=${CI_BUILD_NUMBER:-1.0.0}
+sonar.projectVersion=${APP_VERSION}
 sonar.projectName=SumNote
 sonar.verbose=true
 EOF
