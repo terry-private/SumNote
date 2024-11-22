@@ -37,7 +37,8 @@ jobs:
           BASE_BRANCH: ${{ github.base_ref }}
         run: |
           # 現在のPull Requestのメトリクスを取得
-          CURRENT_METRICS=$(curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/measures/component?component=${PROJECT_KEY}&metricKeys=complexity,cognitive_complexity&branch=${CURRENT_BRANCH}" | jq -r '.component.measures')
+          CURRENT_METRICS=$(curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/measures/component?component=${PROJECT_KEY}&metricKeys=complexity,cognitive_complexity&branch=${CURRENT_BRANCH}")
+          echo "Current Metrics Response: $CURRENT_METRICS"
           
           # ターゲットブランチ（通常はmain）のメトリクスを取得
           TARGET_METRICS=$(curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/measures/component?component=${PROJECT_KEY}&metricKeys=complexity,cognitive_complexity&branch=${BASE_BRANCH}" | jq -r '.component.measures')
