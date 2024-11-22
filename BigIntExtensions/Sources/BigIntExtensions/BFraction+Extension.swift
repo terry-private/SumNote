@@ -44,6 +44,15 @@ public extension BFraction.Extension {
         let string = fraction.abs.truncate().description
         if string.isEmpty {
             print("empty")
+            if string.isEmpty {
+                print("empty2")
+            } else {
+                if fraction.truncate().isZero {
+                    print("empty2")
+                } else {
+                    print("no empty2")
+                }
+            }
         } else {
             if fraction.truncate().isZero {
                 print("empty")
