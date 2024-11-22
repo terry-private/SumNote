@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-if [ "$CI_WORKFLOW" = "SonarCloud Upload" ]; then
+if [ -n "$SONAR_CLOUD_UPLOAD" ]; then
   ./sonar_cloud_upload.sh
 else
-  echo dont upload cause $CI_WORKFLOW is not "SonarCloud Upload"
+  echo "SonarCloudアップロードはスキップされました。"
 fi
