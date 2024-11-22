@@ -26,6 +26,7 @@ jobs:
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
             -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.branch.name=${{ github.head_ref || github.ref_name }}
             
       - name: Generate and post detailed metrics comment
         if: github.event_name == 'pull_request'
