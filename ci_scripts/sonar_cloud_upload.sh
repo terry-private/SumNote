@@ -15,6 +15,13 @@ brew install sonar-scanner jq || {
 
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 
+# バージョン情報の取得
+MARKETING_VERSION=$(xcodebuild -showBuildSettings | grep MARKETING_VERSION | awk '{print $3}')
+CURRENT_PROJECT_VERSION=$(xcodebuild -showBuildSettings | grep CURRENT_PROJECT_VERSION | awk '{print $3}')
+APP_VERSION="${MARKETING_VERSION}(${CURRENT_PROJECT_VERSION})"
+
+echo "Using app version: $APP_VERSION"
+
 # スキーム名の取得（簡略化）
 SCHEME_NAME=${CI_XCODE_SCHEME:-$(xcodebuild -list | awk '/Schemes:/{getline; print $1}')}
 echo "Using scheme: $SCHEME_NAME"
@@ -23,7 +30,7 @@ echo "Using scheme: $SCHEME_NAME"
 SIMULATOR_ID=$CI_TEST_DESTINATION_UDID
 
 [ -z "$SIMULATOR_ID" ] && {
-    echo "Error: Simulator ID for $DEVICE_NAME not found."
+    echo "Error: Simulator ID: '$SIMULATOR_ID' not found."
     exit 1
 }
 
@@ -78,7 +85,7 @@ sonar.test.inclusions=**/*Tests/**
 sonar.swift.file.suffixes=.swift
 sonar.scm.provider=git
 sonar.sourceEncoding=UTF-8
-sonar.projectVersion=${CI_BUILD_NUMBER:-1.0.0}
+sonar.projectVersion=${APP_VERSION}
 sonar.projectName=SumNote
 sonar.verbose=true
 EOF
