@@ -1,4 +1,5 @@
 name: SonarCloud Analysis
+
 on:
   pull_request:
     branches: [ main ]
@@ -13,6 +14,32 @@ jobs:
         with:
           fetch-depth: 0
           
+      - name: Create sonar-project.properties
+        run: |
+          cat << EOF > sonar-project.properties
+          sonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+          sonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+          
+          # 解析対象のソースコード
+          sonar.sources=.
+          
+          # PR分析の設定
+          sonar.pullrequest.provider=GitHub
+          sonar.pullrequest.github.summary_comment=true
+          
+          # 詳細なメトリクスの設定
+          sonar.verbose=true
+          sonar.analysis.mode=preview
+          sonar.report.export.path=sonar-report.json
+          
+          # 表示するメトリクス
+          sonar.metrics=complexity,cognitive_complexity,function_complexity,duplicated_lines_density,sqale_rating,reliability_rating
+          
+          # Additional Metrics
+          sonar.cpp.metrics.enable=true
+          sonar.showProfiling=true
+          EOF
+          
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
@@ -22,12 +49,40 @@ jobs:
           args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-            -Dsonar.sources=.
-            -Dsonar.pullrequest.github.summary_comment=true
-            -Dsonar.pullrequest.provider=GitHub
-            -Dsonar.pullrequest.github.repository=${{ github.repository }}
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
             -Dsonar.pullrequest.branch=${{ github.head_ref }}
             -Dsonar.pullrequest.base=${{ github.base_ref }}
-            -Dsonar.verbose=true
-            -Dsonar.metrics.profiles.path=.sonar/metrics.xml
+            -Dsonar.scm.provider=git
+            
+      - name: Generate and post detailed metrics comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            try {
+              const sonarReport = JSON.parse(fs.readFileSync('sonar-report.json', 'utf8'));
+              
+              let comment = '## Detailed SonarCloud Metrics\n\n';
+              comment += '### Complexity Metrics\n';
+              comment += `- Cyclomatic Complexity: ${sonarReport.metrics.complexity || 'N/A'}\n`;
+              comment += `- Cognitive Complexity: ${sonarReport.metrics.cognitive_complexity || 'N/A'}\n`;
+              comment += `- Function Complexity: ${sonarReport.metrics.function_complexity || 'N/A'}\n\n`;
+              
+              comment += '### Code Quality\n';
+              comment += `- Duplicated Lines (%): ${sonarReport.metrics.duplicated_lines_density || 'N/A'}\n`;
+              comment += `- Technical Debt Rating: ${sonarReport.metrics.sqale_rating || 'N/A'}\n`;
+              comment += `- Reliability Rating: ${sonarReport.metrics.reliability_rating || 'N/A'}\n`;
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            } catch (error) {
+              console.error('Error generating metrics comment:', error);
+            }
