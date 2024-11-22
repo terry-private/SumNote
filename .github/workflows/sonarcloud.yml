@@ -30,22 +30,25 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io
             
       - name: Generate and post detailed metrics comment
-        if: github.event_name == 'pull_request'
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
-        run: |
-          METRICS=$(curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/measures/component?component=${PROJECT_KEY}&metricKeys=complexity,cognitive_complexity,function_complexity,duplicated_lines_density,sqale_rating,reliability_rating" | jq -r '.component.measures')
-          
-          COMMENT="## Detailed SonarCloud Metrics\n\n"
-          COMMENT+="### Complexity Metrics\n"
-          COMMENT+="- Cyclomatic Complexity: $(echo $METRICS | jq -r '.[] | select(.metric == "complexity") | .value')\n"
-          COMMENT+="- Cognitive Complexity: $(echo $METRICS | jq -r '.[] | select(.metric == "cognitive_complexity") | .value')\n"
-          COMMENT+="- Function Complexity: $(echo $METRICS | jq -r '.[] | select(.metric == "function_complexity") | .value')\n\n"
-          COMMENT+="### Code Quality\n"
-          COMMENT+="- Duplicated Lines (%): $(echo $METRICS | jq -r '.[] | select(.metric == "duplicated_lines_density") | .value')\n"
-          COMMENT+="- Technical Debt Rating: $(echo $METRICS | jq -r '.[] | select(.metric == "sqale_rating") | .value')\n"
-          COMMENT+="- Reliability Rating: $(echo $METRICS | jq -r '.[] | select(.metric == "reliability_rating") | .value')\n"
+  if: github.event_name == 'pull_request'
+  env:
+    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+    PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
+  run: |
+    METRICS=$(curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/measures/component?component=${PROJECT_KEY}&metricKeys=complexity,cognitive_complexity,function_complexity,duplicated_lines_density,sqale_rating,reliability_rating&pullRequest=${PULL_REQUEST_NUMBER}" | jq -r '.component.measures')
+
+          COMMENT="## Detailed SonarCloud Metrics
+
+          ### Complexity Metrics
+          - Cyclomatic Complexity: $(echo $METRICS | jq -r '.[] | select(.metric == "complexity") | .value')
+          - Cognitive Complexity: $(echo $METRICS | jq -r '.[] | select(.metric == "cognitive_complexity") | .value')
+          - Function Complexity: $(echo $METRICS | jq -r '.[] | select(.metric == "function_complexity") | .value')
+
+          ### Code Quality
+          - Duplicated Lines (%): $(echo $METRICS | jq -r '.[] | select(.metric == "duplicated_lines_density") | .value')
+          - Technical Debt Rating: $(echo $METRICS | jq -r '.[] | select(.metric == "sqale_rating") | .value')
+          - Reliability Rating: $(echo $METRICS | jq -r '.[] | select(.metric == "reliability_rating") | .value')"
           
           echo "$COMMENT" > comment.txt
           
