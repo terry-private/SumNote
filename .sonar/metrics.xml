@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<profile>
+  <name>Complexity Metrics</name>
+  <metrics>
+    <metric>
+      <key>complexity</key>
+      <name>循環的複雑度</name>
+    </metric>
+    <metric>
+      <key>cognitive_complexity</key>
+      <name>認知的複雑度</name>
+    </metric>
+    <metric>
+      <key>function_complexity</key>
+      <name>関数あたりの複雑度</name>
+    </metric>
+  </metrics>
+</profile>
