@@ -20,14 +20,14 @@ SCHEME_NAME=${CI_XCODE_SCHEME:-$(xcodebuild -list | awk '/Schemes:/{getline; pri
 echo "Using scheme: $SCHEME_NAME"
 
 # シミュレーター設定
-DEVICE_NAME="iPhone 16 Plus"
-SIMULATOR_ID=$(xcrun simctl list devices | grep "$DEVICE_NAME" | grep -oE '[0-9A-F-]{36}' | head -n 1)
+SIMULATOR_ID=$(xcrun simctl list devices | grep "$COVERAGE_BUILD_DEVICE_NAME" | grep -oE '[0-9A-F-]{36}' | head -n 1)
 
 [ -z "$SIMULATOR_ID" ] && {
-    echo "Error: Simulator ID for $DEVICE_NAME not found."
+    echo "Error: $COVERAGE_BUILD_DEVICE_NAME <Simulator ID: $SIMULATOR_ID> not found."
     exit 1
 }
 
+echo "Boot $COVERAGE_BUILD_DEVICE_NAME <Simulator ID: $SIMULATOR_ID>"
 xcrun simctl boot $SIMULATOR_ID
 
 # テスト実行
