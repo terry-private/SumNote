@@ -14,35 +14,6 @@ jobs:
         with:
           fetch-depth: 0
           
-      - name: Create sonar-project.properties
-        run: |
-          cat << EOF > sonar-project.properties
-          # プロジェクトの基本設定
-          sonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-          sonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-          
-          # 解析対象のソースコード
-          sonar.sources=.
-          
-          # PR分析の設定
-          sonar.pullrequest.provider=GitHub
-          sonar.pullrequest.github.summary_comment=true
-          
-          # メトリクス設定
-          sonar.verbose=true
-          sonar.scm.provider=git
-          
-          # 追加メトリクスの設定
-          sonar.measures.metrics=complexity,cognitive_complexity,function_complexity,duplicated_lines_density,sqale_rating,reliability_rating
-          
-          # PRコメントのカスタマイズ
-          sonar.pullrequest.comment.metrics=true
-          sonar.pullrequest.decoration.metrics=complexity,cognitive_complexity,function_complexity
-          
-          # JSONレポートの出力設定
-          sonar.reportPaths=sonar-report.json
-          EOF
-          
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
@@ -53,39 +24,38 @@ jobs:
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
             -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
-            -Dsonar.pullrequest.branch=${{ github.head_ref }}
-            -Dsonar.pullrequest.base=${{ github.base_ref }}
-            -Dsonar.scm.provider=git
             
       - name: Generate and post detailed metrics comment
+        if: github.event_name == 'pull_request'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+        run: |
+          METRICS=$(curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/measures/component?component=${PROJECT_KEY}&metricKeys=complexity,cognitive_complexity,function_complexity,duplicated_lines_density,sqale_rating,reliability_rating" | jq -r '.component.measures')
+          
+          COMMENT="## Detailed SonarCloud Metrics\n\n"
+          COMMENT+="### Complexity Metrics\n"
+          COMMENT+="- Cyclomatic Complexity: $(echo $METRICS | jq -r '.[] | select(.metric == "complexity") | .value')\n"
+          COMMENT+="- Cognitive Complexity: $(echo $METRICS | jq -r '.[] | select(.metric == "cognitive_complexity") | .value')\n"
+          COMMENT+="- Function Complexity: $(echo $METRICS | jq -r '.[] | select(.metric == "function_complexity") | .value')\n\n"
+          COMMENT+="### Code Quality\n"
+          COMMENT+="- Duplicated Lines (%): $(echo $METRICS | jq -r '.[] | select(.metric == "duplicated_lines_density") | .value')\n"
+          COMMENT+="- Technical Debt Rating: $(echo $METRICS | jq -r '.[] | select(.metric == "sqale_rating") | .value')\n"
+          COMMENT+="- Reliability Rating: $(echo $METRICS | jq -r '.[] | select(.metric == "reliability_rating") | .value')\n"
+          
+          echo "$COMMENT" > comment.txt
+          
+      - name: Post comment
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            try {
-              const sonarReport = JSON.parse(fs.readFileSync('sonar-report.json', 'utf8'));
-              
-              let comment = '## Detailed SonarCloud Metrics\n\n';
-              comment += '### Complexity Metrics\n';
-              comment += `- Cyclomatic Complexity: ${sonarReport.metrics.complexity || 'N/A'}\n`;
-              comment += `- Cognitive Complexity: ${sonarReport.metrics.cognitive_complexity || 'N/A'}\n`;
-              comment += `- Function Complexity: ${sonarReport.metrics.function_complexity || 'N/A'}\n\n`;
-              
-              comment += '### Code Quality\n';
-              comment += `- Duplicated Lines (%): ${sonarReport.metrics.duplicated_lines_density || 'N/A'}\n`;
-              comment += `- Technical Debt Rating: ${sonarReport.metrics.sqale_rating || 'N/A'}\n`;
-              comment += `- Reliability Rating: ${sonarReport.metrics.reliability_rating || 'N/A'}\n`;
-              
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: comment
-              });
-            } catch (error) {
-              console.error('Error generating metrics comment:', error);
-            }
+            const comment = fs.readFileSync('comment.txt', 'utf8');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
