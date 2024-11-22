@@ -41,13 +41,7 @@ jobs:
           ### Complexity Metrics
           - Cyclomatic Complexity: $(echo $METRICS | jq -r '.[] | select(.metric == "complexity") | .value')
           - Cognitive Complexity: $(echo $METRICS | jq -r '.[] | select(.metric == "cognitive_complexity") | .value')
-          - Function Complexity: $(echo $METRICS | jq -r '.[] | select(.metric == "function_complexity") | .value')
 
-          ### Code Quality
-          - Duplicated Lines (%): $(echo $METRICS | jq -r '.[] | select(.metric == "duplicated_lines_density") | .value')
-          - Technical Debt Rating: $(echo $METRICS | jq -r '.[] | select(.metric == "sqale_rating") | .value')
-          - Reliability Rating: $(echo $METRICS | jq -r '.[] | select(.metric == "reliability_rating") | .value')"
-          
           echo "$COMMENT" > comment.txt
           
       - name: Post comment
