@@ -17,6 +17,7 @@ jobs:
       - name: Create sonar-project.properties
         run: |
           cat << EOF > sonar-project.properties
+          # プロジェクトの基本設定
           sonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
           sonar.organization=${{ secrets.SONAR_ORGANIZATION }}
           
@@ -27,17 +28,16 @@ jobs:
           sonar.pullrequest.provider=GitHub
           sonar.pullrequest.github.summary_comment=true
           
-          # 詳細なメトリクスの設定
+          # メトリクス設定
           sonar.verbose=true
-          sonar.analysis.mode=preview
-          sonar.report.export.path=sonar-report.json
+          sonar.scm.provider=git
           
-          # 表示するメトリクス
-          sonar.metrics=complexity,cognitive_complexity,function_complexity,duplicated_lines_density,sqale_rating,reliability_rating
+          # 追加メトリクスの設定
+          sonar.measures.metrics=complexity,cognitive_complexity,function_complexity,duplicated_lines_density,sqale_rating,reliability_rating
           
-          # Additional Metrics
-          sonar.cpp.metrics.enable=true
-          sonar.showProfiling=true
+          # PRコメントのカスタマイズ
+          sonar.pullrequest.comment.metrics=true
+          sonar.pullrequest.decoration.metrics=complexity,cognitive_complexity,function_complexity
           EOF
           
       - name: SonarCloud Scan
