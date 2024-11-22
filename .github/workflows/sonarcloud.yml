@@ -32,13 +32,14 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
-          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
+          CURRENT_BRANCH: ${{ github.head_ref }}
+          BASE_BRANCH: ${{ github.base_ref }}
         run: |
           # 現在のPull Requestのメトリクスを取得
-          CURRENT_METRICS=$(curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/measures/component?component=${PROJECT_KEY}&metricKeys=complexity,cognitive_complexity&pullRequest=${PULL_REQUEST_NUMBER}" | jq -r '.component.measures')
+          CURRENT_METRICS=$(curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/measures/component?component=${PROJECT_KEY}&metricKeys=complexity,cognitive_complexity&branch=${CURRENT_BRANCH}" | jq -r '.component.measures')
           
           # ターゲットブランチ（通常はmain）のメトリクスを取得
-          TARGET_METRICS=$(curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/measures/component?component=${PROJECT_KEY}&metricKeys=complexity,cognitive_complexity" | jq -r '.component.measures')
+          TARGET_METRICS=$(curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/measures/component?component=${PROJECT_KEY}&metricKeys=complexity,cognitive_complexity&branch=${BASE_BRANCH}" | jq -r '.component.measures')
           
           # 差分を計算
           CYCLO_CURRENT=$(echo $CURRENT_METRICS | jq -r '.[] | select(.metric == "complexity") | .value')
