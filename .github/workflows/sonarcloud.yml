@@ -36,7 +36,7 @@ jobs:
         run: |
           METRICS=$(curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/measures/component?component=${PROJECT_KEY}&metricKeys=complexity,cognitive_complexity,function_complexity,duplicated_lines_density,sqale_rating,reliability_rating&pullRequest=${PULL_REQUEST_NUMBER}" | jq -r '.component.measures')
 
-                COMMENT="## Detailed SonarCloud Metrics
+COMMENT="## Detailed SonarCloud Metrics
 
 ### Complexity Metrics
 - Cyclomatic Complexity: $(echo $METRICS | jq -r '.[] | select(.metric == "complexity") | .value')
