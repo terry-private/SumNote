@@ -15,6 +15,11 @@ brew install sonar-scanner jq || {
 
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 
+# バージョン情報の取得（スキームを指定）
+APP_VERSION=$(sed -n '/MARKETING_VERSION/{s/MARKETING_VERSION = //;s/;//;s/^[[:space:]]*//;p;q;}' ./Production/Production.xcodeproj/project.pbxproj)
+
+echo "Using app version: $APP_VERSION"
+
 # スキーム名の取得（簡略化）
 SCHEME_NAME=${CI_XCODE_SCHEME:-$(xcodebuild -list | awk '/Schemes:/{getline; print $1}')}
 echo "Using scheme: $SCHEME_NAME"
@@ -79,7 +84,7 @@ sonar.test.inclusions=**/*Tests/**
 sonar.swift.file.suffixes=.swift
 sonar.scm.provider=git
 sonar.sourceEncoding=UTF-8
-sonar.projectVersion=${CI_BUILD_NUMBER:-1.0.0}
+sonar.projectVersion=${APP_VERSION}
 sonar.projectName=SumNote
 sonar.verbose=true
 EOF
