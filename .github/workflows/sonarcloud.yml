@@ -28,33 +28,33 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io
             
       - name: Generate and post detailed metrics comment
-  if: github.event_name == 'pull_request'
-  env:
-    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-    PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
-    PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
-  run: |
-    METRICS=$(curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/measures/component?component=${PROJECT_KEY}&metricKeys=complexity,cognitive_complexity,function_complexity,duplicated_lines_density,sqale_rating,reliability_rating&pullRequest=${PULL_REQUEST_NUMBER}" | jq -r '.component.measures')
-
-          COMMENT="## Detailed SonarCloud Metrics
-
-          ### Complexity Metrics
-          - Cyclomatic Complexity: $(echo $METRICS | jq -r '.[] | select(.metric == "complexity") | .value')
-          - Cognitive Complexity: $(echo $METRICS | jq -r '.[] | select(.metric == "cognitive_complexity") | .value')
-
-          echo "$COMMENT" > comment.txt
-          
-      - name: Post comment
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const comment = fs.readFileSync('comment.txt', 'utf8');
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: comment
-            });
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          METRICS=$(curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/measures/component?component=${PROJECT_KEY}&metricKeys=complexity,cognitive_complexity,function_complexity,duplicated_lines_density,sqale_rating,reliability_rating&pullRequest=${PULL_REQUEST_NUMBER}" | jq -r '.component.measures')
+
+                COMMENT="## Detailed SonarCloud Metrics
+
+                ### Complexity Metrics
+                - Cyclomatic Complexity: $(echo $METRICS | jq -r '.[] | select(.metric == "complexity") | .value')
+                - Cognitive Complexity: $(echo $METRICS | jq -r '.[] | select(.metric == "cognitive_complexity") | .value')"
+                
+                echo "$COMMENT" > comment.txt
+                
+            - name: Post comment
+              if: github.event_name == 'pull_request'
+              uses: actions/github-script@v6
+              with:
+                github-token: ${{ secrets.GITHUB_TOKEN }}
+                script: |
+                  const fs = require('fs');
+                  const comment = fs.readFileSync('comment.txt', 'utf8');
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: context.issue.number,
+                    body: comment
+                  });
