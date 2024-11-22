@@ -16,7 +16,7 @@ brew install sonar-scanner jq || {
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 
 # バージョン情報の取得（スキームを指定）
-APP_VERSION=$(sed -n '/MARKETING_VERSION/{s/MARKETING_VERSION = //;s/;//;s/^[[:space:]]*//;p;q;}' ./Production.xcodeproj/project.pbxproj)
+APP_VERSION=$(sed -n '/MARKETING_VERSION/{s/MARKETING_VERSION = //;s/;//;s/^[[:space:]]*//;p;q;}' ./Production/Production.xcodeproj/project.pbxproj)
 
 echo "Using app version: $APP_VERSION"
 
