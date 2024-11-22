@@ -45,7 +45,7 @@ public extension BFraction.Extension {
         if string.isEmpty {
             print("empty")
         } else {
-            fraction.truncate().isZero {
+            if fraction.truncate().isZero {
                 print("empty")
             } else {
                 print("no empty")
