@@ -16,8 +16,8 @@ brew install sonar-scanner jq || {
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 
 # バージョン情報の取得
-MARKETING_VERSION=$(xcodebuild -showBuildSettings | grep MARKETING_VERSION | awk '{print $3}')
-CURRENT_PROJECT_VERSION=$(xcodebuild -showBuildSettings | grep CURRENT_PROJECT_VERSION | awk '{print $3}')
+MARKETING_VERSION=$(xcodebuild -workspace "$WORKSPACE_PATH" -showBuildSettings | grep MARKETING_VERSION | awk '{print $3}')
+CURRENT_PROJECT_VERSION=$(xcodebuild -workspace "$WORKSPACE_PATH" -showBuildSettings | grep CURRENT_PROJECT_VERSION | awk '{print $3}')
 APP_VERSION="${MARKETING_VERSION}(${CURRENT_PROJECT_VERSION})"
 
 echo "Using app version: $APP_VERSION"
@@ -28,6 +28,7 @@ echo "Using scheme: $SCHEME_NAME"
 
 # シミュレーター設定
 echo "CI_TEST_DESTINATION_UDID: $CI_TEST_DESTINATION_UDID"
+echo "CI_TEST_DESTINATION_DEVICE_TYPE: $CI_TEST_DESTINATION_DEVICE_TYPE"
 DEVICE_NAME="iPhone 16 Plus"
 SIMULATOR_ID=$(xcrun simctl list devices | grep "$DEVICE_NAME" | grep -oE '[0-9A-F-]{36}' | head -n 1)
 
