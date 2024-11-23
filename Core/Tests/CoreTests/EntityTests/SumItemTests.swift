@@ -38,7 +38,7 @@ struct SumItemTests {
         }
 
         @Test(
-            "Sum (オプション half)",
+            "Sum (オプション [half])",
             arguments: [
                 (3, 2, 3),
                 (0, 1, 0),
