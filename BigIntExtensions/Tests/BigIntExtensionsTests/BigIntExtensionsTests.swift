@@ -86,4 +86,13 @@ struct BfractionExtensionsTests {
         #expect(arg.0.ex.currencyWholePartString == arg.1)
     }
 
+    @Test("decimalString 符号が付く ３けた区切りは無し", arguments: [
+        (BFraction(1_000, 3), "333.33"), // roundedは小数点以下のみ
+        (BFraction(-1, 3), "-0.33"), // マイナス記号がちゃんとつく
+        (BFraction(-0, 3), "0"), // 0の時は0のみ
+        (BFraction(100_000, 1), "100000") // 3桁区切りなし
+    ])
+    func decimalString_max2(arg: (BFraction, String)) {
+        #expect(arg.0.ex.decimalString(max: 2) == arg.1)
+    }
 }
