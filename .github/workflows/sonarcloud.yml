@@ -56,17 +56,34 @@ jobs:
           COMPONENT_COUNT=$(echo "${CHANGED_FILES_JSON}" | jq '.components | length')
           
           echo "Found ${COMPONENT_COUNT} components"
-          
+
+          # URLエンコード関数
+          urlencode() {
+            local raw="$1"
+            local encoded=""
+            for ((i=0; i<${#raw}; i++)); do
+              local c="${raw:i:1}"
+              case "$c" in
+                [a-zA-Z0-9._~-]) encoded+="$c" ;;
+                *) encoded+=$(printf '%%%02X' "'$c") ;;
+              esac
+            done
+            echo "$encoded"
+          }
+
           # 各コンポーネントに対してループ
           for ((i=0; i<COMPONENT_COUNT; i++)); do
             # コンポーネントの詳細を取得
             COMPONENT=$(echo "${CHANGED_FILES_JSON}" | jq ".components[${i}]")
-            FILE_KEY=$(echo "${COMPONENT}" | jq -r '.key')
+            FILE_KEY=$(urlencode $(echo "${COMPONENT}" | jq -r '.key'))
             FILE_PATH=$(echo "${COMPONENT}" | jq -r '.path')
             
             # デバッグ用: ファイル情報を表示
-            echo "Processing file: ${FILE_PATH}"
+            echo "Processing component key: ${FILE_KEY}, file: ${FILE_PATH}"
             
+            COMPLEXITY_CURRENT_ORIGIN=$(echo "${COMPONENT}" | jq -r '.measures[] | select(.metric == "complexity") | .value // "0"')
+            echo "COMPLEXITY_CURRENT_ORIGIN: ${COMPLEXITY_CURRENT_ORIGIN}"
+
             # 現在のブランチのファイルメトリクスを取得
             CURRENT_FILE_METRICS=$(curl -s -f -u "${SONAR_TOKEN}:" \
               "https://sonarcloud.io/api/measures/component?branch=${CURRENT_BRANCH}&component=${FILE_KEY}&metricKeys=${METRICS}")
@@ -80,9 +97,6 @@ jobs:
               echo "Metrics not found for file: ${FILE_PATH}"
               continue
             fi
-
-            COMPLEXITY_CURRENT_ORIGIN=$(echo "${COMPONENT}" | jq -r '.measures[] | select(.metric == "complexity") | .value // "0"')
-            echo "COMPLEXITY_CURRENT_ORIGIN: ${COMPLEXITY_CURRENT_ORIGIN}"
             
             # 各メトリクスの差分を計算
             COMPLEXITY_CURRENT=$(echo "${CURRENT_FILE_METRICS}" | jq -r '.component.measures[] | select(.metric == "complexity") | .value // "0"')
