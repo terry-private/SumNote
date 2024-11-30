@@ -18,6 +18,13 @@
         "identifier" : "BigIntExtensionsTests",
         "name" : "BigIntExtensionsTests"
       }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:..\/Core",
+        "identifier" : "CoreTests",
+        "name" : "CoreTests"
+      }
     }
   ],
   "version" : 1

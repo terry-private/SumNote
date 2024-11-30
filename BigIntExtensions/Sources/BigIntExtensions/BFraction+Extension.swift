@@ -12,6 +12,18 @@ extension String {
 }
 
 extension BFraction {
+    public init(_ int: BInt) {
+        self = .init(int, .ONE)
+    }
+}
+
+extension BFraction: @retroactive ExpressibleByIntegerLiteral {
+    public init(integerLiteral value: Int) {
+        self = .init(.init(value))
+    }
+}
+
+extension BFraction {
     public struct Extension {
         private let fraction: BFraction
         fileprivate init(fraction: BFraction) {
