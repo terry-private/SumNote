@@ -27,10 +27,6 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.branch.name=${{ github.head_ref || github.ref_name }}
 
-      - name: Get Changed Files
-        id: changed-files
-        uses: tj-actions/changed-files@v41
-        
       - name: Generate and post detailed metrics comment
         if: github.event_name == 'pull_request'
         env:
@@ -45,9 +41,6 @@ jobs:
           # メトリクスの定義
           METRICS="complexity,cognitive_complexity,function_complexity,duplicated_lines_density"
           
-          # 変更されたファイルの配列を作成
-          CHANGED_FILES=(${{ steps.changed-files.outputs.all_changed_files }})
-          
           # コメント用の変数を初期化
           COMMENT="## SonarCloud File-level Complexity Metrics\n\n"
           
@@ -55,21 +48,45 @@ jobs:
           TOTAL_COMPLEXITY_DIFF=0
           TOTAL_COG_COMPLEXITY_DIFF=0
           
-          # 各変更ファイルに対してループ
-          for file in "${CHANGED_FILES[@]}"; do
-            # ファイルパスをSonarCloudのキー形式に変換
-            SONAR_FILE_KEY="${PROJECT_KEY}:${file}"
+          # component_treeで変更されたファイルを取得
+          CHANGED_FILES_JSON=$(curl -s -f -u "${SONAR_TOKEN}:" \
+            "https://sonarcloud.io/api/measures/component_tree?branch=${CURRENT_BRANCH}&qualifiers=FIL&component=${PROJECT_KEY}&metricKeys=${METRICS}")
+          
+          # コンポーネントの数を取得
+          COMPONENT_COUNT=$(echo "${CHANGED_FILES_JSON}" | jq '.components | length')
+          
+          echo "Found ${COMPONENT_COUNT} components"
+          
+          # 各コンポーネントに対してループ
+          for ((i=0; i<COMPONENT_COUNT; i++)); do
+            # コンポーネントの詳細を取得
+            COMPONENT=$(echo "${CHANGED_FILES_JSON}" | jq ".components[${i}]")
+            FILE_KEY=$(echo "${COMPONENT}" | jq -r '.key')
+            FILE_PATH=$(echo "${COMPONENT}" | jq -r '.path')
+            
+            # デバッグ用: ファイル情報を表示
+            echo "Processing file: ${FILE_PATH}"
             
             # 現在のブランチのファイルメトリクスを取得
-            CURRENT_FILE_METRICS=$(curl -s -u "${SONAR_TOKEN}:" \
-              "https://sonarcloud.io/api/measures/component?branch=${CURRENT_BRANCH}&component=${SONAR_FILE_KEY}&metricKeys=${METRICS}")
+            CURRENT_FILE_METRICS=$(curl -s -f -u "${SONAR_TOKEN}:" \
+              "https://sonarcloud.io/api/measures/component?branch=${CURRENT_BRANCH}&component=${FILE_KEY}&metricKeys=${METRICS}")
             
             # ターゲットブランチのファイルメトリクスを取得
-            TARGET_FILE_METRICS=$(curl -s -u "${SONAR_TOKEN}:" \
-              "https://sonarcloud.io/api/measures/component?branch=${BASE_BRANCH}&component=${SONAR_FILE_KEY}&metricKeys=${METRICS}")
+            TARGET_FILE_METRICS=$(curl -s -f -u "${SONAR_TOKEN}:" \
+              "https://sonarcloud.io/api/measures/component?branch=${BASE_BRANCH}&component=${FILE_KEY}&metricKeys=${METRICS}")
+            
+            # メトリクスが存在するかチェック
+            if [[ -z "$CURRENT_FILE_METRICS" ]] || [[ -z "$TARGET_FILE_METRICS" ]]; then
+              echo "Metrics not found for file: ${FILE_PATH}"
+              continue
+            fi
+
+            COMPLEXITY_CURRENT_ORIGIN=$(echo "${COMPONENT}" | jq -r '.measures[] | select(.metric == "complexity") | .value // "0"')
+            echo "COMPLEXITY_CURRENT_ORIGIN: ${COMPLEXITY_CURRENT_ORIGIN}"
             
             # 各メトリクスの差分を計算
             COMPLEXITY_CURRENT=$(echo "${CURRENT_FILE_METRICS}" | jq -r '.component.measures[] | select(.metric == "complexity") | .value // "0"')
+            echo "COMPLEXITY_CURRENT: ${COMPLEXITY_CURRENT}"
             COMPLEXITY_TARGET=$(echo "${TARGET_FILE_METRICS}" | jq -r '.component.measures[] | select(.metric == "complexity") | .value // "0"')
             COMPLEXITY_DIFF=$((COMPLEXITY_CURRENT - COMPLEXITY_TARGET))
             
@@ -82,7 +99,7 @@ jobs:
             TOTAL_COG_COMPLEXITY_DIFF=$((TOTAL_COG_COMPLEXITY_DIFF + COG_COMPLEXITY_DIFF))
             
             # コメントに追加
-            COMMENT+="### File: \`${file}\`\n"
+            COMMENT+="### File: \`${FILE_PATH}\`\n"
             COMMENT+="- Cyclomatic Complexity: Current: \`${COMPLEXITY_CURRENT}\`, Target: \`${COMPLEXITY_TARGET}\`, Difference: \`${COMPLEXITY_DIFF}\`\n"
             COMMENT+="- Cognitive Complexity: Current: \`${COG_COMPLEXITY_CURRENT}\`, Target: \`${COG_COMPLEXITY_TARGET}\`, Difference: \`${COG_COMPLEXITY_DIFF}\`\n\n"
           done
@@ -94,6 +111,9 @@ jobs:
           
           # コメントをファイルに保存
           echo -e "$COMMENT" > comment.txt
+          
+          # デバッグ用: 生成されたコメントを表示
+          cat comment.txt
 
       - name: Post comment
         if: github.event_name == 'pull_request'
