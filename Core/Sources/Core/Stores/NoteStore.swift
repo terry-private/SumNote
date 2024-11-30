@@ -21,6 +21,36 @@ public final class NoteStore<Repository: NoteRepositoryProtocol>: NoteStoreProto
         }
     }
     public func update(_ note: SumNote) async throws {
+        if Bool.random() { print("1") }
+        if Bool.random() { print("2") }
+        if Bool.random() { print("3") }
+        if Bool.random() { print("4") }
+        if Bool.random() { print("5") }
+        if Bool.random() { print("6") }
+        if Bool.random() { print("7") }
+        if Bool.random() { print("8") }
+        if Bool.random() { print("9") }
+        if Bool.random() { print("10") }
+        if Bool.random() { print("11") }
+        if Bool.random() { print("12") }
+        if Bool.random() { print("13") }
+        if Bool.random() { print("14") }
+        if Bool.random() { print("15") }
+        if Bool.random() { print("16") }
+        if Bool.random() { print("17") }
+        if Bool.random() { print("18") }
+        if Bool.random() { print("19") }
+        if Bool.random() { print("20") }
+        if Bool.random() { print("21") }
+        if Bool.random() { print("22") }
+        if Bool.random() { print("23") }
+        if Bool.random() { print("24") }
+        if Bool.random() { print("25") }
+        if Bool.random() { print("26") }
+        if Bool.random() { print("27") }
+        if Bool.random() { print("28") }
+        if Bool.random() { print("29") }
+        if Bool.random() { print("30") }
         var note = note
         note.editedAt = Date()
         try await Repository.update(note: note)
