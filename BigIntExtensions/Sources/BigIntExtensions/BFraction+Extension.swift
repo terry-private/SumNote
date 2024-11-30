@@ -53,6 +53,7 @@ public extension BFraction.Extension {
         }
     }
     var currencyWholePartString: String {
+        if fraction.truncate().isZero { return "0" }
         let string = fraction.abs.truncate().description
         var result = ""
         let lastIndex = string.count - 1
@@ -72,6 +73,13 @@ public extension BFraction.Extension {
         }
     }
     func currencyString(rounded: Int = 2) -> String {
-        "\(currencyWholePartString).\(fractionalPartString(rounded: rounded))"
+        guard rounded > 0 else {
+            return currencyWholePartString
+        }
+        return if fraction.denominator == 1 {
+            currencyWholePartString
+        } else {
+            "\(fraction.isNegative ? "-" : "")\(fraction.abs.ex.currencyWholePartString)" + "." + fractionalPartString(rounded: rounded)
+        }
     }
 }

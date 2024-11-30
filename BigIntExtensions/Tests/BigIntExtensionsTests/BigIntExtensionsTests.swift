@@ -78,9 +78,10 @@ struct BfractionExtensionsTests {
     }
     @Test("currencyWholePart 符号が付く ３けた区切りは有り", arguments: [
         (BFraction(1_000_000, 3), "333,333"),
-        (BFraction(-1, 3), "-0"),
+        (BFraction(-1, 3), "0"),
         (BFraction(-0, 3), "0"),
-        (BFraction(100_000, 1), "100,000")
+        (BFraction(-100, 1), "-100"),
+        (BFraction(-1000, 1), "-1,000")
     ])
     func currencyWholePartPartTests(arg: (BFraction, String)) {
         #expect(arg.0.ex.currencyWholePartString == arg.1)
@@ -94,5 +95,17 @@ struct BfractionExtensionsTests {
     ])
     func decimalString_max2(arg: (BFraction, String)) {
         #expect(arg.0.ex.decimalString(max: 2) == arg.1)
+    }
+
+    @Test("decimalString 符号が付く ３けた区切りはあり", arguments: [
+        (BFraction(1_000, 3), "333.33"), // roundedは小数点以下のみ
+        (BFraction(-1, 3), "-0.33"), // マイナス記号がちゃんとつく
+        (BFraction(-0, 3), "0"), // 0の時は0のみ
+        (BFraction(100_000, 1), "100,000"), // 3桁区切りあり
+        (BFraction("10000.100")!, "10,000.1"), // 3桁区切りあり, rounded以上の桁に0以外がないなら0を省略
+        (BFraction("10000.101")!, "10,000.10") // 3桁区切りあり, rounded以上の桁に0以外があるなら0を省略しない
+    ])
+    func currencyString_rounded2(arg: (BFraction, String)) {
+        #expect(arg.0.ex.currencyString(rounded: 2) == arg.1)
     }
 }
