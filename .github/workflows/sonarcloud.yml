@@ -36,33 +36,40 @@ jobs:
           CURRENT_BRANCH: ${{ github.head_ref }}
           BASE_BRANCH: ${{ github.base_ref }}
         run: |
-          # 現在のPull Requestのメトリクスを取得
-          CURRENT_METRICS=$(curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/measures/component?component=${PROJECT_KEY}&metricKeys=complexity,cognitive_complexity&branch=${CURRENT_BRANCH}")
-          echo "Current Metrics Response: $CURRENT_METRICS"
+          # 変更のあったファイルのメトリクスを取得
+          CURRENT_FILES=$(curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/measures/component_tree?component=${PROJECT_KEY}&branch=${CURRENT_BRANCH}&qualifiers=FIL&metricKeys=complexity,cognitive_complexity,function_complexity,duplicated_lines_density,lines" | jq -r '.components[]')
           
-          # ターゲットブランチ（通常はmain）のメトリクスを取得
-          TARGET_METRICS=$(curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/measures/component?component=${PROJECT_KEY}&metricKeys=complexity,cognitive_complexity&branch=${BASE_BRANCH}" | jq -r '.component.measures')
-          
+          # ターゲットブランチのファイルメトリクスを取得
+          TARGET_FILES=$(curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/measures/component_tree?component=${PROJECT_KEY}&branch=${BASE_BRANCH}&qualifiers=FIL&metricKeys=complexity,cognitive_complexity,function_complexity,duplicated_lines_density,lines" | jq -r '.components[]')
+
+          # 初期化
+          CYCLO_DIFF=0
+          COG_DIFF=0
+
           # 差分を計算
-          CYCLO_CURRENT=$(echo $CURRENT_METRICS | jq -r '.[] | select(.metric == "complexity") | .value')
-          CYCLO_TARGET=$(echo $TARGET_METRICS | jq -r '.[] | select(.metric == "complexity") | .value')
-          CYCLO_DIFF=$((CYCLO_CURRENT - CYCLO_TARGET))
-          
-          COG_CURRENT=$(echo $CURRENT_METRICS | jq -r '.[] | select(.metric == "cognitive_complexity") | .value')
-          COG_TARGET=$(echo $TARGET_METRICS | jq -r '.[] | select(.metric == "cognitive_complexity") | .value')
-          COG_DIFF=$((COG_CURRENT - COG_TARGET))
-          
+          for FILE in $(echo "$CURRENT_FILES" | jq -r '.key'); do
+            # 現在のブランチのファイルメトリクス
+            CURRENT_METRICS=$(echo "$CURRENT_FILES" | jq -r "select(.key == \"$FILE\") | .measures | from_entries")
+            CURRENT_CYCLO=$(echo "$CURRENT_METRICS" | jq -r '.complexity // 0')
+            CURRENT_COG=$(echo "$CURRENT_METRICS" | jq -r '.cognitive_complexity // 0')
+
+            # マージ先ブランチのファイルメトリクス
+            TARGET_METRICS=$(echo "$TARGET_FILES" | jq -r "select(.key == \"$FILE\") | .measures | from_entries")
+            TARGET_CYCLO=$(echo "$TARGET_METRICS" | jq -r '.complexity // 0')
+            TARGET_COG=$(echo "$TARGET_METRICS" | jq -r '.cognitive_complexity // 0')
+
+            # 差分を加算
+            CYCLO_DIFF=$((CYCLO_DIFF + CURRENT_CYCLO - TARGET_CYCLO))
+            COG_DIFF=$((COG_DIFF + CURRENT_COG - TARGET_COG))
+          done
+
           # コメントを生成
           COMMENT="## SonarCloud Complexity Metrics
 
           ### Cyclomatic Complexity
-          - Current: $CYCLO_CURRENT
-          - Target: $CYCLO_TARGET
           - Difference: $CYCLO_DIFF
 
           ### Cognitive Complexity
-          - Current: $COG_CURRENT
-          - Target: $COG_TARGET
           - Difference: $COG_DIFF"
           
           echo "$COMMENT" > comment.txt
