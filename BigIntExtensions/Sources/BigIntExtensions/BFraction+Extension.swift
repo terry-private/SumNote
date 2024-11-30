@@ -53,6 +53,7 @@ public extension BFraction.Extension {
         }
     }
     var currencyWholePartString: String {
+        if fraction.truncate().isZero { return "0" }
         let string = fraction.abs.truncate().description
         var result = ""
         let lastIndex = string.count - 1

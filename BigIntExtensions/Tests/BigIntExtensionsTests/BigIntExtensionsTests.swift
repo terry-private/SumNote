@@ -78,9 +78,10 @@ struct BfractionExtensionsTests {
     }
     @Test("currencyWholePart 符号が付く ３けた区切りは有り", arguments: [
         (BFraction(1_000_000, 3), "333,333"),
-        (BFraction(-1, 3), "-0"),
+        (BFraction(-1, 3), "0"),
         (BFraction(-0, 3), "0"),
-        (BFraction(100_000, 1), "100,000")
+        (BFraction(-100, 1), "-100"),
+        (BFraction(-1000, 1), "-1,000")
     ])
     func currencyWholePartPartTests(arg: (BFraction, String)) {
         #expect(arg.0.ex.currencyWholePartString == arg.1)
