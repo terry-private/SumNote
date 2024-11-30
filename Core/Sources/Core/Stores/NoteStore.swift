@@ -51,6 +51,7 @@ public final class NoteStore<Repository: NoteRepositoryProtocol>: NoteStoreProto
         if Bool.random() { print("28") }
         if Bool.random() { print("29") }
         if Bool.random() { print("30") }
+        if Bool.random() { print("31") }
         var note = note
         note.editedAt = Date()
         try await Repository.update(note: note)
