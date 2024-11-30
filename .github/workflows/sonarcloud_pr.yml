@@ -88,7 +88,7 @@ jobs:
           echo "Found ${COMPONENT_COUNT} components"
 
           # マークダウンテーブルのヘッダー
-          COMMENT+="| ファイル | 循環的複雑度 | 認知的複雑度 | コード行数 |\n"
+          COMMENT+="| ファイル | 循環的<br>複雑度 | 認知的<br>複雑度 | コード行数 |\n"
           COMMENT+="|:-----|:-------------|:-------------|:------------|\n"
 
           # 各コンポーネントの処理
@@ -138,7 +138,7 @@ jobs:
           # 総合的な変更セクション
           COMMENT+="\n## 📊 プロジェクト全体の変化\n\n"
           COMMENT+="| メトリクス | 傾向 |\n"
-          COMMENT+="|:-------|:---------|:------|\n"
+          COMMENT+="|:-------|:---------|\n"
           
           # 循環的複雑度の概要
           COMPLEXITY_SUMMARY_TREND=$(get_trend_indicator $TOTAL_COMPLEXITY_DIFF 0)
