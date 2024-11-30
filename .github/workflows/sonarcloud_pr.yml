@@ -2,14 +2,20 @@ name: SonarCloud Analysis on pr
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  issues: write
+
 jobs:
   sonarcloud:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: SonarCloud Scan
+
+    - name: Branch Scan
       uses: SonarSource/sonarcloud-github-action@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -20,3 +26,163 @@ jobs:
           -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
           -Dsonar.sources=.
           -Dsonar.branch.name=${{ github.head_ref || github.ref_name }}
+
+    - name: PR Scan
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+          -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+          -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+          -Dsonar.sources=.
+          -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+          -Dsonar.pullrequest.branch=${{ github.head_ref }}
+          -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
+
+    - name: Generate and post detailed metrics comment
+      if: github.event_name == 'pull_request'
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+        CURRENT_BRANCH: ${{ github.head_ref }}
+        BASE_BRANCH: ${{ github.base_ref }}
+      run: |
+        #!/bin/bash
+        set -e
+
+        # メトリクスの定義
+        METRICS="complexity,cognitive_complexity,lines"
+        
+        # コメントの初期化
+        COMMENT="## 🔍 SonarCloudコード複雑性分析\n\n"
+        
+        # 差分トラッカーの初期化
+        TOTAL_COMPLEXITY_DIFF=0
+        TOTAL_COG_COMPLEXITY_DIFF=0
+        TOTAL_LINES_DIFF=0
+        
+        # トレンド表示関数
+        get_trend_indicator() {
+          local current=$1
+          local target=$2
+          local diff=$((current - target))
+          
+          if [[ $diff -gt 0 ]]; then
+            echo "📈 +$diff"
+          elif [[ $diff -lt 0 ]]; then
+            echo "📉 $diff"
+          else
+            echo "➡️ 0"
+          fi
+        }
+        
+        # URLエンコード関数
+        urlencode() {
+          local raw="$1"
+          local encoded=""
+          for ((i=0; i<${#raw}; i++)); do
+            local c="${raw:i:1}"
+            case "$c" in
+              [a-zA-Z0-9._~-]) encoded+="$c" ;;
+              *) encoded+=$(printf '%%%02X' "'$c") ;;
+            esac
+          done
+          echo "$encoded"
+        }
+
+        # 変更されたファイルの取得
+        CHANGED_FILES_JSON=$(curl -s -f -u "${SONAR_TOKEN}:" \
+          "https://sonarcloud.io/api/measures/component_tree?branch=${CURRENT_BRANCH}&qualifiers=FIL&component=${PROJECT_KEY}&metricKeys=${METRICS}")
+        
+        # コンポーネント数の取得
+        COMPONENT_COUNT=$(echo "${CHANGED_FILES_JSON}" | jq '.components | length')
+        
+        echo "Found ${COMPONENT_COUNT} components"
+
+        # マークダウンテーブルのヘッダー
+        COMMENT+="| ファイル | 循環的<br>複雑度 | 認知的<br>複雑度 | コード行数 |\n"
+        COMMENT+="|:-----|:-------------|:-------------|:------------|\n"
+
+        # 各コンポーネントの処理
+        for ((i=0; i<COMPONENT_COUNT; i++)); do
+          # コンポーネントの詳細取得
+          COMPONENT=$(echo "${CHANGED_FILES_JSON}" | jq ".components[${i}]")
+          FILE_KEY=$(urlencode $(echo "${COMPONENT}" | jq -r '.key'))
+          FILE_PATH=$(echo "${COMPONENT}" | jq -r '.path')
+          
+          # コンポーネントから直接メトリクスを取得
+          COMPLEXITY_CURRENT=$(echo "${COMPONENT}" | jq -r '.measures[] | select(.metric == "complexity") | .value // "0"')
+          COG_COMPLEXITY_CURRENT=$(echo "${COMPONENT}" | jq -r '.measures[] | select(.metric == "cognitive_complexity") | .value // "0"')
+          LINES_CURRENT=$(echo "${COMPONENT}" | jq -r '.measures[] | select(.metric == "lines") | .value // "0"')
+          
+          # ターゲットブランチのメトリクス取得
+          TARGET_FILE_METRICS=$(curl -s -f -u "${SONAR_TOKEN}:" \
+            "https://sonarcloud.io/api/measures/component?branch=${BASE_BRANCH}&component=${FILE_KEY}&metricKeys=${METRICS}")
+          
+          # メトリクスが見つからない場合はスキップ
+          if [[ -z "$TARGET_FILE_METRICS" ]]; then
+            continue
+          fi
+          
+          # ターゲットブランチの複雑性メトリクスの計算
+          COMPLEXITY_TARGET=$(echo "${TARGET_FILE_METRICS}" | jq -r '.component.measures[] | select(.metric == "complexity") | .value // "0"')
+          COG_COMPLEXITY_TARGET=$(echo "${TARGET_FILE_METRICS}" | jq -r '.component.measures[] | select(.metric == "cognitive_complexity") | .value // "0"')
+          LINES_TARGET=$(echo "${TARGET_FILE_METRICS}" | jq -r '.component.measures[] | select(.metric == "lines") | .value // "0"')
+          
+          COMPLEXITY_DIFF=$((COMPLEXITY_CURRENT - COMPLEXITY_TARGET))
+          COG_COMPLEXITY_DIFF=$((COG_COMPLEXITY_CURRENT - COG_COMPLEXITY_TARGET))
+          LINES_DIFF=$((LINES_CURRENT - LINES_TARGET))
+          
+          # 総合的な差分の更新
+          TOTAL_COMPLEXITY_DIFF=$((TOTAL_COMPLEXITY_DIFF + COMPLEXITY_DIFF))
+          TOTAL_COG_COMPLEXITY_DIFF=$((TOTAL_COG_COMPLEXITY_DIFF + COG_COMPLEXITY_DIFF))
+          TOTAL_LINES_DIFF=$((TOTAL_LINES_DIFF + LINES_DIFF))
+          
+          # トレンドインジケーターの取得
+          COMPLEXITY_TREND=$(get_trend_indicator $COMPLEXITY_CURRENT $COMPLEXITY_TARGET)
+          COG_COMPLEXITY_TREND=$(get_trend_indicator $COG_COMPLEXITY_CURRENT $COG_COMPLEXITY_TARGET)
+          LINES_TREND=$(get_trend_indicator $LINES_CURRENT $LINES_TARGET)
+          
+          # マークダウンテーブルに追加
+          COMMENT+="| \`${FILE_PATH}\` | ${COMPLEXITY_TARGET} → ${COMPLEXITY_CURRENT} ${COMPLEXITY_TREND} | ${COG_COMPLEXITY_TARGET} → ${COG_COMPLEXITY_CURRENT} ${COG_COMPLEXITY_TREND} | ${LINES_TARGET} → ${LINES_CURRENT} ${LINES_TREND} |\n"
+        done
+        
+        # 総合的な変更セクション
+        COMMENT+="\n## 📊 プロジェクト全体の変化\n\n"
+        COMMENT+="| メトリクス | 傾向 |\n"
+        COMMENT+="|:-------|:---------|\n"
+        
+        # 循環的複雑度の概要
+        COMPLEXITY_SUMMARY_TREND=$(get_trend_indicator $TOTAL_COMPLEXITY_DIFF 0)
+        COMMENT+="| 循環的複雑度 | ${COMPLEXITY_SUMMARY_TREND} |\n"
+        
+        # 認知的複雑度の概要
+        COG_COMPLEXITY_SUMMARY_TREND=$(get_trend_indicator $TOTAL_COG_COMPLEXITY_DIFF 0)
+        COMMENT+="| 認知的複雑度 | ${COG_COMPLEXITY_SUMMARY_TREND} |\n"
+        
+        # コード行数の概要
+        LINES_SUMMARY_TREND=$(get_trend_indicator $TOTAL_LINES_DIFF 0)
+        COMMENT+="| コード行数 | ${LINES_SUMMARY_TREND} |\n"
+        
+        # コメントをファイルに保存
+        echo -e "$COMMENT" > comment.txt
+        
+        # デバッグ用: 生成されたコメントを表示
+        cat comment.txt
+
+    - name: Post comment
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          const comment = fs.readFileSync('comment.txt', 'utf8');
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: comment
+          });
