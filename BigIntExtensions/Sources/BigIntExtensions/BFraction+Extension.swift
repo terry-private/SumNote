@@ -54,24 +54,6 @@ public extension BFraction.Extension {
     }
     var currencyWholePartString: String {
         let string = fraction.abs.truncate().description
-        if string.isEmpty {
-            print("empty")
-            if string.isEmpty {
-                print("empty2")
-            } else {
-                if fraction.truncate().isZero {
-                    print("empty2")
-                } else {
-                    print("no empty2")
-                }
-            }
-        } else {
-            if fraction.truncate().isZero {
-                print("empty")
-            } else {
-                print("no empty")
-            }
-        }
         var result = ""
         let lastIndex = string.count - 1
         for (index, char) in string.enumerated() {
