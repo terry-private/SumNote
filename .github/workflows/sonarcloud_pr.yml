@@ -55,9 +55,9 @@ jobs:
             local diff=$((current - target))
             
             if [[ $diff -gt 0 ]]; then
-              echo "↗️ +$diff"
+              echo "📈 +$diff"
             elif [[ $diff -lt 0 ]]; then
-              echo "↘️ $diff"
+              echo "📉 $diff"
             else
               echo "➡️ 0"
             fi
@@ -131,16 +131,16 @@ jobs:
           
           # 総合的な変更セクション
           COMMENT+="\n## 📊 プロジェクト全体の複雑性変化\n\n"
-          COMMENT+="| メトリクス | 総変化量 | 傾向 |\n"
-          COMMENT+="|:-------|:---------|:------|\n"
+          COMMENT+="| メトリクス | 総変化量 |\n"
+          COMMENT+="|:-------|:---------|\n"
           
           # 循環的複雑度の概要
           COMPLEXITY_SUMMARY_TREND=$(get_trend_indicator $TOTAL_COMPLEXITY_DIFF 0)
-          COMMENT+="| 循環的複雑度 | \`${TOTAL_COMPLEXITY_DIFF}\` | ${COMPLEXITY_SUMMARY_TREND} |\n"
+          COMMENT+="| 循環的複雑度 | ${COMPLEXITY_SUMMARY_TREND} |\n"
           
           # 認知的複雑度の概要
           COG_COMPLEXITY_SUMMARY_TREND=$(get_trend_indicator $TOTAL_COG_COMPLEXITY_DIFF 0)
-          COMMENT+="| 認知的複雑度 | \`${TOTAL_COG_COMPLEXITY_DIFF}\` | ${COG_COMPLEXITY_SUMMARY_TREND} |\n"
+          COMMENT+="| 認知的複雑度 | ${COG_COMPLEXITY_SUMMARY_TREND} |\n"
           
           # コメントをファイルに保存
           echo -e "$COMMENT" > comment.txt
