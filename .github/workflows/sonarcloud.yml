@@ -19,4 +19,4 @@ jobs:
           -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
           -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
           -Dsonar.sources=.
-          -Dsonar.branch.name=${{ github.ref_name }}
+          -Dsonar.branch.name=${{ github.head_ref }}
