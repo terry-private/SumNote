@@ -39,7 +39,7 @@ jobs:
           set -e
 
           # メトリクスの定義
-          METRICS="complexity,cognitive_complexity,function_complexity,duplicated_lines_density"
+          METRICS="complexity,cognitive_complexity,lines"
           
           # コメントの初期化
           COMMENT="## 🔍 SonarCloudコード複雑性分析\n\n"
@@ -47,6 +47,7 @@ jobs:
           # 差分トラッカーの初期化
           TOTAL_COMPLEXITY_DIFF=0
           TOTAL_COG_COMPLEXITY_DIFF=0
+          TOTAL_LINES_DIFF=0
           
           # トレンド表示関数
           get_trend_indicator() {
@@ -87,8 +88,8 @@ jobs:
           echo "Found ${COMPONENT_COUNT} components"
 
           # マークダウンテーブルのヘッダー
-          COMMENT+="| ファイル | 循環的複雑度 | 認知的複雑度 |\n"
-          COMMENT+="|:-----|:-------------|:-------------|\n"
+          COMMENT+="| ファイル | 循環的複雑度 | 認知的複雑度 | コード行数 |\n"
+          COMMENT+="|:-----|:-------------|:-------------|:------------|\n"
 
           # 各コンポーネントの処理
           for ((i=0; i<COMPONENT_COUNT; i++)); do
@@ -100,6 +101,7 @@ jobs:
             # コンポーネントから直接メトリクスを取得
             COMPLEXITY_CURRENT=$(echo "${COMPONENT}" | jq -r '.measures[] | select(.metric == "complexity") | .value // "0"')
             COG_COMPLEXITY_CURRENT=$(echo "${COMPONENT}" | jq -r '.measures[] | select(.metric == "cognitive_complexity") | .value // "0"')
+            LINES_CURRENT=$(echo "${COMPONENT}" | jq -r '.measures[] | select(.metric == "lines") | .value // "0"')
             
             # ターゲットブランチのメトリクス取得
             TARGET_FILE_METRICS=$(curl -s -f -u "${SONAR_TOKEN}:" \
@@ -113,26 +115,30 @@ jobs:
             # ターゲットブランチの複雑性メトリクスの計算
             COMPLEXITY_TARGET=$(echo "${TARGET_FILE_METRICS}" | jq -r '.component.measures[] | select(.metric == "complexity") | .value // "0"')
             COG_COMPLEXITY_TARGET=$(echo "${TARGET_FILE_METRICS}" | jq -r '.component.measures[] | select(.metric == "cognitive_complexity") | .value // "0"')
+            LINES_TARGET=$(echo "${TARGET_FILE_METRICS}" | jq -r '.component.measures[] | select(.metric == "lines") | .value // "0"')
             
             COMPLEXITY_DIFF=$((COMPLEXITY_CURRENT - COMPLEXITY_TARGET))
             COG_COMPLEXITY_DIFF=$((COG_COMPLEXITY_CURRENT - COG_COMPLEXITY_TARGET))
+            LINES_DIFF=$((LINES_CURRENT - LINES_TARGET))
             
             # 総合的な差分の更新
             TOTAL_COMPLEXITY_DIFF=$((TOTAL_COMPLEXITY_DIFF + COMPLEXITY_DIFF))
             TOTAL_COG_COMPLEXITY_DIFF=$((TOTAL_COG_COMPLEXITY_DIFF + COG_COMPLEXITY_DIFF))
+            TOTAL_LINES_DIFF=$((TOTAL_LINES_DIFF + LINES_DIFF))
             
             # トレンドインジケーターの取得
             COMPLEXITY_TREND=$(get_trend_indicator $COMPLEXITY_CURRENT $COMPLEXITY_TARGET)
             COG_COMPLEXITY_TREND=$(get_trend_indicator $COG_COMPLEXITY_CURRENT $COG_COMPLEXITY_TARGET)
+            LINES_TREND=$(get_trend_indicator $LINES_CURRENT $LINES_TARGET)
             
             # マークダウンテーブルに追加
-            COMMENT+="| \`${FILE_PATH}\` | ${COMPLEXITY_TARGET} → ${COMPLEXITY_CURRENT} ${COMPLEXITY_TREND} | ${COG_COMPLEXITY_TARGET} → ${COG_COMPLEXITY_CURRENT} ${COG_COMPLEXITY_TREND} |\n"
+            COMMENT+="| \`${FILE_PATH}\` | ${COMPLEXITY_TARGET} → ${COMPLEXITY_CURRENT} ${COMPLEXITY_TREND} | ${COG_COMPLEXITY_TARGET} → ${COG_COMPLEXITY_CURRENT} ${COG_COMPLEXITY_TREND} | ${LINES_TARGET} → ${LINES_CURRENT} ${LINES_TREND} |\n"
           done
           
           # 総合的な変更セクション
-          COMMENT+="\n## 📊 プロジェクト全体の複雑性変化\n\n"
-          COMMENT+="| メトリクス | 総変化量 |\n"
-          COMMENT+="|:-------|:---------|\n"
+          COMMENT+="\n## 📊 プロジェクト全体の変化\n\n"
+          COMMENT+="| メトリクス | 傾向 |\n"
+          COMMENT+="|:-------|:---------|:------|\n"
           
           # 循環的複雑度の概要
           COMPLEXITY_SUMMARY_TREND=$(get_trend_indicator $TOTAL_COMPLEXITY_DIFF 0)
@@ -141,6 +147,10 @@ jobs:
           # 認知的複雑度の概要
           COG_COMPLEXITY_SUMMARY_TREND=$(get_trend_indicator $TOTAL_COG_COMPLEXITY_DIFF 0)
           COMMENT+="| 認知的複雑度 | ${COG_COMPLEXITY_SUMMARY_TREND} |\n"
+          
+          # コード行数の概要
+          LINES_SUMMARY_TREND=$(get_trend_indicator $TOTAL_LINES_DIFF 0)
+          COMMENT+="| コード行数 | ${LINES_SUMMARY_TREND} |\n"
           
           # コメントをファイルに保存
           echo -e "$COMMENT" > comment.txt
