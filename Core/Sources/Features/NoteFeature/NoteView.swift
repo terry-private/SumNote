@@ -34,13 +34,14 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                 List {
                     groups()
                 }
-                .listStyle(.insetGrouped)
+                .listStyle(.plain)
                 .onChange(of: addedTableID) {
                     guard let addedTableID else { return }
                     withAnimation {
                         scrollProxy.scrollTo(addedTableID)
                     }
                 }
+                .background(Color(uiColor: .secondarySystemBackground))
             }
             // MARK: - 総計 -
             HStack {
@@ -54,7 +55,7 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                 Spacer()
             }
             .ignoresSafeArea()
-            .background(.ultraThinMaterial)
+            .background(Color(uiColor: .systemBackground))
         }
         // MARK: - Alert -
         .alert(editNameAlert?.title ?? "", isPresented: Binding(get: { editNameAlert != nil}, set: { if !$0 { editNameAlert = nil }})) {
@@ -213,7 +214,8 @@ extension NoteView {
             Text("円")
                 .font(.caption)
         }
-        .foregroundStyle(Color.primary)
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
     }
     
     // MARK: - table row -
