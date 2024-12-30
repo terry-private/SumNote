@@ -31,22 +31,14 @@ public struct CalculatorInputView: View {
                     Button {
                         state.add1()
                     } label: {
-                        Capsule()
-                            .overlay {
-                                Text("+1")
-                                    .foregroundStyle(.white)
-                            }
-                            .frame(width: 44)
+                        Image(systemName: "chevron.up")
+                            .padding()
                     }
                     Button {
                         state.subtract1()
                     } label: {
-                        Capsule()
-                            .overlay {
-                                Text("-1")
-                                    .foregroundStyle(.white)
-                            }
-                            .frame(width: 44)
+                        Image(systemName: "chevron.down")
+                            .padding()
                     }
                 }
                 .padding(.top, 5)
