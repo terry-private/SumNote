@@ -24,7 +24,10 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
     @State var editNameAlert: EditAlert<String>?
     @State var editNameAlertText: String = ""
     @State var addedTableID: SumGroup.ID?
+    @State var addedItemID: SumItem.ID?
     @State var editFractionState: EditFractionState?
+    @State var showDetails: Set<SumItem.ID> = []
+    @Namespace private var animationNameSpace
     public init(note: SumNote) {
         _note = .init(wrappedValue: note)
     }
@@ -33,7 +36,9 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
             ScrollViewReader { scrollProxy in
                 List {
                     groups()
+//                        .listRowBackground(Color(uiColor: .systemFill))
                 }
+//                .listRowSpacing(-5)
                 .listStyle(.plain)
                 .onChange(of: addedTableID) {
                     guard let addedTableID else { return }
@@ -41,21 +46,26 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                         scrollProxy.scrollTo(addedTableID)
                     }
                 }
-                .background(Color(uiColor: .secondarySystemBackground))
+                .onChange(of: addedItemID) {
+                    guard let addedItemID else { return }
+                    withAnimation {
+                        scrollProxy.scrollTo(addedItemID)
+                    }
+                }
             }
             // MARK: - 総計 -
             HStack {
                 Spacer()
-                HStack {
-                    Text("総計:")
-                    BFractionText(fraction: note.sum)
+                HStack(alignment: .lastTextBaseline) {
+                    Text("総計")
+                        .foregroundStyle(.secondary)
+                    BFractionText(fraction: note.sum, textStyle: .title3)
                     Text("円")
                 }
                 .padding()
                 Spacer()
             }
             .ignoresSafeArea()
-            .background(Color(uiColor: .systemBackground))
         }
         // MARK: - Alert -
         .alert(editNameAlert?.title ?? "", isPresented: Binding(get: { editNameAlert != nil}, set: { if !$0 { editNameAlert = nil }})) {
@@ -89,22 +99,21 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                 }
             } else {
                 Menu {
-                    Button("表編集") {
+                    Button("ノート名を編集", systemImage: "square.and.pencil") {
+                        setAlert(title: "表題を編集", binding: $note.name)
+                    }
+                    Button("グループ編集モード") {
                         withAnimation {
                             editMode?.wrappedValue = .active
                         }
                     }
-                    Button("ノート名を編集", systemImage: "square.and.pencil") {
-                        setAlert(title: "表題を編集", binding: $note.name)
-                    }
-                    Button("空の表を追加", systemImage: "note.text.badge.plus") {
+                    Button("空のグループを追加", systemImage: "note.text.badge.plus") {
                         withAnimation {
-                            let newTable = SumGroup(name: "表", items: [.init(name: "品名", unitPrice: .ZERO, quantity: .ONE, unitName: "個")])
+                            let newTable = SumGroup(name: "グループ\(note.groups.count+1)", items: [.init(name: "アイテム", unitPrice: 0, quantity: 0, unitName: "個")])
                             note.groups.append(newTable)
                             addedTableID = newTable.id
                         }
                     }
-
                     Button("テキストコピー", systemImage: "pencil") {
                         UIPasteboard.general.string = note.description()
                     }
@@ -147,10 +156,11 @@ extension NoteView {
                             .font(.headline)
                         Spacer()
                     }
-                    footer(table: $table)
+//                    footer(table: $table)
                 }
+                .listRowSeparator(.hidden)
             } else {
-                Section(header: header(table: $table), footer: footer(table: $table)) {
+                Section(header: header(table: $table)) {
                     ForEach($table.items) { $row in
                         tableRow(tableName: table.name, $row)
                     }
@@ -161,6 +171,7 @@ extension NoteView {
                         table.items.remove(atOffsets: indexSet)
                     }
                 }
+                .listRowSeparator(.hidden)
             }
         }
         .onMove { indexSet, index in
@@ -174,9 +185,27 @@ extension NoteView {
     // MARK: - header footer -
     @ViewBuilder
     func header(table: Binding<SumGroup>) -> some View {
-        HStack {
+        HStack(alignment: .lastTextBaseline) {
             Menu {
-                Button("表題を編集", systemImage: "square.and.pencil") {
+                Button("空のアイテムを追加", systemImage: "square.badge.plus") {
+                    withAnimation {
+                        let item: SumItem = .init(name: "品名", unitPrice: .ZERO, quantity: .ONE, unitName: "個")
+                        table.wrappedValue.items.append(item)
+                        addedItemID = item.id
+                    }
+                }
+                Button("テンプレートから追加", systemImage: "macwindow.badge.plus") {
+
+                }
+            } label: {
+                Image(systemName: "plus")
+                    .padding(15) // タップ範囲を広げる
+            }
+            .padding(-20) // タップ範囲を広げてもレイアウトサイズはそのままにする
+            .padding(.trailing, 20)
+
+            Menu {
+                Button("グループ名を編集", systemImage: "square.and.pencil") {
                     setAlert(title: "表題を編集", binding: table.name)
                 }
                 Button("テキストコピー", systemImage: "pencil") {
@@ -184,43 +213,48 @@ extension NoteView {
                 }
             } label: {
                 Text(table.wrappedValue.name)
-                    .font(.headline)
+                    .font(.title3)
                     .padding(20) // タップ範囲を広げる
             }
-            .padding(-20) // タップ範囲を広げてもレイアウトサイズはそのままにする
+            .padding(-16) // タップ範囲を広げてもレイアウトサイズはそのままにする
+            Spacer()
+            Text("合計")
+                .font(.caption)
+            BFractionText(fraction: table.wrappedValue.sum, textStyle: .title3, rounded: 2)
+                .foregroundStyle(Color(uiColor: .label))
+                .bold()
+            Text("円")
+                .font(.caption)
+        }
+        .listRowSeparator(.hidden)
+    }
+    func footer(table: Binding<SumGroup>) -> some View {
+        HStack {
             Spacer()
             Menu {
-                Button("空の行を追加", systemImage: "square.badge.plus") {
+                Button("空のアイテムを追加", systemImage: "square.badge.plus") {
                     withAnimation {
                         table.wrappedValue.items.append(.init(name: "品名", unitPrice: .ZERO, quantity: .ONE, unitName: "個"))
                     }
                 }
                 Button("テンプレートから追加", systemImage: "macwindow.badge.plus") {
-                    
+
                 }
             } label: {
                 Image(systemName: "plus")
-                    .padding(20) // タップ範囲を広げる
+                    .padding(15) // タップ範囲を広げる
             }
             .padding(-20) // タップ範囲を広げてもレイアウトサイズはそのままにする
-        }
-    }
-    func footer(table: Binding<SumGroup>) -> some View {
-        HStack(alignment: .lastTextBaseline) {
             Spacer()
-            Text("合計")
-            BFractionText(fraction: table.wrappedValue.sum, textStyle: .body, rounded: 2)
-                .bold()
-            Text("円")
-                .font(.caption)
         }
-        .listRowBackground(Color.clear)
-        .listRowSeparator(.hidden)
     }
     
     // MARK: - table row -
     @ViewBuilder
     func tableRow(tableName: String, _ row: Binding<SumItem>) -> some View {
+        let showDetail: Bool = showDetails.contains(row.wrappedValue.id)
+        let sum = BFractionText(fraction: row.wrappedValue.sum)
+            .matchedGeometryEffect(id: "sumID:\(row.id.rawValue)", in: animationNameSpace)
         VStack {
             // MARK: - row name-
             HStack {
@@ -231,8 +265,10 @@ extension NoteView {
                     Button("単位を編集", systemImage: "square.and.pencil") {
                         setAlert(title: "単位を編集", binding: row.unitName)
                     }
-                    Button("オプションを追加", systemImage: "circle.badge.plus") {
-                        row.wrappedValue.options.append(.init(name: "10% OFF", ratio: .init(9, 10)))
+                    if row.wrappedValue.option == nil {
+                        Button("割引を追加", systemImage: "circle.badge.plus") {
+                            row.wrappedValue.option = .init(name: "%off", ratio: .init(9, 10))
+                        }
                     }
                 } label: {
                     Text(row.wrappedValue.name)
@@ -241,113 +277,118 @@ extension NoteView {
                 }
                 .padding(-20) // タップ範囲を広げてもレイアウトサイズはそのままにする
                 Spacer()
-            }
-            // MARK: - row -
-            HStack(alignment: .lastTextBaseline, spacing: 0) {
-                Button {
-                    editFractionState = .init(
-                        id: row.wrappedValue.id.rawValue,
-                        title: "\(tableName) / \(row.wrappedValue.name) / 単価",
-                        fraction: row.wrappedValue.unitPrice
-                    ) { fraction in
-                        row.wrappedValue.unitPrice = fraction
-                        editFractionState = nil
-                    }
-                } label: {
-                    BFractionText(fraction: row.wrappedValue.unitPrice)
-                }
-                
-                Text("円/\(row.wrappedValue.unitName)")
-                    .font(.caption)
-                
-                Spacer()
-                
-                Text(String("x"))
-                    .font(.caption)
-                    .foregroundStyle(Color.secondary)
-                
-                Spacer()
-                
-                Button {
-                    editFractionState = .init(
-                        id: row.wrappedValue.id.rawValue,
-                        title: "\(tableName) / \(row.wrappedValue.name) / 数量",
-                        fraction: row.wrappedValue.quantity
-                    ) { fraction in
-                        row.wrappedValue.quantity = fraction
-                        editFractionState = nil
-                    }
-                } label: {
-                    BFractionText(fraction: row.wrappedValue.quantity)
-                }
-                
-                Text(row.wrappedValue.unitName)
-                    .font(.caption)
-                
-                Spacer()
-                
-                Text("=")
-                    .font(.caption)
-                    .foregroundStyle(Color.secondary)
 
-                Spacer()
-                
-                BFractionText(fraction: row.wrappedValue.subtotal)
-
-                Text("円")
-                    .font(.caption)
-            }
-            .buttonStyle(BorderlessButtonStyle())
-            .padding(.vertical, 3)
-
-            ForEach(row.options) { option in
-                HStack {
-                    Spacer()
-                    Text(String("x"))
-                        .font(.caption)
-                        .foregroundStyle(Color.secondary)
-                    Menu {
-                        Button("オプション名を編集", systemImage: "square.and.pencil") {
-                            setAlert(title: "オプション名を編集", binding: option.name)
-                        }
-                        Button("割合を編集", systemImage: "square.and.pencil") {
-                            editFractionState = .init(
-                                id: option.wrappedValue.id.rawValue,
-                                title: "\(tableName) / \(row.wrappedValue.name) / \(option.wrappedValue.name)",
-                                fraction: option.wrappedValue.ratio
-                            ) { fraction in
-                                option.wrappedValue.ratio = fraction
-                                editFractionState = nil
-                            }
-                        }
-                        Button("オプションを削除", role: .destructive) {
-                            guard let index = row.wrappedValue.options.firstIndex(of: option.wrappedValue) else { return }
-                            row.wrappedValue.options.remove(at: index)
-                        }
-
-                    } label: {
-                        HStack {
-                            BFractionText(fraction: option.wrappedValue.ratio)
-
-                            Text("(\(option.wrappedValue.name))")
-                                .font(.caption)
-                        }
-                    }
-                }
-            }
-            if !row.options.isEmpty {
-                HStack {
-                    Spacer()
-
-                    Text(String("="))
-                        .font(.caption)
-                        .foregroundStyle(Color.secondary)
-                    BFractionText(fraction: row.wrappedValue.sum)
+                if !showDetail {
+                    sum
                     Text("円")
                         .font(.caption)
                 }
-                .padding(.top, 3)
+
+                Button {
+//                    withAnimation {
+                        if showDetail {
+                            showDetails.remove(row.id)
+                        } else {
+                            showDetails.insert(row.id)
+                        }
+//                    }
+                } label: {
+                    Image(systemName: "chevron.down.circle")
+                        .rotationEffect(.degrees(showDetail ? 180 : 0))
+                        .padding(.leading, 7)
+                        .padding(.vertical, 5)
+                }
             }
+            // MARK: - row -
+            if showDetail {
+                Grid {
+                    GridRow(alignment: .lastTextBaseline) {
+                        Text("単価")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .gridColumnAlignment(.listRowSeparatorLeading)
+                        Spacer()
+                        Button {
+                            editFractionState = .init(
+                                id: row.wrappedValue.id.rawValue,
+                                title: "\(tableName) / \(row.wrappedValue.name) / 単価",
+                                fraction: row.wrappedValue.unitPrice
+                            ) { fraction in
+                                row.wrappedValue.unitPrice = fraction
+                                editFractionState = nil
+                            }
+                        } label: {
+                            BFractionText(fraction: row.wrappedValue.unitPrice)
+                                .padding(1)
+                        }
+                        .gridColumnAlignment(.listRowSeparatorTrailing)
+                        Text("円/\(row.wrappedValue.unitName)")
+                            .font(.caption)
+                            .gridColumnAlignment(.listRowSeparatorLeading)
+                    }
+                    GridRow(alignment: .lastTextBaseline) {
+                        Text("数量")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .gridColumnAlignment(.listRowSeparatorLeading)
+                        Spacer()
+                        Button {
+                            editFractionState = .init(
+                                id: row.wrappedValue.id.rawValue,
+                                title: "\(tableName) / \(row.wrappedValue.name) / 数量",
+                                fraction: row.wrappedValue.quantity
+                            ) { fraction in
+                                row.wrappedValue.quantity = fraction
+                                editFractionState = nil
+                            }
+                        } label: {
+                            BFractionText(fraction: row.wrappedValue.quantity)
+                                .padding(1)
+                        }
+                        .gridColumnAlignment(.listRowSeparatorTrailing)
+                        Text(row.wrappedValue.unitName)
+                            .font(.caption)
+                    }
+
+                    if let option = row.wrappedValue.option {
+                        GridRow(alignment: .lastTextBaseline) {
+                            Text("値引き")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .gridColumnAlignment(.listRowSeparatorLeading)
+                            Spacer()
+                            Button {
+
+                            } label: {
+                                Text(option.labelText)
+                                    .padding(1)
+                            }
+                            .gridCellColumns(2)
+                        }
+                    }
+                    Divider()
+                        .gridCellUnsizedAxes(.horizontal)
+                    GridRow(alignment: .lastTextBaseline) {
+                        Text("小計")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .gridColumnAlignment(.listRowSeparatorLeading)
+                        Spacer()
+                        sum
+                            .padding(1)
+                        Text("円")
+                            .font(.caption)
+                    }
+                }
+                .padding(.leading, 60)
+            }
+        }
+        .buttonStyle(BorderlessButtonStyle())
+        .padding(.horizontal, 10)
+        .padding(.vertical, 3)
+        .background {
+            RoundedRectangle(cornerRadius: 6)
+                .foregroundStyle(Color(uiColor: .secondarySystemBackground))
         }
     }
 }

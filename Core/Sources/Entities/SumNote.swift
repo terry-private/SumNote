@@ -40,7 +40,7 @@ public extension SumNote {
             name: "BBQ",
             groups: [
                 .init(name: "肉類🍖", items: [
-                    .init(name: "カルビ", unitPrice: .init(2885, 1000), quantity: .init(866,1), unitName: "g", options: [.dummy(3)]),
+                    .init(name: "カルビ", unitPrice: .init(2885, 1000), quantity: .init(866,1), unitName: "g", option: .dummy(3)),
                     .init(name: "ロース", unitPrice: .init(29874, 10000), quantity: .init(841,1), unitName: "g"),
                     .init(name: "ウインナー (10本入)", unitPrice: .init(480,1), quantity: .init(4,1), unitName: "袋")
                 ]),
