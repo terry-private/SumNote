@@ -16,8 +16,8 @@ struct SumItemTests {
                 (BFraction(9, 7), BFraction(49, 3), BFraction(21, 1))
             ]
         )
-        func subtotal(uqs: (BFraction, BFraction, BFraction)) {
-            #expect(SumItem(name: "", unitPrice: uqs.0 , quantity: uqs.1, unitName: "").subtotal == uqs.2)
+        func subtotal(args: (unitPrice: BFraction, quantity: BFraction, subtotal: BFraction)) {
+            #expect(SumItem(name: "", unitPrice: args.unitPrice , quantity: args.quantity, unitName: "").subtotal == args.subtotal)
         }
     }
     struct Sum {
@@ -50,7 +50,7 @@ struct SumItemTests {
             ]
         )
         func sumWithHalfOption(uqs: (BFraction, BFraction, BFraction)) {
-            #expect(SumItem(name: "", unitPrice: uqs.0 , quantity: uqs.1, unitName: "", options: [.init(name: "", ratio: .init(1, 2))]).sum == uqs.2)
+            #expect(SumItem(name: "", unitPrice: uqs.0 , quantity: uqs.1, unitName: "", option: .init(name: "", ratio: .init(1, 2))).sum == uqs.2)
         }
     }
 }

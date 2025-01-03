@@ -267,7 +267,7 @@ extension NoteView {
                     }
                     if row.wrappedValue.option == nil {
                         Button("割引を追加", systemImage: "circle.badge.plus") {
-                            row.wrappedValue.option = .init(name: "%off", ratio: .init(9, 10))
+                            row.wrappedValue.option = .init(name: "%", numerator: 10)
                         }
                     }
                 } label: {

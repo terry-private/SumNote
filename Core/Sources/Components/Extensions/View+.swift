@@ -6,7 +6,7 @@ private struct SizePreferenceKey: PreferenceKey {
 }
 
 public extension View {
-    func onChangeFrame( _ block: @escaping (CGSize) -> Void) -> some View {
+    func onChangeFrame( _ block: @Sendable @escaping (CGSize) -> Void) -> some View {
         background(
             GeometryReader {
                 Color.clear

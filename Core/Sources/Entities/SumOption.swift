@@ -10,19 +10,21 @@ public struct SumOption: EntityProtocol {
     }
     public let id: ID
     public var name: String
-    public var ratio: BFraction
-    public var displayUnit: BFraction
-    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, ratio: BFraction, displayUnit: BFraction = 1) {
+    public var numerator: BFraction
+    public var denominator: Int
+    public var ratio: BFraction { (BFraction(denominator, 1) - numerator) / denominator }
+    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, numerator: BFraction, denominator: Int = 100) {
         self.id = id
         self.name = name
-        self.ratio = ratio
-        self.displayUnit = displayUnit
+        self.numerator = numerator
+        self.denominator = denominator
     }
 }
 
 public extension SumOption {
+    var prefix: String { "\(name) off"}
     var labelText: String {
-        "\(((1 - ratio) * (100 / displayUnit)).ex.currencyString())\(name)"
+        "\(numerator.ex.currencyString())\(prefix)"
     }
     func description(with indent: Int = 0) -> String {
         description.indent(indent)
@@ -31,9 +33,9 @@ public extension SumOption {
         "x \(ratio.ex.currencyString()) (\(labelText))"
     }
     static var dummy: Self {
-        .init(name: "Dummy", ratio: .init(80, 100))
+        .init(name: "%", numerator: 80)
     }
     static func dummy(_ number: Int) -> Self {
-        .init(name: "割引", ratio: .init(10-number, 10), displayUnit: 10)
+        return .init(name: "割", numerator: .init(number % 10, 1), denominator: 10)
     }
 }
