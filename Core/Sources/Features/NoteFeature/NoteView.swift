@@ -10,12 +10,6 @@ struct EditAlert<T> {
     var title: String
     var binding: Binding<T>
 }
-struct EditFractionState: Identifiable {
-    var id: String
-    var title: String
-    var fraction: BFraction
-    var completion: (BFraction) -> Void
-}
 
 public struct NoteView<Dependency: DependencyProtocol>: View {
     @Environment(\.editMode) private var editMode

@@ -3,10 +3,9 @@ import Entities
 import Components
 
 public struct SumGroupView: View {
-    @Environment(\.editMode) private var editMode
     @Binding var parent: SumGroup2
     @State var sumGroup: SumGroup2
-    @State var editState: EditStete?
+    @State var editState: EditState?
     public init(sumGroup: Binding<SumGroup2>) {
         self._parent = sumGroup
         self._sumGroup = .init(initialValue: sumGroup.wrappedValue)
@@ -59,19 +58,8 @@ public struct SumGroupView: View {
         .onChange(of: sumGroup) {
             parent = sumGroup
         }
-        .alert(
-            editState?.textState?.title ?? "",
-            isPresented: .bool(from: $editState),
-            presenting: editState?.textState
-        ) { textState in
-            TextField("テキストフィールド", text: textState.text)
-            Button("Cancel", action: {})
-            Button("OK") {
-                guard !textState.text.wrappedValue.isBlank() else { return }
-                textState.completion(textState.text.wrappedValue)
-            }
-        }
-        .sheet(item: .editFractionState(from: $editState)) { state in
+        .editTextAlert(editState: $editState)
+        .sheet(item: Binding<EditFractionState?>(from: $editState)) { state in
             CalculatorInputView(
                 title: state.title,
                 value: state.fraction,
@@ -79,7 +67,8 @@ public struct SumGroupView: View {
             ) {
                 editState = nil
             }
-            .presentationDetents([.height(CalculatorLayoutLogics.displaySize(maxSize: UIScreen.main.bounds.size).height)]
+            .presentationDetents(
+                [.height(CalculatorLayoutLogics.displaySize(maxSize: UIScreen.main.bounds.size).height)]
             )
         }
         .overlay {
@@ -91,37 +80,26 @@ public struct SumGroupView: View {
         }
         // MARK: - toolbar -
         .toolbar {
-            if editMode?.wrappedValue.isEditing == true {
-                Button("完了") {
-                    withAnimation {
-                        editMode?.wrappedValue = .inactive
-                    }
-                }
-            } else {
-                Menu {
-                    Button("ノート名を編集", systemImage: "square.and.pencil") {
-//                        setAlert(title: "表題を編集", binding: $note.name)
-                    }
-                    Button("グループ編集モード") {
-                        withAnimation {
-                            editMode?.wrappedValue = .active
+            Menu {
+                Button("グループ名を編集", systemImage: "square.and.pencil") {
+                    editState = .text(
+                        EditTextAlertState(
+                            id: sumGroup.id.rawValue,
+                            title: "グループ名を編集",
+                            text: sumGroup.name
+                        ) {
+                            sumGroup.name = $0
+                            parent.name = $0
                         }
-                    }
-                    Button("空のグループを追加", systemImage: "note.text.badge.plus") {
-                        withAnimation {
-//                            let newTable = SumGroup(name: "グループ\(note.groups.count+1)", items: [.init(name: "アイテム", unitPrice: 0, quantity: 0, unitName: "個")])
-//                            note.groups.append(newTable)
-//                            addedTableID = newTable.id
-                        }
-                    }
-                    Button("テキストコピー", systemImage: "pencil") {
-                        UIPasteboard.general.string = sumGroup.description()
-                    }
-                } label: {
-                    Label("menu", systemImage: "line.3.horizontal.circle")
+                    )
                 }
-                .disabled(editState?.discountState != nil)
+                Button("テキストコピー", systemImage: "pencil") {
+                    UIPasteboard.general.string = sumGroup.description()
+                }
+            } label: {
+                Label("menu", systemImage: "line.3.horizontal.circle")
             }
+            .disabled(editState?.discountState != nil)
         }
         .navigationTitle(sumGroup.name)
     }

@@ -6,115 +6,11 @@ import Components
 import Combine
 import Stores
 
-//struct EditAlert2<T> {
-//    var title: String
-//    var binding: Binding<T>
-//}
-//struct EditFractionState2: Identifiable {
-//    var id: String
-//    var title: String
-//    var fraction: BFraction
-//    var completion: (BFraction) -> Void
-//}
-
-struct EditTextAlertState: Identifiable {
-    var id: String
-    var title: String
-    var text: Binding<String>
-    var completion: (String) -> Void
-}
-struct EditGroupState: Identifiable, Hashable {
-    static func == (lhs: EditGroupState, rhs: EditGroupState) -> Bool {
-        lhs.group.wrappedValue == rhs.group.wrappedValue
-    }
-    
-    var id: SumGroup2.ID { group.id }
-    var group: Binding<SumGroup2>
-    var hashValue: Int { group.wrappedValue.hashValue }
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(group.wrappedValue)
-    }
-}
-struct EditDiscountState: Identifiable {
-    var id: SumOption.ID { option.id }
-    var title: String
-    var option: SumOption
-    var completion: (SumOption?) -> Void
-}
-
-extension Binding where Value == Bool {
-    @MainActor
-    static func bool(from alertState: Binding<EditStete?>) -> Self {
-        Binding<Bool> {
-            print(alertState.wrappedValue as Any)
-            return alertState.wrappedValue?.textState != nil
-        } set: {
-            if !$0 {
-                alertState.wrappedValue = nil
-            }
-        }
-    }
-}
-extension Binding where Value == EditFractionState? {
-    @MainActor
-    static func editFractionState(from editState: Binding<EditStete?>) -> Self {
-        Binding<EditFractionState?> {
-            editState.wrappedValue?.fractionState
-        } set: { state in
-            editState.wrappedValue = state.map { .fraction($0)}
-        }
-    }
-}
-extension Binding where Value == EditGroupState? {
-    @MainActor
-    static func editGroupState(from editState: Binding<EditStete?>) -> Self {
-        Binding<EditGroupState?> {
-            editState.wrappedValue?.groupState
-        } set: { state in
-            editState.wrappedValue = state.map { .group($0) }
-        }
-    }
-}
-
-enum EditStete {
-    case text(EditTextAlertState)
-    case fraction(EditFractionState)
-    case discount(EditDiscountState)
-    case group(EditGroupState)
-    var textState: EditTextAlertState? {
-        if case .text(let state) = self {
-            state
-        } else {
-            nil
-        }
-    }
-    var fractionState: EditFractionState? {
-        if case .fraction(let state) = self {
-            state
-        } else {
-            nil
-        }
-    }
-    var discountState: EditDiscountState? {
-        if case .discount(let state) = self {
-            state
-        } else {
-            nil
-        }
-    }
-    var groupState: EditGroupState? {
-        if case .group(let state) = self {
-            state
-        } else {
-            nil
-        }
-    }
-}
 public struct SumNoteView2<Dependency: DependencyProtocol>: View {
     @Environment(\.editMode) private var editMode
     @State var store = Dependency.noteStore
     @State var note: SumNote2
-    @State var editState: EditStete?
+    @State var editState: EditState?
     @Namespace private var animationNameSpace
     public init(_ note: SumNote2) {
         _note = .init(wrappedValue: note)
@@ -156,19 +52,8 @@ public struct SumNoteView2<Dependency: DependencyProtocol>: View {
         }
         .background(Color(uiColor: .systemGroupedBackground))
         // MARK: - Alert -
-        .alert(
-            editState?.textState?.title ?? "",
-            isPresented: .bool(from: $editState),
-            presenting: editState?.textState
-        ) { textState in
-            TextField("テキストフィールド", text: textState.text)
-            Button("Cancel", action: {})
-            Button("OK") {
-                guard !textState.text.wrappedValue.isBlank() else { return }
-                textState.completion(textState.text.wrappedValue)
-            }
-        }
-        .sheet(item: .editFractionState(from: $editState)) { state in
+        .editTextAlert(editState: $editState)
+        .sheet(item: Binding<EditFractionState?>(from: $editState)) { state in
             CalculatorInputView(
                 title: state.title,
                 value: state.fraction,
@@ -186,7 +71,7 @@ public struct SumNoteView2<Dependency: DependencyProtocol>: View {
                 }
             }
         }
-        .navigationDestination(item: Binding<EditGroupState?>.editGroupState(from: $editState)) { state in
+        .navigationDestination(item: Binding<EditGroupState?>(from: $editState)) { state in
             SumGroupView(sumGroup: state.group)
         }
         // MARK: - toolbar -
@@ -288,34 +173,40 @@ extension SumNoteView2 {
                             )
                         )
                     } label: {
-                        HStack(spacing: 10) {
+                        HStack(spacing: 5) {
                             SystemIcon(systemName: "note.text", color: .orange, size: 22)
                                 .foregroundStyle(.white)
+                                .padding(.trailing, 5)
                             Text(group.name)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.5)
                             if let (totalQuantity, unitName) = group.totalQuantity() {
                                 HStack(alignment: .lastTextBaseline, spacing: 2) {
                                     Text("(")
-                                    BFractionText(fraction: totalQuantity)
+                                    BFractionText(fraction: totalQuantity, textStyle: .footnote)
                                     Text(unitName)
-                                        .font(.caption)
+                                        .font(.caption2)
                                     Text(")")
                                 }
+                                .font(.footnote)
+                                .layoutPriority(-1)
+                                .minimumScaleFactor(0.5)
                                 .foregroundStyle(Color(uiColor: .secondaryLabel))
                             }
                             Spacer()
-                            VStack(alignment: .trailing, spacing: 5) {
-                                HStack(alignment: .lastTextBaseline, spacing: 2) {
-                                    Text("合計")
-                                        .font(.caption)
-                                        .foregroundStyle(Color(uiColor: .secondaryLabel))
-                                    BFractionText(fraction: group.sum())
-                                    Text("円")
-                                        .font(.caption)
-                                        .foregroundStyle(Color(uiColor: .secondaryLabel))
-                                }
+                            HStack(alignment: .lastTextBaseline, spacing: 2) {
+                                Text("合計")
+                                    .font(.caption)
+                                    .foregroundStyle(Color(uiColor: .secondaryLabel))
+                                BFractionText(fraction: group.sum())
+                                Text("円")
+                                    .font(.caption)
+                                    .foregroundStyle(Color(uiColor: .secondaryLabel))
                             }
                             Image(systemName: "chevron.right")
+                                .font(.caption)
                                 .foregroundStyle(.secondary)
+                                .padding(.trailing, -10)
                         }
                     }
                     .foregroundStyle(Color(uiColor: .label))

@@ -5,8 +5,8 @@ import BigIntExtensions
 
 struct SumItemView: View {
     @Binding var item: SumItem2
-    @Binding var state: EditStete?
-    init(item: Binding<SumItem2>, state: Binding<EditStete?>) {
+    @Binding var state: EditState?
+    init(item: Binding<SumItem2>, state: Binding<EditState?>) {
         self._item = item
         self._state = state
     }
@@ -29,16 +29,19 @@ struct SumItemView: View {
                 } label: {
                     Image(systemName: "square.and.pencil")
                         .padding(.vertical, 8)
-                        .padding(.trailing, 10)
+                        .padding(.trailing, 5)
                 }
                 .padding(.vertical, -8)
                 Text(item.name)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                 HStack(alignment: .lastTextBaseline, spacing: 2) {
                     Spacer()
                     Text("小計")
                         .font(.caption)
                         .foregroundStyle(Color(uiColor: .secondaryLabel))
                     BFractionText(fraction: item.sum)
+                        .minimumScaleFactor(0.5)
                     Text("円")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -124,19 +127,7 @@ struct SumItemView: View {
 extension SumItemView {
     func setAlert(title: String, _ keyPath: WritableKeyPath<SumItem2, String>) {
         guard state == nil else { return }
-        var tmpText: String = item[keyPath: keyPath]
-        let bindingText: Binding<String> = .init(get: { tmpText }, set: { tmpText = $0 })
-        state = .text(
-            EditTextAlertState(
-                id: item.id.rawValue,
-                title: title,
-                text: bindingText,
-                completion: {
-                    item[keyPath: keyPath] = $0
-                    state = nil
-                }
-            )
-        )
+        state = .text(.init(title: title, item: $item, keyPath))
     }
     func setEditFraction(title: String, _ keyPath: WritableKeyPath<SumItem2, BFraction>) {
         guard state == nil else { return }
@@ -156,7 +147,7 @@ extension SumItemView {
 
 #Preview {
     @Previewable @State var item: SumItem2 = .dummy(1)
-    @Previewable @State var state: EditStete? = nil
+    @Previewable @State var state: EditState? = nil
     VStack {
         Spacer()
         SumItemView(item: $item, state: $state)
