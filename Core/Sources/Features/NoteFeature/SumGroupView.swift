@@ -30,11 +30,14 @@ public struct SumGroupView: View {
                                 Text("数量")
                                     .foregroundStyle(.secondary)
                             }
+                            .layoutPriority(0)
                             BFractionText(fraction: totalQuantity, textStyle: .title3)
+                                .layoutPriority(1)
                             HStack {
                                 Text(unitName)
                                 Spacer()
                             }
+                            .layoutPriority(0)
                         }
                     }
                     GridRow(alignment: .lastTextBaseline) {
@@ -43,11 +46,14 @@ public struct SumGroupView: View {
                             Text("合計")
                                 .foregroundStyle(.secondary)
                         }
+                        .layoutPriority(0)
                         BFractionText(fraction: sumGroup.sum(), textStyle: .title3)
+                            .layoutPriority(1)
                         HStack {
                             Text("円")
                             Spacer()
                         }
+                        .layoutPriority(0)
                     }
                 }
                 .padding()
