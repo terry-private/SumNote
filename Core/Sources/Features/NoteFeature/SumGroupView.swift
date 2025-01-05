@@ -4,17 +4,20 @@ import Components
 
 public struct SumGroupView: View {
     @Environment(\.editMode) private var editMode
-    @Binding var sumGroup: SumGroup2
+    @Binding var parent: SumGroup2
+    @State var sumGroup: SumGroup2
     @State var editState: EditStete?
     public init(sumGroup: Binding<SumGroup2>) {
-        self._sumGroup = sumGroup
+        self._parent = sumGroup
+        self._sumGroup = .init(initialValue: sumGroup.wrappedValue)
     }
     public var body: some View {
         VStack {
             List($sumGroup.items) { $item in
-                SumItemView(item: item, state: $editState) { item in
-                    print(item)
-                }
+                SumItemView(
+                    item: $item,
+                    state: $editState
+                )
                 .buttonStyle(BorderlessButtonStyle())
             }
             .listStyle(.plain)
@@ -52,6 +55,9 @@ public struct SumGroupView: View {
                 Spacer()
             }
             .ignoresSafeArea()
+        }
+        .onChange(of: sumGroup) {
+            parent = sumGroup
         }
         .alert(
             editState?.textState?.title ?? "",

@@ -321,9 +321,14 @@ extension SumNoteView2 {
                     .foregroundStyle(Color(uiColor: .label))
                     .buttonStyle(BorderlessButtonStyle())
                 case .item(let item):
-                    SumItemView(item: item, state: $editState) {
-                        row = .item($0)
-                    }
+                    SumItemView(
+                        item: Binding<SumItem2> {
+                            item
+                        } set: {
+                            row = .item($0)
+                        },
+                        state: $editState
+                    )
                     .buttonStyle(BorderlessButtonStyle())
                 }
             }

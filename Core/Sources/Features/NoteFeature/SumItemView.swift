@@ -4,13 +4,11 @@ import Components
 import BigIntExtensions
 
 struct SumItemView: View {
-    var item: SumItem2
+    @Binding var item: SumItem2
     @Binding var state: EditStete?
-    var update: (SumItem2) -> ()
-    init(item: SumItem2, state: Binding<EditStete?>, update: @escaping (SumItem2) -> Void) {
-        self.item = item
+    init(item: Binding<SumItem2>, state: Binding<EditStete?>) {
+        self._item = item
         self._state = state
-        self.update = update
     }
 
     var body: some View {
@@ -25,9 +23,7 @@ struct SumItemView: View {
                     }
                     if item.option == nil {
                         Button("割引を追加", systemImage: "tag.slash.fill") {
-                            var item = self.item
                             item.option = .init(style: .percentile, 10)
-                            update(item)
                         }
                     }
                 } label: {
@@ -48,8 +44,8 @@ struct SumItemView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            Grid(verticalSpacing: 0) {
-                GridRow(alignment: .lastTextBaseline) {
+            VStack(spacing: 0) {
+                HStack(alignment: .lastTextBaseline) {
                     SumItemValueButton(iconSystemName: "yensign", iconColor: .indigo, title: "単価") {
                         setEditFraction(title: "\(item.name) / 単価", \.unitPrice)
                     } content: {
@@ -65,7 +61,7 @@ struct SumItemView: View {
                         .frame(maxWidth: .infinity)
                     }
                     .foregroundStyle(.indigo)
-                    SumItemValueButton(iconSystemName: "cart.fill", iconColor: .green, title: "数量") {
+                    SumItemValueButton(iconSystemName: "cart.fill.badge.plus", iconColor: .green, title: "数量") {
                         setEditFraction(title: "\(item.name) / 数量", \.quantity)
                     } content:  {
                         HStack(alignment: .lastTextBaseline, spacing: 2) {
@@ -83,9 +79,7 @@ struct SumItemView: View {
                             guard state == nil else { return }
                             state = .discount(
                                 EditDiscountState(title: item.name, option: option) { option in
-                                    var item = self.item
                                     item.option = option
-                                    update(item)
                                     state = nil
                                 }
                             )
@@ -138,9 +132,7 @@ extension SumItemView {
                 title: title,
                 text: bindingText,
                 completion: {
-                    var item = self.item
                     item[keyPath: keyPath] = $0
-                    update(item)
                     state = nil
                 }
             )
@@ -154,9 +146,7 @@ extension SumItemView {
                 title: title,
                 fraction: item[keyPath: keyPath],
                 completion: {
-                    var item = self.item
                     item[keyPath: keyPath] = $0
-                    update(item)
                     state = nil
                 }
             )
@@ -165,42 +155,25 @@ extension SumItemView {
 }
 
 #Preview {
+    @Previewable @State var item: SumItem2 = .dummy(1)
     @Previewable @State var state: EditStete? = nil
     VStack {
-        SumItemView(item: .dummy(1), state: $state) { item in
-            print(item)
-        }
-        Grid {
-            GridRow {
-                HStack {
-                    Spacer()
-                    Spacer()
-                }
-                HStack {
-                    Spacer()
-                    Spacer()
-                }
-                HStack {
-                    Spacer()
-                }
-            }
-            .frame(height: 0)
-            GridRow {
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.red)
-                    .aspectRatio(1, contentMode: .fit)  // これで正方形を維持
-//                    .frame(width: geometry.size.width / 3)
-
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.blue)
-                    .aspectRatio(1, contentMode: .fit)  // これで正方形を維持
-//                    .frame(width: geometry.size.width / 3)
-
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.green)
-                    .aspectRatio(1, contentMode: .fit)  // これで正方形を維持
-//                    .frame(width: geometry.size.width / 3)
-            }
-        }
+        Spacer()
+        SumItemView(item: $item, state: $state)
+//        Grid {
+//            GridRow {
+//                RoundedRectangle(cornerRadius: 10)
+//                    .fill(Color.red)
+//                    .aspectRatio(1, contentMode: .fit)  // これで正方形を維持
+//
+//                RoundedRectangle(cornerRadius: 10)
+//                    .fill(Color.blue)
+//                    .aspectRatio(1, contentMode: .fit)  // これで正方形を維持
+//
+//                RoundedRectangle(cornerRadius: 10)
+//                    .fill(Color.green)
+//                    .aspectRatio(1, contentMode: .fit)  // これで正方形を維持
+//            }
+//        }
     }
 }
