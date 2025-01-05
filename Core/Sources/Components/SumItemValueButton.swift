@@ -2,26 +2,47 @@ import SwiftUI
 import BigIntExtensions
 
 public struct SumItemValueButton<Content: View>: View {
+    var iconSystemName: String
+    var iconColor: Color
     var title: String
+    var disabled: Bool
     var action: () -> Void
     var content: Content
-    public init(title: String, action: @escaping () -> Void, @ViewBuilder content: () -> Content) {
+    public init(
+        iconSystemName: String,
+        iconColor: Color,
+        title: String,
+        disabled: Bool = false,
+        action: @escaping () -> Void,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.iconSystemName = iconSystemName
+        self.iconColor = iconColor
         self.title = title
+        self.disabled = disabled
         self.action = action
         self.content = content()
     }
     public var body: some View {
         Button {
-
+            action()
         } label: {
-            VStack(alignment: .leading) {
-                Text(title)
-                    .font(.caption2)
-                content
-                .padding(.leading, 15)
+            Grid {
+                GridRow(alignment: .center) {
+                    SystemIcon(systemName: iconSystemName, color: iconColor, size: 16)
+                        .foregroundStyle(.white)
+                        .opacity(disabled ? 0.2 : 1)
+                    Text(title)
+                        .font(.caption)
+                        .lineLimit(1)
+                }
+                GridRow {
+                    content
+                }
+                .gridCellColumns(3)
             }
-            .foregroundStyle(.white)
-            .padding(5)
+            .foregroundStyle(disabled ? Color(uiColor: .secondaryLabel) : Color(uiColor: .label))
+            .padding(8)
             .background {
 //                UnevenRoundedRectangle(
 //                    cornerRadii: .init(
@@ -32,9 +53,12 @@ public struct SumItemValueButton<Content: View>: View {
 //                    style: .continuous
 //                )
                 RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .foregroundStyle(Color(uiColor: .secondarySystemGroupedBackground))
+                    .shadow(color: Color.black.opacity(0.1), radius: 10)
 //                .stroke(style: .init())
             }
         }
+        .disabled(disabled)
     }
 }
 
@@ -49,14 +73,26 @@ func content(_ fraction: BFraction, _ unitName: String) -> some View {
 }
 
 #Preview {
-    HStack {
-        SumItemValueButton(title: "単価") {
+    VStack {
+        Spacer()
+        Color.blue.clipShape(Circle())
+            .frame(width: 22, height: 22)
+            .overlay {
+                Image(systemName: "folder")
+                    .resizable()
+                    .bold()
+                    .scaledToFill()
+                    .frame(width: 11, height: 11)
+            }
+        SystemIcon(systemName: "folder", color: .red, size: 40)
+        SystemIcon(systemName: "folder", color: .red, size: 100)
+        SumItemValueButton(iconSystemName: "folder", iconColor: .cyan, title: "単価") {
             // do nothing
         } content: {
             content(.init(0, 1), "円")
         }
 
-        SumItemValueButton(title: "単価") {
+        SumItemValueButton(iconSystemName: "plus.circle", iconColor: .indigo, title: "単価", disabled: true) {
             // do nothing
         } content:  {
             VStack {
@@ -65,17 +101,49 @@ func content(_ fraction: BFraction, _ unitName: String) -> some View {
             }
         }
 
-        SumItemValueButton(title: "単価") {
+        SumItemValueButton(iconSystemName: "note", iconColor: .purple, title: "単価") {
             // do nothing
         } content:  {
             content(.init(10000, 3), "円")
         }
 
-        SumItemValueButton(title: "単価") {
+        SumItemValueButton(iconSystemName: "chevron.down", iconColor: .green, title: "単価") {
             // do nothing
         } content:  {
             content(.init(10000000000, 3), "円/ケース")
         }
         .foregroundStyle(.red)
+        HStack {
+
+                SumItemValueButton(iconSystemName: "folder", iconColor: .cyan, title: "単価") {
+                    // do nothing
+                } content: {
+                    content(.init(0, 1), "円")
+                }
+
+                SumItemValueButton(iconSystemName: "plus.circle", iconColor: .indigo, title: "単価") {
+                    // do nothing
+                } content:  {
+                    VStack {
+                        Text("どすこい")
+                        Text("どすこい")
+                    }
+                }
+
+                SumItemValueButton(iconSystemName: "note", iconColor: .purple, title: "単価") {
+                    // do nothing
+                } content:  {
+                    content(.init(10000, 3), "円")
+                }
+
+                SumItemValueButton(iconSystemName: "chevron.down", iconColor: .green, title: "単価") {
+                    // do nothing
+                } content:  {
+                    content(.init(10000000000, 3), "円/ケース")
+                }
+                .foregroundStyle(.red)
+        }
+        Spacer()
     }
+    .background(Color(uiColor: .systemGroupedBackground))
 }

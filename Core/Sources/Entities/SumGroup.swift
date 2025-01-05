@@ -35,6 +35,13 @@ public enum SumRow: EntityProtocol {
         case .item(let item): item.description(with: indent, spaces: spaces)
         }
     }
+    public var isGroup: Bool {
+        switch self {
+        case .group: true
+        case .item: false
+        }
+    }
+
     static func dummy(_ index: Int) -> Self {
         .group(SumGroup2(name: "group_\(index)", items: (1...index).map { _ in .dummy(0) }))
     }
@@ -49,8 +56,8 @@ public struct SumGroup2: EntityProtocol {
     }
     public let id: ID
     public var name: String
-    public var items: [SumItem]
-    public init(id: ID = .ID(rawValue: UUID().uuidString), name: String, items: [SumItem]) {
+    public var items: [SumItem2]
+    public init(id: ID = .ID(rawValue: UUID().uuidString), name: String, items: [SumItem2]) {
         self.id = id
         self.name = name
         self.items = items
@@ -59,6 +66,25 @@ public struct SumGroup2: EntityProtocol {
         items.reduce(.ZERO) {
             $0 + $1.sum
         }
+    }
+
+    /// 数量の合計
+    /// - Returns: 単位が全て同じなら数量の合計を返す。もし違う単位が混じっているならnilを返す。
+    public func totalQuantity() -> (BFraction, String)? {
+        guard let firstUnitName = items.first?.unitName else {
+            return nil
+        }
+
+        var totalQuantity: BFraction = .ZERO
+
+        for item in items {
+            guard item.unitName == firstUnitName else {
+                return nil
+            }
+            totalQuantity += item.quantity
+        }
+
+        return (totalQuantity, firstUnitName)
     }
 
     public func description(with indent: Int = 0, spaces: Int = 2) -> String {
@@ -121,7 +147,7 @@ extension SumItem2 {
     public var description: String {
         "\(name)\n \(unitPrice.ex.currencyString())円/\(unitName) x \(quantity.ex.currencyString())\(unitName) \(option?.description ?? "") = \(sum.ex.currencyString())円"
     }
-    static func dummy(_ index: Int) -> Self {
+    public static func dummy(_ index: Int) -> Self {
         SumItem2(name: "item_name_\(index)", unitPrice: BFraction(index, 1), quantity: BFraction(index, 1), unitName: "個", option: .dummy(index))
     }
 }

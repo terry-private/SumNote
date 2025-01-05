@@ -10,7 +10,7 @@ import Stores
 public enum ProductionDependency: DependencyProtocol {
     public static func rootView() -> some View {
         NavigationStack {
-            noteListView()
+            SumNoteView2<Self>(.dummy())
         }
     }
     @MainActor public static func folderListView() -> FolderListView<Self> {

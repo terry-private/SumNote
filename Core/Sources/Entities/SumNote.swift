@@ -52,9 +52,7 @@ public extension SumNote2 {
                                 unitPrice: .init(2885, 1000),
                                 quantity: .init(866,1),
                                 unitName: "g",
-                                option: .dummy(
-                                    3
-                                )
+                                option: .init(style: .percentile,15)
                             ),
                             .init(
                                 name: "ロース",
@@ -64,11 +62,11 @@ public extension SumNote2 {
                                 option: .dummy(3)
                             ),
                             .init(
-                                name: "ウインナー (10本入)",
-                                unitPrice: .init(480,1),
-                                quantity: .init(4,1),
-                                unitName: "袋",
-                                option: .dummy(3)
+                                name: "ウインナー",
+                                unitPrice: .init(96,100),
+                                quantity: .init(400,1),
+                                unitName: "g",
+                                option: .dummy(1)
                             )
                         ]
                     )

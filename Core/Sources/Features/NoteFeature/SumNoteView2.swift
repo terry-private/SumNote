@@ -17,15 +17,104 @@ import Stores
 //    var completion: (BFraction) -> Void
 //}
 
+struct EditTextAlertState: Identifiable {
+    var id: String
+    var title: String
+    var text: Binding<String>
+    var completion: (String) -> Void
+}
+struct EditGroupState: Identifiable, Hashable {
+    static func == (lhs: EditGroupState, rhs: EditGroupState) -> Bool {
+        lhs.group.wrappedValue == rhs.group.wrappedValue
+    }
+    
+    var id: SumGroup2.ID { group.id }
+    var group: Binding<SumGroup2>
+    var hashValue: Int { group.wrappedValue.hashValue }
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(group.wrappedValue)
+    }
+}
+struct EditDiscountState: Identifiable {
+    var id: SumOption.ID { option.id }
+    var title: String
+    var option: SumOption
+    var completion: (SumOption?) -> Void
+}
+
+extension Binding where Value == Bool {
+    @MainActor
+    static func bool(from alertState: Binding<EditStete?>) -> Self {
+        Binding<Bool> {
+            print(alertState.wrappedValue as Any)
+            return alertState.wrappedValue?.textState != nil
+        } set: {
+            if !$0 {
+                alertState.wrappedValue = nil
+            }
+        }
+    }
+}
+extension Binding where Value == EditFractionState? {
+    @MainActor
+    static func editFractionState(from editState: Binding<EditStete?>) -> Self {
+        Binding<EditFractionState?> {
+            editState.wrappedValue?.fractionState
+        } set: { state in
+            editState.wrappedValue = state.map { .fraction($0)}
+        }
+    }
+}
+extension Binding where Value == EditGroupState? {
+    @MainActor
+    static func editGroupState(from editState: Binding<EditStete?>) -> Self {
+        Binding<EditGroupState?> {
+            editState.wrappedValue?.groupState
+        } set: { state in
+            editState.wrappedValue = state.map { .group($0) }
+        }
+    }
+}
+
+enum EditStete {
+    case text(EditTextAlertState)
+    case fraction(EditFractionState)
+    case discount(EditDiscountState)
+    case group(EditGroupState)
+    var textState: EditTextAlertState? {
+        if case .text(let state) = self {
+            state
+        } else {
+            nil
+        }
+    }
+    var fractionState: EditFractionState? {
+        if case .fraction(let state) = self {
+            state
+        } else {
+            nil
+        }
+    }
+    var discountState: EditDiscountState? {
+        if case .discount(let state) = self {
+            state
+        } else {
+            nil
+        }
+    }
+    var groupState: EditGroupState? {
+        if case .group(let state) = self {
+            state
+        } else {
+            nil
+        }
+    }
+}
 public struct SumNoteView2<Dependency: DependencyProtocol>: View {
     @Environment(\.editMode) private var editMode
     @State var store = Dependency.noteStore
     @State var note: SumNote2
-//    @State var group: SumGroup2
-    @State var editNameAlert: EditAlert<String>?
-    @State var editNameAlertText: String = ""
-    @State var editFractionState: EditFractionState?
-    @State var showDetails: Set<SumItem2.ID> = []
+    @State var editState: EditStete?
     @Namespace private var animationNameSpace
     public init(_ note: SumNote2) {
         _note = .init(wrappedValue: note)
@@ -67,26 +156,38 @@ public struct SumNoteView2<Dependency: DependencyProtocol>: View {
         }
         .background(Color(uiColor: .systemGroupedBackground))
         // MARK: - Alert -
-        .alert(editNameAlert?.title ?? "", isPresented: Binding(get: { editNameAlert != nil}, set: { if !$0 { editNameAlert = nil }})) {
-            if let editNameAlert {
-                TextField("テキストフィールド", text: $editNameAlertText)
-                Button("Cancel", action: {})
-                Button("OK") {
-                    guard !editNameAlertText.isBlank() else { return }
-                    editNameAlert.binding.wrappedValue = editNameAlertText
-                }
+        .alert(
+            editState?.textState?.title ?? "",
+            isPresented: .bool(from: $editState),
+            presenting: editState?.textState
+        ) { textState in
+            TextField("テキストフィールド", text: textState.text)
+            Button("Cancel", action: {})
+            Button("OK") {
+                guard !textState.text.wrappedValue.isBlank() else { return }
+                textState.completion(textState.text.wrappedValue)
             }
         }
-        .sheet(item: $editFractionState) { state in
+        .sheet(item: .editFractionState(from: $editState)) { state in
             CalculatorInputView(
                 title: state.title,
                 value: state.fraction,
                 completion: state.completion
             ) {
-                editFractionState = nil
+                editState = nil
             }
             .presentationDetents([.height(CalculatorLayoutLogics.displaySize(maxSize: UIScreen.main.bounds.size).height)]
             )
+        }
+        .overlay {
+            if let state = editState?.discountState {
+                SumDiscountPicker(title: state.title, option: state.option, completion: state.completion) {
+                    editState = nil
+                }
+            }
+        }
+        .navigationDestination(item: Binding<EditGroupState?>.editGroupState(from: $editState)) { state in
+            SumGroupView(sumGroup: state.group)
         }
         // MARK: - toolbar -
         .toolbar {
@@ -119,6 +220,7 @@ public struct SumNoteView2<Dependency: DependencyProtocol>: View {
                 } label: {
                     Label("menu", systemImage: "line.3.horizontal.circle")
                 }
+                .disabled(editState?.discountState != nil)
             }
         }
         // MARK: - navigationTitle -
@@ -151,11 +253,20 @@ extension SumNoteView2 {
             if editMode?.wrappedValue.isEditing == true {
                 VStack {
                     HStack {
+                        if row.isGroup {
+                            Image(systemName: "note.text")
+                                .font(.caption)
+                                .bold()
+                                .padding(5)
+                                .background(Color.orange.clipShape(Circle()))
+                                .foregroundStyle(.white)
+                        }
                         Text(row.name)
-                            .font(.headline)
                         Spacer()
                         HStack(alignment: .lastTextBaseline, spacing: 2) {
-                            Spacer()
+                            Text("合計")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                             BFractionText(fraction: row.sum())
                             Text("円")
                                 .font(.caption)
@@ -166,81 +277,54 @@ extension SumNoteView2 {
                 switch row {
                 case .group(let group):
                     Button {
-
-                    } label: {
-                        HStack {
-                            VStack {
-                                HStack {
-                                    Text(group.name)
-                                        .font(.headline)
-                                    Spacer()
+                        guard editState == nil else { return }
+                        editState = .group(
+                            .init(
+                                group: .init {
+                                    group
+                                } set: {
+                                    row = .group($0)
                                 }
+                            )
+                        )
+                    } label: {
+                        HStack(spacing: 10) {
+                            SystemIcon(systemName: "note.text", color: .orange, size: 22)
+                                .foregroundStyle(.white)
+                            Text(group.name)
+                            if let (totalQuantity, unitName) = group.totalQuantity() {
                                 HStack(alignment: .lastTextBaseline, spacing: 2) {
-                                    Spacer()
+                                    Text("(")
+                                    BFractionText(fraction: totalQuantity)
+                                    Text(unitName)
+                                        .font(.caption)
+                                    Text(")")
+                                }
+                                .foregroundStyle(Color(uiColor: .secondaryLabel))
+                            }
+                            Spacer()
+                            VStack(alignment: .trailing, spacing: 5) {
+                                HStack(alignment: .lastTextBaseline, spacing: 2) {
+                                    Text("合計")
+                                        .font(.caption)
+                                        .foregroundStyle(Color(uiColor: .secondaryLabel))
                                     BFractionText(fraction: group.sum())
                                     Text("円")
                                         .font(.caption)
+                                        .foregroundStyle(Color(uiColor: .secondaryLabel))
                                 }
                             }
-                            Spacer()
                             Image(systemName: "chevron.right")
+                                .foregroundStyle(.secondary)
                         }
                     }
+                    .foregroundStyle(Color(uiColor: .label))
+                    .buttonStyle(BorderlessButtonStyle())
                 case .item(let item):
-                    VStack {
-                        HStack(alignment: .lastTextBaseline, spacing: 2) {
-                            Text(item.name)
-                            Spacer()
-                            BFractionText(fraction: item.sum)
-                            Text("円")
-                                .font(.caption)
-                        }
-                        HStack(alignment: .lastTextBaseline) {
-                            SumItemValueButton(title: "単価") {
-
-                            } content: {
-                                HStack(alignment: .lastTextBaseline, spacing: 2) {
-                                    BFractionText(fraction: item.unitPrice)
-                                    Text("円/\(item.unitName)")
-                                        .font(.caption)
-                                }
-                            }
-                            .foregroundStyle(.indigo)
-                            SumItemValueButton(title: "数量") {
-
-                            } content:  {
-                                HStack(alignment: .lastTextBaseline, spacing: 2) {
-                                    BFractionText(fraction: item.quantity)
-                                    Text(item.unitName)
-                                        .font(.caption)
-                                }
-                            }
-                            .foregroundStyle(.blue)
-                            if let option = item.option {
-                                SumItemValueButton(title: "値引き") {
-
-                                } content: {
-                                    HStack(alignment: .lastTextBaseline, spacing: 2) {
-                                        BFractionText(fraction: option.numerator)
-                                        Text(option.prefix)
-                                            .font(.caption)
-                                    }
-                                }
-                                .foregroundStyle(.red)
-                            } else {
-                            }
-                            Spacer()
-                        }
-                        .padding(5)
+                    SumItemView(item: item, state: $editState) {
+                        row = .item($0)
                     }
                     .buttonStyle(BorderlessButtonStyle())
-                    .padding()
-                    .background {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .foregroundStyle(Color(uiColor: .secondarySystemGroupedBackground))
-                            .shadow(color: Color.black.opacity(0.1), radius: 10)
-                    }
-                    .listRowSeparator(.hidden)
                 }
             }
         }

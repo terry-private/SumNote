@@ -66,6 +66,7 @@ enum Module: String, CaseIterable {
         case .components: target(
             dependencies: [
                 .bInt,
+                .init(.entities)
             ]
         )
         // MARK: - Features -
