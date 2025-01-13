@@ -51,7 +51,7 @@ struct EditTextAlert: View {
                 presenting: editState?.textState
             ) { state in
                 TextField("テキストフィールド", text: .init {
-                    tmpText ?? editState?.textState?.text ?? ""
+                    tmpText ?? state.text
                 } set: {
                     tmpText = $0
                 })
