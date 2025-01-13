@@ -47,12 +47,8 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
                     }
                     .listStyle(.plain)
                     .onChange(of: scrollTarget) { _, newValue in
-                        print("onChange", newValue as Any)
-                        guard let newValue else { return }
                         withAnimation {
                             scrollProxy.scrollTo(newValue)
-                        } completion: {
-//                            scrollTarget = nil
                         }
                     }
                 }
