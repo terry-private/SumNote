@@ -1,6 +1,7 @@
 import Foundation
 import BigIntExtensions
 
+
 public struct SumItem: EntityProtocol {
     public struct ID: StringIDProtocol {
         public var rawValue: String
@@ -31,29 +32,19 @@ extension SumItem {
     public var unitPriceDescription: String { "\(unitPrice.ex.currencyString())円/\(unitName)" }
     public var quantityDescription: String { "x \(quantity.ex.currencyString())\(unitName)" }
     public var sumDescription: String { "= \(sum.ex.currencyString())円" }
-    public func description(with indent: Int = 0) -> String {
-//        let subtotal = "\(name) \(unitPrice.ex.currencyString())円/\(unitName) x \(quantity.ex.currencyString())\(unitName) = \(subtotal.ex.currencyString())円".indent(indent)
-//        let header = "\(name)"
-//        let
-//        guard let option else { return subtotal }
-//
-//        let optionDescription = option.description(with: indent + 1)
-//        let sum = "= \(sum.ex.currencyString())円".indent(indent + 1)
-        let items = [
-            "\(name) \(unitPriceDescription)".indent(indent),
-            quantityDescription.indent(indent + 1),
-            option?.description.indent(indent + 1),
-            sumDescription.indent(indent + 1),
+    public func description(with indent: Int = 0, spaces: Int = 2) -> String {
+        let items: [String?] = [
+            "\(name) \(unitPriceDescription)".indent(indent, spaces: spaces),
+            quantityDescription.indent(indent + 1, spaces: spaces),
+            option?.description.indent(indent + 1, spaces: spaces),
+            sumDescription.indent(indent + 1, spaces: spaces),
         ]
         return items.compactMap{ $0 }.joined(separator: "\n")
     }
     public var description: String {
         "\(name)\n \(unitPrice.ex.currencyString())円/\(unitName) x \(quantity.ex.currencyString())\(unitName) \(option?.description ?? "") = \(sum.ex.currencyString())円"
     }
-}
-
-public extension SumItem {
-    static func dummy(_ index: Int) -> Self {
-        SumItem(name: "row_name_\(index)", unitPrice: BFraction(index, 1), quantity: BFraction(index, 1), unitName: "個", option: .dummy(index))
+    public static func dummy(_ index: Int) -> Self {
+        SumItem(name: "item_name_\(index)", unitPrice: BFraction(index, 1), quantity: BFraction(index, 1), unitName: "個", option: .dummy(index))
     }
 }

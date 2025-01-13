@@ -12,7 +12,7 @@ struct EditTextAlertState: Identifiable {
         self.text = text
         self.completion = completion
     }
-    init(title: String, item: Binding<SumItem2>,_ keyPath: WritableKeyPath<SumItem2, String>) {
+    init(title: String, item: Binding<SumItem>,_ keyPath: WritableKeyPath<SumItem, String>) {
         self.init(
             id: item.id.rawValue,
             title: title,
@@ -28,7 +28,6 @@ extension Binding where Value == Bool {
     @MainActor
     static func bool(from alertState: Binding<EditState?>) -> Self {
         Binding<Bool> {
-            print(alertState.wrappedValue as Any)
             return alertState.wrappedValue?.textState != nil
         } set: {
             if !$0 {

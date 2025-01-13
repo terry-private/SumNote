@@ -19,10 +19,8 @@ public struct NoteListView<Dependency: DependencyProtocol>: View {
                     }
                 }
                 .onDelete { indexSet in
-                    Task {
-                        for index in indexSet {
-                            try await store.delete(section.items[index].id)
-                        }
+                    for index in indexSet {
+                        store.delete(section.items[index].id)
                     }
                 }
             }
@@ -30,16 +28,14 @@ public struct NoteListView<Dependency: DependencyProtocol>: View {
         .navigationDestination(
             item: $selected,
             destination: { note in
-                Dependency.noteView(note: note)
+                Dependency.noteView(note.id)
             }
         )
         .navigationTitle("ノートリスト")
         .toolbar {
             Menu {
                 Button("空のノートを追加", systemImage: "note.text.badge.plus") {
-                    Task {
-                        try await store.create(.dummy())
-                    }
+                    store.create(.dummy())
                 }
             } label: {
                 Label("menu", systemImage: "line.3.horizontal.circle")

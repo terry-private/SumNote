@@ -10,7 +10,8 @@ let package = Package(
     ],
     products: Module.allCases.map(\.library),
     dependencies: [
-        .package(path: "../BigIntExtensions")
+        .package(path: "../BigIntExtensions"),
+        .package(url: "https://github.com/apple/swift-collections", from: "1.1.4")
     ],
     targets: Module.allCases.map(\.target) + TestModule.allCases.map(\.target)
 )
@@ -21,6 +22,7 @@ extension Target.Dependency {
         self = module.dependency
     }
     static var bInt: Self { .product(name: "BigIntExtensions", package: "BigIntExtensions") }
+    static var swiftCollections: Self { .product(name: "Collections", package: "swift-collections")}
 }
 
 // MARK: モジュール親ディレクトリ
@@ -45,7 +47,8 @@ enum Module: String, CaseIterable {
         return switch self {
         case .entities: target(
             dependencies: [
-                .bInt
+                .bInt,
+                .swiftCollections
             ]
         )
         // MARK: - Core -

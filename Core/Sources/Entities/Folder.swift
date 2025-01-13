@@ -21,6 +21,6 @@ public struct Folder: EntityProtocol {
 
 public extension Folder {
     static func dummy(_ index: Int) -> Self {
-        Folder(name: "folder_\(index)", notes: (1...index).map { .dummy($0) }, editedAt: .dummy)
+        Folder(name: "folder_\(index)", notes: (1...index).map { _ in .dummy() }, editedAt: .dummy)
     }
 }

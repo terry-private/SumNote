@@ -3,50 +3,87 @@ import Entities
 import CoreProtocols
 import Observation
 import SwiftData
+import Collections
 
 @Observable
 @MainActor
 public final class NoteStore<Repository: NoteRepositoryProtocol>: NoteStoreProtocol {
-    public var notes: [SumNote] = []
+
+    public var values: OrderedDictionary<SumNote.ID, SumNote> = [:]
     var refreshTask: Task<Void, Error>?
-    public var isRefreshing: Bool { refreshTask != nil }
+
     public init() {
-        refreshTask = Task {
-            defer { refreshTask = nil }
-            do {
-                try await refresh()
-            } catch {
-                print(error)
-            }
-        }
+        refresh()
     }
-    public func update(_ note: SumNote) async throws {
+
+    public var notes: [SumNote] { values.values.elements }
+
+    public func note(by id: SumNote.ID) -> SumNote? {
+        values[id]
+    }
+
+    // MARK: - update
+    @discardableResult
+    public func update(_ note: SumNote) -> Task<Void, Error> {
         var note = note
         note.editedAt = Date()
-        try await Repository.update(note: note)
-        try await refresh()
+        values[note.id] = note
+        return Task {
+            try await Repository.update(note)
+        }
     }
-    public func delete(_ id: SumNote.ID) async throws {
-        try await Repository.delete(id)
-        try await refresh()
+
+    @discardableResult
+    public func update(_ group: Entities.SumGroup, in noteID: Entities.SumNote.ID) -> Task<Void, Error>{
+        guard var note = values[noteID] else {
+            return .init {}
+        }
+        note.groups[group.id] = group
+        return update(note)
     }
-    public func delete(_ id: SumGroup.ID, in noteID: SumNote.ID) async throws {
-        try await Repository.delete(id, in: noteID)
-        try await refresh()
+
+    @discardableResult
+    public func update(_ item: Entities.SumItem, in noteID: Entities.SumNote.ID) -> Task<Void, Error> {
+        guard var note = values[noteID] else {
+            return .init {}
+        }
+        note.items[item.id] = item
+        return update(note)
     }
-    public func note(by id: SumNote.ID) async throws -> SumNote? {
-        try await Repository.fetch(by: id)
+
+    @discardableResult
+    public func update(_ item: Entities.SumItem, in groupID: Entities.SumGroup.ID, in noteID: Entities.SumNote.ID) -> Task<Void, Error> {
+        guard var note = values[noteID] else {
+            return .init {}
+        }
+        note.groups[groupID]?.items[item.id] = item
+        return update(note)
     }
-    public func refresh() async throws {
-        notes = try await Repository.fetchAll()
+
+    // MARK: - delete
+    @discardableResult
+    public func delete(_ id: SumNote.ID) -> Task<Void, Error> {
+        values.removeValue(forKey: id)
+        return Task {
+            try await Repository.delete(id)
+        }
     }
-    public func create(_ note: SumNote) async throws {
-        try await Repository.create(note)
-        try await refresh()
+    @discardableResult
+    public func delete(_ id: SumGroup.ID, in noteID: SumNote.ID) -> Task<Void, Error> {
+        values[noteID]?.groups.removeValue(forKey: id)
+        return Task {
+            try await Repository.delete(id, in: noteID)
+        }
+    }
+    @discardableResult
+    public func create(_ note: SumNote) -> Task<Void, Error> {
+        values[note.id] = note
+        return Task {
+            try await Repository.create(note)
+        }
     }
     public var yearMonthSections: [SectionBox<YearMonth, SumNote>] {
-        let ymToNotes: [YearMonth: [SumNote]] = notes
-            .reduce(into: [:]) { result, note in
+        let ymToNotes: [YearMonth: [SumNote]] = notes.reduce(into: [:]) { result, note in
                 let yearMonth = YearMonth(date: note.editedAt)
                 result[yearMonth, default: []].append(note)
             }
@@ -61,4 +98,22 @@ public final class NoteStore<Repository: NoteRepositoryProtocol>: NoteStoreProto
     }
 }
 
+internal extension NoteStore {
+    var isRefreshing: Bool { refreshTask != nil }
 
+    @discardableResult
+    func refresh() -> Task<Void, Error> {
+        Task {
+            defer { refreshTask = nil }
+            do {
+                let notes = try await Repository.fetchAll()
+                values = notes.reduce(into: OrderedDictionary<SumNote.ID, SumNote>()) { result, note in
+                    result[note.id] = note
+                }
+            } catch {
+                print(error)
+                throw error
+            }
+        }
+    }
+}

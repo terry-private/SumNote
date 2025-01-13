@@ -5,7 +5,7 @@ enum EditState {
     case text(EditTextAlertState)
     case fraction(EditFractionState)
     case discount(EditDiscountState)
-    case group(EditGroupState)
+    case group(SumGroup.ID)
 
     var textState: EditTextAlertState? {
         if case .text(let state) = self {
@@ -28,9 +28,9 @@ enum EditState {
             nil
         }
     }
-    var groupState: EditGroupState? {
-        if case .group(let state) = self {
-            state
+    var groupID: SumGroup.ID? {
+        if case .group(let id) = self {
+            id
         } else {
             nil
         }

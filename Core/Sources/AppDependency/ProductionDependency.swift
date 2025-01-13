@@ -8,9 +8,9 @@ import Repositories
 import Stores
 
 public enum ProductionDependency: DependencyProtocol {
-    public static func rootView() -> some View {
+    @MainActor public static func rootView() -> some View {
         NavigationStack {
-            SumNoteView2<Self>(.dummy())
+            noteListView()
         }
     }
     @MainActor public static func folderListView() -> FolderListView<Self> {
@@ -19,8 +19,8 @@ public enum ProductionDependency: DependencyProtocol {
     @MainActor public static func noteListView() -> NoteListView<Self> {
         NoteListFeature.NoteListView<Self>()
     }
-    @MainActor public static func noteView(note: SumNote) -> some View {
-        NoteFeature.NoteView<Self>(note: note)
+    @MainActor public static func noteView(_ noteID: SumNote.ID) -> some View {
+        NoteFeature.NoteView<Self>(noteID)
     }
     // MARK: - Stores
     @MainActor public static let folderStore = Stores.FolderStore()

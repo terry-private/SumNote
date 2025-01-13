@@ -14,8 +14,8 @@ public protocol DependencyProtocol {
     @MainActor static func noteListView() -> NoteListView
     
     associatedtype NoteView: View
-    @MainActor static func noteView(note: SumNote) -> NoteView
-    
+    @MainActor static func noteView(_ noteID: SumNote.ID) -> NoteView
+
     // MARK: - Stores
     associatedtype FolderStore: FolderStoreProtocol
     @MainActor static var folderStore: FolderStore { get }
@@ -31,7 +31,7 @@ public enum DummyDependency: DependencyProtocol {
     public static func rootView() -> some View { EmptyView() }
     public static func folderListView() -> some View { EmptyView() }
     public static func noteListView() -> some View { EmptyView() }
-    public static func noteView(note: SumNote) -> some View { EmptyView() }
+    public static func noteView(_ noteID: SumNote.ID) -> some View { EmptyView() }
     public static var folderStore = DummyFolderStore()
     public static var noteStore = DummyNoteStore()
     public typealias NoteRepository = DummyNoteRepository

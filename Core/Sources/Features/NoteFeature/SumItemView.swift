@@ -4,9 +4,9 @@ import Components
 import BigIntExtensions
 
 struct SumItemView: View {
-    @Binding var item: SumItem2
+    @Binding var item: SumItem
     @Binding var state: EditState?
-    init(item: Binding<SumItem2>, state: Binding<EditState?>) {
+    init(item: Binding<SumItem>, state: Binding<EditState?>) {
         self._item = item
         self._state = state
     }
@@ -110,26 +110,15 @@ struct SumItemView: View {
             }
             .padding(5)
         }
-        // MARK: - Alert -
-//        .alert(state?.editNameAlert?.title ?? "", isPresented: .bool(for: state), presenting) {
-//            if let editNameAlert {
-//                TextField("テキストフィールド", text: $editNameAlertText)
-//                Button("Cancel", action: {})
-//                Button("OK") {
-//                    guard !editNameAlertText.isBlank() else { return }
-//                    editNameAlert.binding.wrappedValue = editNameAlertText
-//                }
-//            }
-//        }
     }
 }
 
 extension SumItemView {
-    func setAlert(title: String, _ keyPath: WritableKeyPath<SumItem2, String>) {
+    func setAlert(title: String, _ keyPath: WritableKeyPath<SumItem, String>) {
         guard state == nil else { return }
         state = .text(.init(title: title, item: $item, keyPath))
     }
-    func setEditFraction(title: String, _ keyPath: WritableKeyPath<SumItem2, BFraction>) {
+    func setEditFraction(title: String, _ keyPath: WritableKeyPath<SumItem, BFraction>) {
         guard state == nil else { return }
         state = .fraction(
             EditFractionState(
@@ -146,7 +135,7 @@ extension SumItemView {
 }
 
 #Preview {
-    @Previewable @State var item: SumItem2 = .dummy(1)
+    @Previewable @State var item: SumItem = .dummy(1)
     @Previewable @State var state: EditState? = nil
     VStack {
         Spacer()
