@@ -18,31 +18,72 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
             VStack {
                 ScrollViewReader { scrollProxy in
                     List {
-                        ForEach(group.items.values.elements) { item in
-                            SumItemView(
-                                item: Binding<SumItem> {
-                                    item
-                                } set: { newItem in
-                                    store.update(newItem, in: groupID, in: noteID)
-                                },
-                                state: $editState
-                            )
-                            .buttonStyle(BorderlessButtonStyle())
-                            .id(item.id)
-                        }
-                        .onMove { indexSet, index in
-                            var items = group.items.values.elements
-                            items.move(fromOffsets: indexSet, toOffset: index)
-                            var group = group
-                            group.items = items.reduce(into: [:]) { $0[$1.id] = $1 }
-                            store.update(group, in: noteID)
-                        }
-                        .onDelete { indexSet in
-                            var group = group
-                            var items = group.items.values.elements
-                            items.remove(atOffsets: indexSet)
-                            group.items = items.reduce(into: [:]) { $0[$1.id] = $1 }
-                            store.update(group, in: noteID)
+                        Section {
+                            ForEach(group.items.values.elements) { item in
+                                SumItemView(
+                                    item: Binding<SumItem> {
+                                        item
+                                    } set: { newItem in
+                                        store.update(newItem, in: groupID, in: noteID)
+                                    },
+                                    state: $editState
+                                )
+                                .buttonStyle(BorderlessButtonStyle())
+                                .id(item.id)
+                            }
+                            .onMove { indexSet, index in
+                                var items = group.items.values.elements
+                                items.move(fromOffsets: indexSet, toOffset: index)
+                                var group = group
+                                group.items = items.reduce(into: [:]) { $0[$1.id] = $1 }
+                                store.update(group, in: noteID)
+                            }
+                            .onDelete { indexSet in
+                                var group = group
+                                var items = group.items.values.elements
+                                items.remove(atOffsets: indexSet)
+                                group.items = items.reduce(into: [:]) { $0[$1.id] = $1 }
+                                store.update(group, in: noteID)
+                            }
+                            .listRowBackground(Color.clear)
+                        } header: {
+                            // MARK: - 総計 -
+                            HStack {
+                                Grid(alignment: .trailing) {
+                                    if let (totalQuantity, unitName) = group.totalQuantity() {
+                                        GridRow(alignment: .lastTextBaseline) {
+                                            HStack {
+                                                Spacer()
+                                                Text("数量")
+                                            }
+                                            .layoutPriority(0)
+                                            BFractionText(fraction: totalQuantity, textStyle: .headline)
+                                                .foregroundStyle(Color(uiColor: .label))
+                                                .layoutPriority(1)
+                                            HStack {
+                                                Text(unitName)
+                                                Spacer()
+                                            }
+                                            .layoutPriority(0)
+                                        }
+                                    }
+                                    GridRow(alignment: .lastTextBaseline) {
+                                        HStack {
+                                            Spacer()
+                                            Text("合計")
+                                        }
+                                        .layoutPriority(0)
+                                        BFractionText(fraction: group.sum(), textStyle: .headline)
+                                            .foregroundStyle(Color(uiColor: .label))
+                                            .layoutPriority(1)
+                                        HStack {
+                                            Text("円")
+                                            Spacer()
+                                        }
+                                        .layoutPriority(0)
+                                    }
+                                }
+                            }
                         }
                     }
                     .listStyle(.plain)
@@ -52,46 +93,27 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
                         }
                     }
                 }
-                // MARK: - 総計 -
                 HStack {
-                    Grid(alignment: .trailing) {
-                        if let (totalQuantity, unitName) = group.totalQuantity() {
-                            GridRow(alignment: .lastTextBaseline) {
-                                HStack {
-                                    Spacer()
-                                    Text("数量")
-                                        .foregroundStyle(.secondary)
-                                }
-                                .layoutPriority(0)
-                                BFractionText(fraction: totalQuantity, textStyle: .title3)
-                                    .layoutPriority(1)
-                                HStack {
-                                    Text(unitName)
-                                    Spacer()
-                                }
-                                .layoutPriority(0)
+                    Menu {
+                        Button("新規アイテム作成", systemImage: "note.text.badge.plus") {
+                            let item = SumItem(name: "新規アイテム", unitPrice: 0, quantity: 1, unitName: "個")
+                            _ = withAnimation {
+                                store.update(item, in: groupID, in: noteID)
+                            } completion: {
+                                scrollTarget = item.id
                             }
                         }
-                        GridRow(alignment: .lastTextBaseline) {
-                            HStack {
-                                Spacer()
-                                Text("合計")
-                                    .foregroundStyle(.secondary)
-                            }
-                            .layoutPriority(0)
-                            BFractionText(fraction: group.sum(), textStyle: .title3)
-                                .layoutPriority(1)
-                            HStack {
-                                Text("円")
-                                Spacer()
-                            }
-                            .layoutPriority(0)
+                        Button("テンプレートから作成", systemImage: "note.text.badge.plus") {
                         }
+                    } label: {
+                        Label("新規", systemImage: "plus.circle.fill")
+                            .padding(.vertical, 15)
+                            .padding(.horizontal, 25)
                     }
-                    .padding()
+                    Spacer()
                 }
-                .ignoresSafeArea()
             }
+            .background(Color(uiColor: .systemGroupedBackground))
             .editTextAlert(editState: $editState)
             .sheet(item: Binding<EditFractionState?>(from: $editState)) { state in
                 CalculatorInputView(
@@ -115,11 +137,11 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
             // MARK: - toolbar -
             .toolbar {
                 Menu {
-                    Button("グループ名を編集", systemImage: "square.and.pencil") {
+                    Button("リスト名を編集", systemImage: "square.and.pencil") {
                         editState = .text(
                             EditTextAlertState(
                                 id: group.id.rawValue,
-                                title: "グループ名を編集",
+                                title: "リスト名を編集",
                                 text: group.name
                             ) {
                                 var group = group
@@ -127,14 +149,6 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
                                 store.update(group, in: noteID)
                             }
                         )
-                    }
-                    Button("新規追加", systemImage: "plus") {
-                        let item = SumItem(name: "アイテム", unitPrice: 0, quantity: 1, unitName: "個")
-                        _ = withAnimation {
-                            store.update(item, in: groupID, in: noteID)
-                        } completion: {
-                            scrollTarget = item.id
-                        }
                     }
                     Button("テキストコピー", systemImage: "pencil") {
                         UIPasteboard.general.string = group.description()

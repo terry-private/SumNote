@@ -35,8 +35,150 @@ struct SumItemView: View {
                 Text(item.name)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
+
+                if let option = item.option {
+                    Button {
+                        guard state == nil else { return }
+                        state = .discount(
+                            EditDiscountState(title: item.name, option: option) { option in
+                                item.option = option
+                                state = nil
+                            }
+                        )
+                    } label: {
+                        HStack(alignment: .lastTextBaseline, spacing: 2) {
+                            Text("(\(option.numerator.description)\(Text(option.suffix).font(.caption)))")
+                        }
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                    }
+                    .tint(.secondary)
+
+                }
+                Spacer()
+            }
+            HStack(alignment: .lastTextBaseline) {
+//                SumItemValueButton(iconSystemName: "yensign", iconColor: .indigo, title: "単価") {
+//                    setEditFraction(title: "\(item.name) / 単価", \.unitPrice)
+//                } content: {
+//                    HStack(alignment: .lastTextBaseline, spacing: 2) {
+//
+//                        BFractionText(fraction: item.unitPrice)
+//                            .layoutPriority(1)
+//                        Text("円/\(item.unitName)")
+//                            .font(.caption)
+//                            .lineLimit(1)
+//                            .minimumScaleFactor(0.5)
+//                    }
+//                    .frame(maxWidth: .infinity)
+//                }
+//                .foregroundStyle(.indigo)
+                Button {
+                    setEditFraction(title: "\(item.name) / 単価", \.unitPrice)
+                } label: {
+                    HStack(alignment: .lastTextBaseline, spacing: 2) {
+                        BFractionText(fraction: item.unitPrice)
+                            .layoutPriority(1)
+                        Text("円/\(item.unitName)")
+                            .font(.caption)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(5)
+                    .frame(maxWidth: .infinity)
+                    .background {
+                        RoundedRectangle(cornerRadius: 5, style: .continuous)
+                            .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                            .shadow(color: Color.black.opacity(0.1), radius: 10)
+                    }
+                }
+                .tint(.primary)
+//                SumItemValueButton(iconSystemName: "cart.fill.badge.plus", iconColor: .green, title: "数量") {
+//                    setEditFraction(title: "\(item.name) / 数量", \.quantity)
+//                } content:  {
+//                    HStack(alignment: .lastTextBaseline, spacing: 2) {
+//                        BFractionText(fraction: item.quantity)
+//                        Text(item.unitName)
+//                            .font(.caption)
+//                            .lineLimit(1)
+//                            .minimumScaleFactor(0.5)
+//                    }
+//                    .frame(maxWidth: .infinity)
+//                }
+                Button {
+                    setEditFraction(title: "\(item.name) / 数量", \.quantity)
+                } label: {
+                    HStack(alignment: .lastTextBaseline, spacing: 2) {
+                        BFractionText(fraction: item.quantity)
+                        Text(item.unitName)
+                            .foregroundStyle(.secondary)
+                    }
+                    .font(.caption)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .padding(5)
+                    .frame(maxWidth: .infinity)
+                    .background {
+                        RoundedRectangle(cornerRadius: 5, style: .continuous)
+                            .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                            .shadow(color: Color.black.opacity(0.1), radius: 10)
+                    }
+                }
+                .tint(.primary)
+//                if let option = item.option {
+//                    SumItemValueButton(iconSystemName: "tag.slash.fill", iconColor: .red, title: "値引き") {
+//                        guard state == nil else { return }
+//                        state = .discount(
+//                            EditDiscountState(title: item.name, option: option) { option in
+//                                item.option = option
+//                                state = nil
+//                            }
+//                        )
+//                    } content: {
+//                        HStack(alignment: .lastTextBaseline, spacing: 2) {
+//                            Text(option.numerator.description)
+//                            Text(option.suffix)
+//                                .font(.caption)
+//                                .foregroundStyle(.secondary)
+//                        }
+//                        .lineLimit(1)
+//                        .minimumScaleFactor(0.5)
+//                    }
+//                    .foregroundStyle(.red)
+//
+//                } else {
+//                    SumItemValueButton(iconSystemName: "tag.slash.fill", iconColor: .red, title: "値引き", disabled: true) {
+//                    } content: {
+//                        HStack(alignment: .lastTextBaseline, spacing: 2) {
+//                            Text("なし")
+//                        }
+//                    }
+//                    .foregroundStyle(.red)
+//                }
+            }
+            .padding(.horizontal, 5)
+            HStack(alignment: .lastTextBaseline, spacing: 10) {
+                Spacer()
+                if item.option != nil {
+                    HStack(alignment: .lastTextBaseline, spacing: 2) {
+                        Text("小計")
+                            .font(.caption)
+                        BFractionText(fraction: item.subtotal)
+                            .minimumScaleFactor(0.5)
+                        Text("円")
+                            .font(.caption)
+                    }
+                    .foregroundStyle(.secondary)
+                    .overlay {
+                        Color.secondary.frame(height: 1)
+                            .font(.caption)
+                    }
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 HStack(alignment: .lastTextBaseline, spacing: 2) {
-                    Spacer()
                     Text("小計")
                         .font(.caption)
                         .foregroundStyle(Color(uiColor: .secondaryLabel))
@@ -47,68 +189,7 @@ struct SumItemView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            VStack(spacing: 0) {
-                HStack(alignment: .lastTextBaseline) {
-                    SumItemValueButton(iconSystemName: "yensign", iconColor: .indigo, title: "単価") {
-                        setEditFraction(title: "\(item.name) / 単価", \.unitPrice)
-                    } content: {
-                        HStack(alignment: .lastTextBaseline, spacing: 2) {
-
-                            BFractionText(fraction: item.unitPrice)
-                                .layoutPriority(1)
-                            Text("円/\(item.unitName)")
-                                .font(.caption)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.5)
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                    .foregroundStyle(.indigo)
-                    SumItemValueButton(iconSystemName: "cart.fill.badge.plus", iconColor: .green, title: "数量") {
-                        setEditFraction(title: "\(item.name) / 数量", \.quantity)
-                    } content:  {
-                        HStack(alignment: .lastTextBaseline, spacing: 2) {
-                            BFractionText(fraction: item.quantity)
-                            Text(item.unitName)
-                                .font(.caption)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.5)
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                    .foregroundStyle(.blue)
-                    if let option = item.option {
-                        SumItemValueButton(iconSystemName: "tag.slash.fill", iconColor: .red, title: "値引き") {
-                            guard state == nil else { return }
-                            state = .discount(
-                                EditDiscountState(title: item.name, option: option) { option in
-                                    item.option = option
-                                    state = nil
-                                }
-                            )
-                        } content: {
-                            HStack(alignment: .lastTextBaseline, spacing: 2) {
-                                Text(option.numerator.description)
-                                Text(option.suffix)
-                                    .font(.caption)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.5)
-                            }
-                        }
-                        .foregroundStyle(.red)
-                    } else {
-                        SumItemValueButton(iconSystemName: "tag.slash.fill", iconColor: .red, title: "値引き", disabled: true) {
-                        } content: {
-                            HStack(alignment: .lastTextBaseline, spacing: 2) {
-                                Text("なし")
-                            }
-                        }
-                        .foregroundStyle(.red)
-                    }
-                    Spacer()
-                }
-            }
-            .padding(5)
+            .padding(.horizontal, 5)
         }
     }
 }
@@ -137,23 +218,5 @@ extension SumItemView {
 #Preview {
     @Previewable @State var item: SumItem = .dummy(1)
     @Previewable @State var state: EditState? = nil
-    VStack {
-        Spacer()
-        SumItemView(item: $item, state: $state)
-//        Grid {
-//            GridRow {
-//                RoundedRectangle(cornerRadius: 10)
-//                    .fill(Color.red)
-//                    .aspectRatio(1, contentMode: .fit)  // これで正方形を維持
-//
-//                RoundedRectangle(cornerRadius: 10)
-//                    .fill(Color.blue)
-//                    .aspectRatio(1, contentMode: .fit)  // これで正方形を維持
-//
-//                RoundedRectangle(cornerRadius: 10)
-//                    .fill(Color.green)
-//                    .aspectRatio(1, contentMode: .fit)  // これで正方形を維持
-//            }
-//        }
-    }
+    SumItemView(item: $item, state: $state)
 }

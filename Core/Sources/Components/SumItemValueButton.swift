@@ -27,22 +27,13 @@ public struct SumItemValueButton<Content: View>: View {
         Button {
             action()
         } label: {
-            Grid {
-                GridRow(alignment: .center) {
-                    SystemIcon(systemName: iconSystemName, color: iconColor, size: 16)
-                        .foregroundStyle(.white)
-                        .opacity(disabled ? 0.2 : 1)
-                    Text(title)
-                        .font(.caption)
-                        .lineLimit(1)
-                }
-                GridRow {
-                    content
-                }
-                .gridCellColumns(3)
+            HStack {
+                SystemIcon(systemName: iconSystemName, color: iconColor, size: 18)
+                    .foregroundStyle(.white)
+                    .opacity(disabled ? 0.2 : 1)
+                content
             }
             .foregroundStyle(disabled ? Color(uiColor: .secondaryLabel) : Color(uiColor: .label))
-            .padding(8)
             .background {
 //                UnevenRoundedRectangle(
 //                    cornerRadii: .init(
@@ -52,9 +43,9 @@ public struct SumItemValueButton<Content: View>: View {
 //                        topTrailing: 30.0),
 //                    style: .continuous
 //                )
-                RoundedRectangle(cornerRadius: 5, style: .continuous)
-                    .foregroundStyle(Color(uiColor: .secondarySystemGroupedBackground))
-                    .shadow(color: Color.black.opacity(0.1), radius: 10)
+//                RoundedRectangle(cornerRadius: 5, style: .continuous)
+//                    .foregroundStyle(Color(uiColor: .secondarySystemGroupedBackground))
+//                    .shadow(color: Color.black.opacity(0.1), radius: 10)
 //                .stroke(style: .init())
             }
         }
@@ -64,7 +55,7 @@ public struct SumItemValueButton<Content: View>: View {
 
 @ViewBuilder
 @MainActor
-func content(_ fraction: BFraction, _ unitName: String) -> some View {
+private func content(_ fraction: BFraction, _ unitName: String) -> some View {
     HStack(alignment: .lastTextBaseline, spacing: 5) {
         BFractionText(fraction: fraction, textStyle: .body)
         Text(unitName)

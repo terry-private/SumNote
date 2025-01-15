@@ -21,10 +21,27 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
             VStack(spacing: 0) {
                 ScrollViewReader { scrollProxy in
                     List {
-                        groups(note)
-                            .listRowBackground(Color.clear)
-                        items(note)
-                            .listRowBackground(Color.clear)
+                        Section {
+                            groups(note)
+                                .listRowBackground(Color.clear)
+                            items(note)
+                                .listRowBackground(Color.clear)
+                        } header: {
+                            // MARK: - 総計 -
+                            HStack {
+                                Spacer()
+                                HStack(alignment: .lastTextBaseline) {
+                                    Text("総計")
+                                    BFractionText(fraction: note.sum(), textStyle: .headline)
+                                        .foregroundStyle(Color(uiColor: .label))
+                                    Text("円")
+                                }
+                                .font(.headline)
+                                .padding(5)
+                                Spacer()
+                            }
+                        }
+
                     }
                     .listStyle(.plain)
                     .onChange(of: scrollTargetItem) { _, newValue in
@@ -40,19 +57,36 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                         }
                     }
                 }
-                // MARK: - 総計 -
                 HStack {
-                    Spacer()
-                    HStack(alignment: .lastTextBaseline) {
-                        Text("総計")
-                            .foregroundStyle(.secondary)
-                        BFractionText(fraction: note.sum(), textStyle: .title3)
-                        Text("円")
+                    Menu {
+                        Button("新規アイテム作成", systemImage: "note.text.badge.plus") {
+                            let item = SumItem(name: "新規アイテム", unitPrice: 0, quantity: 1, unitName: "個")
+                            withAnimation {
+                                store.update(item, in: noteID)
+                                scrollTargetItem = item.id
+                            }
+                        }
+                        Button("テンプレートから作成", systemImage: "note.text.badge.plus") {
+                        }
+                    } label: {
+                        Label("新規", systemImage: "plus.circle.fill")
+                            .padding(.vertical, 15)
+                            .padding(.horizontal, 25)
                     }
-                    .padding()
                     Spacer()
+                    Button {
+                        let group = SumGroup(name: "新規リスト", items: [])
+
+                        withAnimation {
+                            store.update(group, in: noteID)
+                            scrollTargetGroup = group.id
+                        }
+                    } label: {
+                        Text("リストを追加")
+                            .padding(.vertical, 15)
+                            .padding(.horizontal, 25)
+                    }
                 }
-                .ignoresSafeArea()
             }
             .background(Color(uiColor: .systemGroupedBackground))
             // MARK: - Alert -
@@ -90,21 +124,6 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                                 store.update(note)
                             }
                         )
-                    }
-                    Button("新規アイテム作成", systemImage: "note.text.badge.plus") {
-                        let item = SumItem(name: "新規アイテム", unitPrice: 0, quantity: 1, unitName: "個")
-                        withAnimation {
-                            store.update(item, in: noteID)
-                            scrollTargetItem = item.id
-                        }
-                    }
-                    Button("新規リスト作成", systemImage: "note.text.badge.plus") {
-                        let group = SumGroup(name: "新規リスト", items: [])
-
-                        withAnimation {
-                            store.update(group, in: noteID)
-                            scrollTargetGroup = group.id
-                        }
                     }
                     Button("テキストコピー", systemImage: "pencil") {
                         UIPasteboard.general.string = note.description()

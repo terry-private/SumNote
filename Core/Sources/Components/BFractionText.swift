@@ -12,24 +12,30 @@ public struct BFractionText: View {
         self.rounded = rounded
         self.currencyMode = currencyMode
     }
+    var wholePart: String {
+        if currencyMode {
+            fraction.ex.currencyWholePartString
+        } else {
+            fraction.ex.wholePartString
+        }
+    }
     var wholePartFont: UIFont {
         textStyle.uiFont
+    }
+
+    var fractionalPart: String {
+        fraction.ex.fractionalPartString(rounded: rounded)
     }
     var fractionalPartFont: UIFont {
         .systemFont(ofSize: wholePartFont.xHeight * wholePartFont.pointSize / wholePartFont.capHeight)
     }
     public var body: some View {
         HStack(alignment: .lastTextBaseline, spacing: 0) {
-            let wholePart = currencyMode ? fraction.ex.currencyWholePartString : fraction.ex.wholePartString
+            Text(wholePart)
+                .font(.init(wholePartFont))
             if fraction.denominator != 1 {
-                Text(wholePart)
-                    .font(.init(wholePartFont)) +
-                Text(".") +
-                Text(fraction.ex.fractionalPartString(rounded: rounded))
+                Text(".\(fractionalPart)")
                     .font(.init(fractionalPartFont))
-            } else {
-                Text(wholePart)
-                    .font(.init(wholePartFont))
             }
         }
         .textSelection(.enabled)

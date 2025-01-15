@@ -26,8 +26,8 @@ struct EditTextAlertState: Identifiable {
 
 extension Binding where Value == Bool {
     @MainActor
-    static func bool(from alertState: Binding<EditState?>) -> Self {
-        Binding<Bool> {
+    init(from alertState: Binding<EditState?>) {
+        self.init {
             return alertState.wrappedValue?.textState != nil
         } set: {
             if !$0 {
@@ -47,7 +47,7 @@ struct EditTextAlert: View {
         EmptyView()
             .alert(
                 editState?.textState?.title ?? "",
-                isPresented: .bool(from: $editState),
+                isPresented: .init(from: $editState),
                 presenting: editState?.textState
             ) { state in
                 TextField("テキストフィールド", text: .init {
