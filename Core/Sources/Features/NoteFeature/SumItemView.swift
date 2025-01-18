@@ -21,10 +21,8 @@ struct SumItemView: View {
                     Button("単位を編集", systemImage: "square.and.pencil") {
                         setAlert(title: "単位を編集", \.unitName)
                     }
-                    if item.option == nil {
-                        Button("割引を追加", systemImage: "tag.slash.fill") {
-                            item.option = .init(style: .percentile, 10)
-                        }
+                    Button("割引", systemImage: "tag.slash.fill") {
+                        setDiscountPciderState()
                     }
                 } label: {
                     Image(systemName: "square.and.pencil")
@@ -36,45 +34,20 @@ struct SumItemView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
 
-                if let option = item.option {
-                    Button {
-                        guard state == nil else { return }
-                        state = .discount(
-                            EditDiscountState(title: item.name, option: option) { option in
-                                item.option = option
-                                state = nil
-                            }
-                        )
-                    } label: {
-                        HStack(alignment: .lastTextBaseline, spacing: 2) {
-                            Text("(\(option.numerator.description)\(Text(option.suffix).font(.caption)))")
-                        }
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.5)
+                if item.option.numerator != .zero {
+                    HStack(alignment: .lastTextBaseline, spacing: 2) {
+                        Text("(\(item.option.numerator.description)\(Text(item.option.suffix).font(.caption)))")
+                            .foregroundStyle(.secondary)
                     }
-                    .tint(.secondary)
-
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                 }
+
                 Spacer()
             }
             HStack(alignment: .lastTextBaseline) {
-//                SumItemValueButton(iconSystemName: "yensign", iconColor: .indigo, title: "単価") {
-//                    setEditFraction(title: "\(item.name) / 単価", \.unitPrice)
-//                } content: {
-//                    HStack(alignment: .lastTextBaseline, spacing: 2) {
-//
-//                        BFractionText(fraction: item.unitPrice)
-//                            .layoutPriority(1)
-//                        Text("円/\(item.unitName)")
-//                            .font(.caption)
-//                            .lineLimit(1)
-//                            .minimumScaleFactor(0.5)
-//                    }
-//                    .frame(maxWidth: .infinity)
-//                }
-//                .foregroundStyle(.indigo)
                 Button {
-                    setEditFraction(title: "\(item.name) / 単価", \.unitPrice)
+                    setEditFraction(.unitPrice)
                 } label: {
                     HStack(alignment: .lastTextBaseline, spacing: 2) {
                         BFractionText(fraction: item.unitPrice)
@@ -94,20 +67,8 @@ struct SumItemView: View {
                     }
                 }
                 .tint(.primary)
-//                SumItemValueButton(iconSystemName: "cart.fill.badge.plus", iconColor: .green, title: "数量") {
-//                    setEditFraction(title: "\(item.name) / 数量", \.quantity)
-//                } content:  {
-//                    HStack(alignment: .lastTextBaseline, spacing: 2) {
-//                        BFractionText(fraction: item.quantity)
-//                        Text(item.unitName)
-//                            .font(.caption)
-//                            .lineLimit(1)
-//                            .minimumScaleFactor(0.5)
-//                    }
-//                    .frame(maxWidth: .infinity)
-//                }
                 Button {
-                    setEditFraction(title: "\(item.name) / 数量", \.quantity)
+                    setEditFraction(.quantity)
                 } label: {
                     HStack(alignment: .lastTextBaseline, spacing: 2) {
                         BFractionText(fraction: item.quantity)
@@ -126,41 +87,11 @@ struct SumItemView: View {
                     }
                 }
                 .tint(.primary)
-//                if let option = item.option {
-//                    SumItemValueButton(iconSystemName: "tag.slash.fill", iconColor: .red, title: "値引き") {
-//                        guard state == nil else { return }
-//                        state = .discount(
-//                            EditDiscountState(title: item.name, option: option) { option in
-//                                item.option = option
-//                                state = nil
-//                            }
-//                        )
-//                    } content: {
-//                        HStack(alignment: .lastTextBaseline, spacing: 2) {
-//                            Text(option.numerator.description)
-//                            Text(option.suffix)
-//                                .font(.caption)
-//                                .foregroundStyle(.secondary)
-//                        }
-//                        .lineLimit(1)
-//                        .minimumScaleFactor(0.5)
-//                    }
-//                    .foregroundStyle(.red)
-//
-//                } else {
-//                    SumItemValueButton(iconSystemName: "tag.slash.fill", iconColor: .red, title: "値引き", disabled: true) {
-//                    } content: {
-//                        HStack(alignment: .lastTextBaseline, spacing: 2) {
-//                            Text("なし")
-//                        }
-//                    }
-//                    .foregroundStyle(.red)
-//                }
             }
             .padding(.horizontal, 5)
             HStack(alignment: .lastTextBaseline, spacing: 10) {
                 Spacer()
-                if item.option != nil {
+                if item.option.numerator != .zero {
                     HStack(alignment: .lastTextBaseline, spacing: 2) {
                         Text("小計")
                             .font(.caption)
@@ -191,6 +122,31 @@ struct SumItemView: View {
             }
             .padding(.horizontal, 5)
         }
+        .buttonStyle(BorderlessButtonStyle())
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button {
+                guard state == nil else { return }
+                state = .removeItem(item)
+            } label: {
+                Image(systemName: "trash")
+            }
+            .tint(.red)
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button {
+                guard state == nil else { return }
+                state = .discount(
+                    DiscountPickerState(title: "\(item.name) / 値引き", option: item.option) { option in
+                        item.option = option
+                        state = nil
+                    }
+                )
+            } label: {
+                Image(systemName: "tag.slash.fill")
+            }
+            .tint(.purple)
+        }
+        .id(item.id)
     }
 }
 
@@ -199,18 +155,22 @@ extension SumItemView {
         guard state == nil else { return }
         state = .text(.init(title: title, item: $item, keyPath))
     }
-    func setEditFraction(title: String, _ keyPath: WritableKeyPath<SumItem, BFraction>) {
+    func setDiscountPciderState() {
+        guard state == nil else { return }
+        state = .discount(
+            DiscountPickerState(title: item.name, option: item.option) { option in
+                item.option = option
+                state = nil
+            }
+        )
+    }
+    func setEditFraction(_ property: FractionalProperty) {
         guard state == nil else { return }
         state = .fraction(
-            EditFractionState(
-                id: item.id.rawValue,
-                title: title,
-                fraction: item[keyPath: keyPath],
-                completion: {
-                    item[keyPath: keyPath] = $0
-                    state = nil
-                }
-            )
+            CalculatorInputState(item: item, property: property) { result in
+                item[keyPath: property.keyPath] = result
+                state = nil
+            }
         )
     }
 }

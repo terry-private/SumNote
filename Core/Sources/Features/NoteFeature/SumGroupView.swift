@@ -28,8 +28,6 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
                                     },
                                     state: $editState
                                 )
-                                .buttonStyle(BorderlessButtonStyle())
-                                .id(item.id)
                             }
                             .onMove { indexSet, index in
                                 var items = group.items.values.elements
@@ -38,14 +36,6 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
                                 group.items = items.reduce(into: [:]) { $0[$1.id] = $1 }
                                 store.update(group, in: noteID)
                             }
-                            .onDelete { indexSet in
-                                var group = group
-                                var items = group.items.values.elements
-                                items.remove(atOffsets: indexSet)
-                                group.items = items.reduce(into: [:]) { $0[$1.id] = $1 }
-                                store.update(group, in: noteID)
-                            }
-                            .listRowBackground(Color.clear)
                         } header: {
                             // MARK: - 総計 -
                             HStack {
@@ -97,8 +87,8 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
                     Menu {
                         Button("新規アイテム作成", systemImage: "note.text.badge.plus") {
                             let item = SumItem(name: "新規アイテム", unitPrice: 0, quantity: 1, unitName: "個")
-                            _ = withAnimation {
-                                store.update(item, in: groupID, in: noteID)
+                            withAnimation {
+                                _ = store.update(item, in: groupID, in: noteID)
                             } completion: {
                                 scrollTarget = item.id
                             }
@@ -115,25 +105,8 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
             }
             .background(Color(uiColor: .systemGroupedBackground))
             .editTextAlert(editState: $editState)
-            .sheet(item: Binding<EditFractionState?>(from: $editState)) { state in
-                CalculatorInputView(
-                    title: state.title,
-                    value: state.fraction,
-                    completion: state.completion
-                ) {
-                    editState = nil
-                }
-                .presentationDetents(
-                    [.height(CalculatorLayoutLogics.displaySize(maxSize: UIScreen.main.bounds.size).height)]
-                )
-            }
-            .overlay {
-                if let state = editState?.discountState {
-                    SumDiscountPicker(title: state.title, option: state.option, completion: state.completion) {
-                        editState = nil
-                    }
-                }
-            }
+            .caluculatorInputSheet($editState.calculatorInputState)
+            .discountPckerSheet($editState.discountState)
             // MARK: - toolbar -
             .toolbar {
                 Menu {
@@ -156,7 +129,6 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
                 } label: {
                     Label("menu", systemImage: "line.3.horizontal.circle")
                 }
-                .disabled(editState?.discountState != nil)
             }
             .navigationTitle(group.name)
         }

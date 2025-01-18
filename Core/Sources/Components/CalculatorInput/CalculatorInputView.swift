@@ -2,12 +2,12 @@ import SwiftUI
 import BigIntExtensions
 
 public struct CalculatorInputView: View {
-    let size: CGSize
     let title: String
+    let size: CGSize
     @State var state: CalculatorInputViewState
-    public init(title: String = "", value: BFraction = .init(4, 1), maxSize: CGSize = UIScreen.main.bounds.size, completion: @escaping (BFraction) -> Void, cancel: @escaping () -> Void) {
+    public init(title: String = "", value: BFraction = .init(4, 1), size: CGSize, completion: @escaping (BFraction) -> Void, cancel: @escaping () -> Void) {
         self.title = title
-        size = CalculatorLayoutLogics.displaySize(maxSize: maxSize)
+        self.size = size
         state = CalculatorInputViewState(
             state: .fraction(value),
             completion: completion,
@@ -73,7 +73,6 @@ public struct CalculatorInputView: View {
 
             buttonPad
         }
-        .frame(width: size.width, height: size.height)
     }
 }
 
@@ -102,9 +101,16 @@ extension CalculatorInputView {
 }
 
 #Preview {
-    CalculatorInputView(value: .init(1357, 100)) {
-        print($0)
-    } cancel: {
-        print("cancel tapped")
+    GeometryReader { proxy in
+        let size = CalculatorLayoutLogics.displaySize(maxSize: proxy.size)
+        Color.clear
+            .overlay {
+                CalculatorInputView(value: .init(1357, 100), size: size) {
+                    print($0)
+                } cancel: {
+                    print("cancel tapped")
+                }
+                .frame(width: size.width, height: size.height)
+            }
     }
 }

@@ -1,6 +1,36 @@
 import SwiftUI
 import BigIntExtensions
 
+public extension BFraction {
+    func text(textStyle: Font.TextStyle = .body, rounded: Int = 2, currencyMode: Bool = true) -> Text {
+        var wholePart: String {
+            if currencyMode {
+                ex.currencyWholePartString
+            } else {
+                ex.wholePartString
+            }
+        }
+        var wholePartFont: UIFont {
+            textStyle.uiFont
+        }
+
+        var fractionalPart: String {
+            ex.fractionalPartString(rounded: rounded)
+        }
+        var fractionalPartFont: UIFont {
+            .systemFont(ofSize: wholePartFont.xHeight * wholePartFont.pointSize / wholePartFont.capHeight)
+        }
+        let wholePartText = Text(wholePart)
+            .font(.init(wholePartFont))
+        if denominator != 1 {
+            return Text("\(wholePartText).\(fractionalPart)")
+                .font(.init(fractionalPartFont))
+        } else {
+            return wholePartText
+        }
+    }
+}
+
 public struct BFractionText: View {
     let fraction: BFraction
     let textStyle: Font.TextStyle
@@ -69,6 +99,9 @@ extension BFraction {
             .foregroundStyle(Color.cyan)
             .bold()
         BFractionText(fraction: BFraction(30000,14), rounded: 4, currencyMode: false)
+            .foregroundStyle(Color.cyan)
+            .bold()
+        BFraction(30000,14).text(rounded: 4)
             .foregroundStyle(Color.cyan)
             .bold()
     }

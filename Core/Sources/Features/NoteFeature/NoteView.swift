@@ -23,7 +23,6 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                     List {
                         Section {
                             groups(note)
-                                .listRowBackground(Color.clear)
                             items(note)
                                 .listRowBackground(Color.clear)
                         } header: {
@@ -89,28 +88,48 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                 }
             }
             .background(Color(uiColor: .systemGroupedBackground))
+            .caluculatorInputSheet($editState.calculatorInputState)
             // MARK: - Alert -
             .editTextAlert(editState: $editState)
-            .sheet(item: Binding<EditFractionState?>(from: $editState)) { state in
-                CalculatorInputView(
-                    title: state.title,
-                    value: state.fraction,
-                    completion: state.completion
-                ) {
-                    editState = nil
-                }
-                .presentationDetents([.height(CalculatorLayoutLogics.displaySize(maxSize: UIScreen.main.bounds.size).height)]
-                )
-            }
-            .overlay {
-                if let state = editState?.discountState {
-                    SumDiscountPicker(title: state.title, option: state.option, completion: state.completion) {
-                        editState = nil
-                    }
-                }
-            }
+            .discountPckerSheet($editState.discountState)
             .navigationDestination(item: Binding<SumGroup.ID?>(from: $editState)) { groupID in
                 SumGroupView<Dependency>(noteID: noteID, groupID: groupID)
+            }
+            .alert(
+                "リストを削除",
+                isPresented: $editState.removeGroupAlertState,
+                presenting: editState?.removeGroup
+            ) { group in
+                Button("キャンセル", role: .cancel) {
+                    editState = nil
+                }
+                Button("削除", role: .destructive) {
+                    var note = note
+                    note.groups.removeValue(forKey: group.id)
+                    withAnimation {
+                        _ = store.update(note)
+                    }
+                }
+            } message: { group in
+                Text("\(group.name)を削除しますか？")
+            }
+            .alert(
+                "アイテムを削除",
+                isPresented: $editState.removeItemAlertState,
+                presenting: editState?.removeItem
+            ) { item in
+                Button("キャンセル", role: .cancel) {
+                    editState = nil
+                }
+                Button("削除", role: .destructive) {
+                    var note = note
+                    note.items.removeValue(forKey: item.id)
+                    withAnimation {
+                        _ = store.update(note)
+                    }
+                }
+            } message: { item in
+                Text("\(item.name)を削除しますか？")
             }
             // MARK: - toolbar -
             .toolbar {
@@ -131,7 +150,6 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                 } label: {
                     Label("menu", systemImage: "line.3.horizontal.circle")
                 }
-                .disabled(editState?.discountState != nil)
             }
             // MARK: - navigationTitle -
             .navigationTitle(note.name)
@@ -184,8 +202,18 @@ extension NoteView {
                         .padding(.trailing, -10)
                 }
             }
+            .listRowBackground(groupBackgroundColor(group.id))
             .foregroundStyle(Color(uiColor: .label))
             .buttonStyle(BorderlessButtonStyle())
+            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                Button {
+                    guard editState == nil else { return }
+                    editState = .removeGroup(group)
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .tint(.red)
+            }
             .id(group.id)
         }
         .onMove { indexSet, index in
@@ -214,8 +242,7 @@ extension NoteView {
                 }),
                 state: $editState
             )
-            .buttonStyle(BorderlessButtonStyle())
-            .id(item.id)
+            .listRowBackground(itemBackgroundColor(item))
         }
         .onMove { indexSet, index in
             var items = note.items.values.elements
@@ -224,13 +251,38 @@ extension NoteView {
             note.items = items.reduce(into: [:]) { $0[$1.id] = $1 }
             store.update(note)
         }
-        .onDelete { indexSet in
-            var items = note.items.values.elements
-            items.remove(atOffsets: indexSet)
-            var note = note
-            note.items = items.reduce(into: [:]) { $0[$1.id] = $1 }
-            store.update(note)
+    }
+
+    func groupBackgroundColor(_ id: SumGroup.ID) -> Color {
+        if editState?.removeGroup?.id == id {
+            Color.red.opacity(0.2)
+        } else {
+            Color.clear
         }
+    }
+    func itemBackgroundColor(_ target: SumItem) -> Color {
+        switch editState {
+        case .discount(let state):
+            if state.id == target.option.id {
+                return Color.purple.opacity(0.7)
+            }
+        case .removeItem(let item):
+            if item.id == target.id {
+                return Color.red.opacity(0.7)
+            }
+        case .fraction(let state):
+            if state.id == target.id {
+                switch state.property {
+                case .unitPrice:
+                    return Color.indigo.opacity(0.7)
+                case .quantity:
+                    return Color.green.opacity(0.7)
+                }
+            }
+        default:
+            break
+        }
+        return Color.clear
     }
 }
 

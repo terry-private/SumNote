@@ -4,6 +4,7 @@ public enum CalculatorLayoutLogics {
     internal static let padding: CGFloat = 12.0
 
     public static func displaySize(maxSize: CGSize) -> CGSize {
+        let maxSize: CGSize = .init(width: min(maxSize.width, 400), height: min(maxSize.height, 600))
         let upperHeight = Font.TextStyle.body.uiFont.lineHeight + 20 + Font.TextStyle.title2.uiFont.lineHeight + Font.TextStyle.largeTitle.uiFont.lineHeight
         let buttonPadMaxHeight = maxSize.height - upperHeight
         let buttonPadMaxSize: CGSize = .init(width: maxSize.width, height: buttonPadMaxHeight)

@@ -39,7 +39,7 @@ public struct SumOption: EntityProtocol {
     public var discountSuffix: String { style.discountSuffix }
     public var denominator: Int { style.denominator }
     public var ratio: BFraction { (BFraction(denominator, 1) - numerator) / denominator }
-    public init(id: ID = .init(rawValue: UUID().uuidString), style: Style, _ numerator: Int) {
+    public init(id: ID = .init(rawValue: UUID().uuidString), style: Style = .percentile, _ numerator: Int = 0) {
         self.id = id
         self.style = style
         self.numerator = numerator
@@ -55,7 +55,7 @@ public extension SumOption {
         description.indent(indent)
     }
     var description: String {
-        "x \(ratio.ex.currencyString()) (\(labelText))"
+        numerator == .zero ? "" : "x \(ratio.ex.currencyString()) (\(labelText))"
     }
     static var dummy: Self {
         .init(style: .percentile, 15)

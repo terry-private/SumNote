@@ -36,6 +36,7 @@ extension Binding where Value == Bool {
         }
     }
 }
+
 struct EditTextAlert: View {
     @State var tmpText: String?
     @Binding var editState: EditState?

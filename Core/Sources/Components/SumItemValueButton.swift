@@ -1,6 +1,7 @@
 import SwiftUI
 import BigIntExtensions
 
+// FIXME: 削除予定
 public struct SumItemValueButton<Content: View>: View {
     var iconSystemName: String
     var iconColor: Color

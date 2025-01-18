@@ -1,4 +1,4 @@
-public protocol IDProtocol: RawRepresentable, Hashable, Sendable, Identifiable, Codable, CustomStringConvertible where RawValue: Hashable & Sendable & Codable & CustomStringConvertible {
+public protocol IDProtocol: RawRepresentable, Hashable, Sendable, Identifiable, Codable, CustomStringConvertible, Equatable where RawValue: Hashable & Sendable & Codable & CustomStringConvertible {
     init(rawValue: RawValue)
 }
 
