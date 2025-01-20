@@ -126,6 +126,7 @@ public struct EditItemView: View {
                         + item.sum.text()
                             .add(prefix: "小計", suffix: "円")
                     }
+                    .foregroundStyle(.secondary)
                     .lineSpacing(5)
                     .multilineTextAlignment(.trailing)
                 }

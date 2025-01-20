@@ -70,14 +70,23 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                     }
                     Spacer()
                     Button {
-                        let group = SumGroup(name: "新規リスト", items: [])
-
-                        withAnimation {
-                            store.update(group, in: noteID)
-                            scrollTargetGroup = group.id
-                        } completion: {
-                            screenState = .group(group.id)
-                        }
+                        guard screenState == nil else { return }
+                        let editTextAlertState: EditTextAlertState = .init(
+                            id: note.id.rawValue,
+                            title: "新規リスト名",
+                            text: "新規リスト") { groupName in
+                                let group = SumGroup(name: groupName, items: [])
+                                withAnimation {
+                                    store.update(group, in: noteID)
+                                    scrollTargetGroup = group.id
+                                } completion: {
+                                    Task { @MainActor in
+                                        try await Task.sleep(for: .seconds(0.3))
+                                        screenState = .group(group.id)
+                                    }
+                                }
+                            }
+                        screenState = .text(editTextAlertState)
                     } label: {
                         Text("リストを追加")
                             .padding(.vertical, 15)
