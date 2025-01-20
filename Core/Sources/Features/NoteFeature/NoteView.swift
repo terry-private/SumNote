@@ -10,7 +10,7 @@ import Collections
 public struct NoteView<Dependency: DependencyProtocol>: View {
     @State var store = Dependency.noteStore
     let noteID: SumNote.ID
-    @State var editState: EditState?
+    @State var screenState: ScreenState?
     @State var scrollTargetItem: SumItem.ID?
     @State var scrollTargetGroup: SumGroup.ID?
     public init(_ noteID: SumNote.ID) {
@@ -24,7 +24,6 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                         Section {
                             groups(note)
                             items(note)
-                                .listRowBackground(Color.clear)
                         } header: {
                             // MARK: - 総計 -
                             HStack {
@@ -59,11 +58,8 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                 HStack {
                     Menu {
                         Button("新規アイテム作成", systemImage: "note.text.badge.plus") {
-                            let item = SumItem(name: "新規アイテム", unitPrice: 0, quantity: 1, unitName: "個")
-                            withAnimation {
-                                store.update(item, in: noteID)
-                                scrollTargetItem = item.id
-                            }
+                            let item = SumItem(name: "", unitPrice: 0, quantity: 1, unitName: "個")
+                            screenState = .item(.init(item: item, mode: .create))
                         }
                         Button("テンプレートから作成", systemImage: "note.text.badge.plus") {
                         }
@@ -79,6 +75,8 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                         withAnimation {
                             store.update(group, in: noteID)
                             scrollTargetGroup = group.id
+                        } completion: {
+                            screenState = .group(group.id)
                         }
                     } label: {
                         Text("リストを追加")
@@ -88,20 +86,34 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                 }
             }
             .background(Color(uiColor: .systemGroupedBackground))
-            .caluculatorInputSheet($editState.calculatorInputState)
+            .caluculatorInputSheet($screenState.calculatorInputState)
             // MARK: - Alert -
-            .editTextAlert(editState: $editState)
-            .discountPckerSheet($editState.discountState)
-            .navigationDestination(item: Binding<SumGroup.ID?>(from: $editState)) { groupID in
+            .editTextAlert(screenState: $screenState)
+            .discountPckerSheet($screenState.discountState)
+            .navigationDestination(item: Binding<SumGroup.ID?>(from: $screenState)) { groupID in
                 SumGroupView<Dependency>(noteID: noteID, groupID: groupID)
+            }
+            .showEditItemView($screenState.item) { state in
+                switch state.mode {
+                case .create:
+                    Task { @MainActor in
+                        try await Task.sleep(for: .seconds(0.3))
+                        withAnimation {
+                            store.update(state.item, in: noteID)
+                            scrollTargetItem = state.item.id
+                        }
+                    }
+                case .edit:
+                    store.update(state.item, in: noteID)
+                }
             }
             .alert(
                 "リストを削除",
-                isPresented: $editState.removeGroupAlertState,
-                presenting: editState?.removeGroup
+                isPresented: $screenState.removeGroupAlertState,
+                presenting: screenState?.removeGroup
             ) { group in
                 Button("キャンセル", role: .cancel) {
-                    editState = nil
+                    screenState = nil
                 }
                 Button("削除", role: .destructive) {
                     var note = note
@@ -113,30 +125,19 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
             } message: { group in
                 Text("\(group.name)を削除しますか？")
             }
-            .alert(
-                "アイテムを削除",
-                isPresented: $editState.removeItemAlertState,
-                presenting: editState?.removeItem
-            ) { item in
-                Button("キャンセル", role: .cancel) {
-                    editState = nil
+            .removeItemAlert($screenState) { item in
+                var note = note
+                note.items.removeValue(forKey: item.id)
+                withAnimation {
+                    _ = store.update(note)
                 }
-                Button("削除", role: .destructive) {
-                    var note = note
-                    note.items.removeValue(forKey: item.id)
-                    withAnimation {
-                        _ = store.update(note)
-                    }
-                }
-            } message: { item in
-                Text("\(item.name)を削除しますか？")
             }
             // MARK: - toolbar -
             .toolbar {
                 Menu {
                     Button("ノート名を編集", systemImage: "square.and.pencil") {
-                        guard editState == nil else { return }
-                        editState = .text(
+                        guard screenState == nil else { return }
+                        screenState = .text(
                             .init(id: note.id.rawValue, title: "ノート名", text: note.name) {
                                 var note = note
                                 note.name = $0
@@ -163,11 +164,11 @@ extension NoteView {
     func groups(_ note: SumNote) -> some View {
         ForEach(note.groups.values.elements) { group in
             Button {
-                guard editState == nil else { return }
-                editState = .group(group.id)
+                guard screenState == nil else { return }
+                screenState = .group(group.id)
             } label: {
                 HStack(spacing: 5) {
-                    SystemIcon(systemName: "note.text", color: .orange, size: 22)
+                    SystemIcon(systemName: "list.bullet.rectangle.portrait", color: .orange, size: 32)
                         .foregroundStyle(.white)
                         .padding(.trailing, 5)
                     Text(group.name)
@@ -201,14 +202,15 @@ extension NoteView {
                         .foregroundStyle(.secondary)
                         .padding(.trailing, -10)
                 }
+                .padding(.vertical, 3)
             }
             .listRowBackground(groupBackgroundColor(group.id))
             .foregroundStyle(Color(uiColor: .label))
             .buttonStyle(BorderlessButtonStyle())
             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                 Button {
-                    guard editState == nil else { return }
-                    editState = .removeGroup(group)
+                    guard screenState == nil else { return }
+                    screenState = .removeGroup(group)
                 } label: {
                     Image(systemName: "trash")
                 }
@@ -234,15 +236,15 @@ extension NoteView {
     @ViewBuilder
     func items(_ note: SumNote) -> some View {
         ForEach(note.items.values) { item in
-            SumItemView(
+            SumItemCell(
                 item: .init(get: {
                     item
                 }, set: {
                     store.update($0, in: noteID)
                 }),
-                state: $editState
+                state: $screenState
             )
-            .listRowBackground(itemBackgroundColor(item))
+            .listRowBackground(item.backgroundColor(screenState))
         }
         .onMove { indexSet, index in
             var items = note.items.values.elements
@@ -254,35 +256,11 @@ extension NoteView {
     }
 
     func groupBackgroundColor(_ id: SumGroup.ID) -> Color {
-        if editState?.removeGroup?.id == id {
+        if screenState?.removeGroup?.id == id {
             Color.red.opacity(0.2)
         } else {
             Color.clear
         }
-    }
-    func itemBackgroundColor(_ target: SumItem) -> Color {
-        switch editState {
-        case .discount(let state):
-            if state.id == target.option.id {
-                return Color.purple.opacity(0.7)
-            }
-        case .removeItem(let item):
-            if item.id == target.id {
-                return Color.red.opacity(0.7)
-            }
-        case .fraction(let state):
-            if state.id == target.id {
-                switch state.property {
-                case .unitPrice:
-                    return Color.indigo.opacity(0.7)
-                case .quantity:
-                    return Color.green.opacity(0.7)
-                }
-            }
-        default:
-            break
-        }
-        return Color.clear
     }
 }
 

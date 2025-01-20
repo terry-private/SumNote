@@ -1,18 +1,18 @@
 import SwiftUI
 import Entities
 
-struct EditTextAlertState: Identifiable {
-    var id: String
-    var title: String
-    var text: String
-    var completion: (String) -> Void
-    init(id: String, title: String, text: String, completion: @escaping (String) -> Void) {
+public struct EditTextAlertState: Identifiable {
+    public var id: String
+    public var title: String
+    public var text: String
+    public var completion: (String) -> Void
+    public init(id: String, title: String, text: String, completion: @escaping (String) -> Void) {
         self.id = id
         self.title = title
         self.text = text
         self.completion = completion
     }
-    init(title: String, item: Binding<SumItem>,_ keyPath: WritableKeyPath<SumItem, String>) {
+    public init(title: String, item: Binding<SumItem>,_ keyPath: WritableKeyPath<SumItem, String>) {
         self.init(
             id: item.id.rawValue,
             title: title,
@@ -24,9 +24,9 @@ struct EditTextAlertState: Identifiable {
     }
 }
 
-extension Binding where Value == Bool {
+public extension Binding where Value == Bool {
     @MainActor
-    init(from alertState: Binding<EditState?>) {
+    init(from alertState: Binding<ScreenState?>) {
         self.init {
             return alertState.wrappedValue?.textState != nil
         } set: {
@@ -37,19 +37,19 @@ extension Binding where Value == Bool {
     }
 }
 
-struct EditTextAlert: View {
+public struct EditTextAlert: View {
     @State var tmpText: String?
-    @Binding var editState: EditState?
-    init(editState: Binding<EditState?>) {
-        _tmpText = .init(wrappedValue: editState.wrappedValue?.textState?.text)
-        self._editState = editState
+    @Binding var screenState: ScreenState?
+    public init(screenState: Binding<ScreenState?>) {
+        _tmpText = .init(wrappedValue: screenState.wrappedValue?.textState?.text)
+        self._screenState = screenState
     }
-    var body: some View {
+    public var body: some View {
         EmptyView()
             .alert(
-                editState?.textState?.title ?? "",
-                isPresented: .init(from: $editState),
-                presenting: editState?.textState
+                screenState?.textState?.title ?? "",
+                isPresented: .init(from: $screenState),
+                presenting: screenState?.textState
             ) { state in
                 TextField("テキストフィールド", text: .init {
                     tmpText ?? state.text
@@ -68,10 +68,10 @@ struct EditTextAlert: View {
     }
 }
 
-extension View {
-    func editTextAlert(editState: Binding<EditState?>) -> some View {
+public extension View {
+    func editTextAlert(screenState: Binding<ScreenState?>) -> some View {
         background {
-            EditTextAlert(editState: editState)
+            EditTextAlert(screenState: screenState)
         }
     }
 }

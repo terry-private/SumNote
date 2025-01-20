@@ -3,11 +3,11 @@ import Entities
 
 extension Binding where Value == SumGroup.ID? {
     @MainActor
-    init(from editState: Binding<EditState?>) {
+    init(from screenState: Binding<ScreenState?>) {
         self = Binding<SumGroup.ID?> {
-            editState.wrappedValue?.groupID
+            screenState.wrappedValue?.groupID
         } set: { state in
-            editState.wrappedValue = state.map { .group($0) }
+            screenState.wrappedValue = state.map { .group($0) }
         }
     }
 }

@@ -5,7 +5,7 @@ import Components
 
 public struct SumGroupView<Dependency: DependencyProtocol>: View {
     @State var store = Dependency.noteStore
-    @State var editState: EditState?
+    @State var screenState: ScreenState?
     @State var scrollTarget: SumItem.ID?
     let noteID: SumNote.ID
     let groupID: SumGroup.ID
@@ -14,20 +14,21 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
         self.groupID = groupID
     }
     public var body: some View {
-        if let group = store.note(by: noteID)?.groups[groupID] {
+        if let note = store.note(by: noteID), let group = note.groups[groupID] {
             VStack {
                 ScrollViewReader { scrollProxy in
                     List {
                         Section {
                             ForEach(group.items.values.elements) { item in
-                                SumItemView(
+                                SumItemCell(
                                     item: Binding<SumItem> {
                                         item
                                     } set: { newItem in
                                         store.update(newItem, in: groupID, in: noteID)
                                     },
-                                    state: $editState
+                                    state: $screenState
                                 )
+                                .listRowBackground(item.backgroundColor(screenState))
                             }
                             .onMove { indexSet, index in
                                 var items = group.items.values.elements
@@ -104,24 +105,36 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
                 }
             }
             .background(Color(uiColor: .systemGroupedBackground))
-            .editTextAlert(editState: $editState)
-            .caluculatorInputSheet($editState.calculatorInputState)
-            .discountPckerSheet($editState.discountState)
+            // MARK: - Screen
+            .editTextAlert(screenState: $screenState)
+            .caluculatorInputSheet($screenState.calculatorInputState)
+            .discountPckerSheet($screenState.discountState)
+            .showEditItemView($screenState.item) { state in
+                switch state.mode {
+                case .create:
+                    Task { @MainActor in
+                        try await Task.sleep(for: .seconds(0.3))
+                        withAnimation {
+                            store.update(state.item, in: noteID)
+                            scrollTarget = state.item.id
+                        }
+                    }
+                case .edit:
+                    store.update(state.item, in: noteID)
+                }
+            }
+            .removeItemAlert($screenState) { item in
+                var group = group
+                group.items.removeValue(forKey: item.id)
+                withAnimation {
+                    _ = store.update(group, in: noteID)
+                }
+            }
             // MARK: - toolbar -
             .toolbar {
                 Menu {
                     Button("リスト名を編集", systemImage: "square.and.pencil") {
-                        editState = .text(
-                            EditTextAlertState(
-                                id: group.id.rawValue,
-                                title: "リスト名を編集",
-                                text: group.name
-                            ) {
-                                var group = group
-                                group.name = $0
-                                store.update(group, in: noteID)
-                            }
-                        )
+                        setGroupNameEditTextAlert(group)
                     }
                     Button("テキストコピー", systemImage: "pencil") {
                         UIPasteboard.general.string = group.description()
@@ -132,5 +145,18 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
             }
             .navigationTitle(group.name)
         }
+    }
+    func setGroupNameEditTextAlert(_ group: SumGroup) {
+        screenState = .text(
+            EditTextAlertState(
+                id: group.id.rawValue,
+                title: "リスト名を編集",
+                text: group.name
+            ) {
+                var group = group
+                group.name = $0
+                store.update(group, in: noteID)
+            }
+        )
     }
 }
