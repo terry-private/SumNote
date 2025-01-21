@@ -50,7 +50,7 @@ struct SumItemTests {
             ]
         )
         func sumWithHalfOption(uqs: (BFraction, BFraction, BFraction)) {
-            #expect(SumItem(name: "", unitPrice: uqs.0 , quantity: uqs.1, unitName: "", option: .init(name: "", ratio: .init(1, 2))).sum == uqs.2)
+            #expect(SumItem(name: "", unitPrice: uqs.0 , quantity: uqs.1, unitName: "", discount: .init(style: .percentile, 50)).sum == uqs.2)
         }
     }
 }

@@ -47,27 +47,6 @@ public struct EditItemView: View {
                         .focused($focusPoint, equals: .name)
                         .multilineTextAlignment(.trailing)
                 }
-                HStack(spacing: 10) {
-                    Text("単位")
-                    Spacer()
-                    Menu {
-                        ForEach(commonUnits, id: \.self) { unit in
-                            Button {
-                                focusPoint = nil
-                                item.unitName = unit
-                            } label: {
-                                Text(unit)
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "chevron.down")
-                            .padding(8)
-                    }
-                    TextField("単位", text: $item.unitName)
-                        .textInputAutocapitalization(.never)
-                        .multilineTextAlignment(.trailing)
-                        .focused($focusPoint, equals: .unitName)
-                }
                 HStack {
                     Text("単価")
                     Spacer()
@@ -96,13 +75,34 @@ public struct EditItemView: View {
                     }
                     .tint(.primary)
                 }
+                HStack(spacing: 10) {
+                    Text("単位")
+                    Spacer()
+                    Menu {
+                        ForEach(commonUnits, id: \.self) { unit in
+                            Button {
+                                focusPoint = nil
+                                item.unitName = unit
+                            } label: {
+                                Text(unit)
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "chevron.down")
+                            .padding(8)
+                    }
+                    TextField("単位", text: $item.unitName)
+                        .textInputAutocapitalization(.never)
+                        .multilineTextAlignment(.trailing)
+                        .focused($focusPoint, equals: .unitName)
+                }
                 HStack {
                     Text("値引")
                     Spacer()
                     Button {
                         focusPoint = nil
-                        screenState = .discount(.init(title: "値引", option: item.option) { option in
-                            item.option = option
+                        screenState = .discount(.init(title: "値引", discount: item.discount) { discount in
+                            item.discount = discount
                             screenState = nil
                         })
                     } label: {

@@ -18,7 +18,7 @@ public struct SumNote: EntityProtocol {
     public func sum() -> BFraction {
         items.values.reduce(BFraction.ZERO) { $0 + $1.sum } + groups.values.reduce(BFraction.ZERO) { $0 + $1.sum() }
     }
-    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, groups: OrderedDictionary<SumGroup.ID, SumGroup>, items: OrderedDictionary<SumItem.ID, SumItem>, editedAt: Date, createdAt: Date) {
+    public init(id: ID = .newID, name: String, groups: OrderedDictionary<SumGroup.ID, SumGroup>, items: OrderedDictionary<SumItem.ID, SumItem>, editedAt: Date, createdAt: Date) {
         self.id = id
         self.name = name
         self.groups = groups
@@ -26,7 +26,7 @@ public struct SumNote: EntityProtocol {
         self.editedAt = editedAt
         self.createdAt = createdAt
     }
-    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, groups: [SumGroup], items: [SumItem], editedAt: Date, createdAt: Date) {
+    public init(id: ID = .newID, name: String, groups: [SumGroup], items: [SumItem], editedAt: Date, createdAt: Date) {
         self.id = id
         self.name = name
         self.groups = groups.reduce(into: OrderedDictionary()) { $0[$1.id] = $1 }
@@ -55,28 +55,28 @@ public struct SumNote: EntityProtocol {
                             unitPrice: .init(2885, 1000),
                             quantity: .init(866,1),
                             unitName: "g",
-                            option: .init(style: .percentile,15)
+                            discount: .init(style: .percentile,15)
                         ),
                         .init(
                             name: "ロース",
                             unitPrice: .init(29874, 1000),
                             quantity: .init(841,1),
                             unitName: "g",
-                            option: .dummy(3)
+                            discount: .dummy(3)
                         ),
                         .init(
                             name: "鶏肉",
                             unitPrice: .init(96,100),
                             quantity: .init(400,1),
                             unitName: "g",
-                            option: .dummy(1)
+                            discount: .dummy(1)
                         ),
                         .init(
                             name: "豚肉",
                             unitPrice: .init(96,100),
                             quantity: .init(400,1),
                             unitName: "g",
-                            option: .dummy(1)
+                            discount: .dummy(1)
                         )
                     ]
                 ),
@@ -88,28 +88,28 @@ public struct SumNote: EntityProtocol {
                             unitPrice: .init(198,1),
                             quantity: .init(24,1),
                             unitName: "缶",
-                            option: .dummy(3)
+                            discount: .dummy(3)
                         ),
                         .init(
                             name: "ビール 500ml",
                             unitPrice: .init(298,1),
                             quantity: .init(24,1),
                             unitName: "缶",
-                            option: .dummy(3)
+                            discount: .dummy(3)
                         ),
                         .init(
                             name: "ハイボール",
                             unitPrice: .init(198,1),
                             quantity: .init(24,1),
                             unitName: "缶",
-                            option: .dummy(3)
+                            discount: .dummy(3)
                         ),
                         .init(name: "水 2l", unitPrice: .init(100, 1), quantity: .init(3, 1), unitName: "本")
                     ]
                 )
             ],
             items: [
-                .init(name: "割り箸", unitPrice: .init(100, 1), quantity: .init(1, 1), unitName: "袋", option: .dummy(1)),
+                .init(name: "割り箸", unitPrice: .init(100, 1), quantity: .init(1, 1), unitName: "袋", discount: .dummy(1)),
                 .init(name: "ゴミ袋", unitPrice: .init(130, 1), quantity: .init(1, 1), unitName: "ケース"),
                 .init(name: "箱ティッシュ", unitPrice: .init(350, 1), quantity: .init(1, 1), unitName: "ケース")
 

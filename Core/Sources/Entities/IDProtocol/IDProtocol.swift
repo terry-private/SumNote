@@ -1,3 +1,5 @@
+import Foundation
+
 public protocol IDProtocol: RawRepresentable, Hashable, Sendable, Identifiable, Codable, CustomStringConvertible, Equatable where RawValue: Hashable & Sendable & Codable & CustomStringConvertible {
     init(rawValue: RawValue)
 }
@@ -18,5 +20,9 @@ extension StringIDProtocol {
 
     public init(stringInterpolation: RawValue.StringInterpolation) {
         self.init(rawValue: RawValue(stringInterpolation: stringInterpolation))
+    }
+
+    public static var newID: Self {
+        .init(rawValue: UUID().uuidString)
     }
 }

@@ -1,31 +1,7 @@
 import Foundation
 import BigIntExtensions
 
-
-public struct SumOption: EntityProtocol {
-    public enum Style: Sendable, Hashable, Codable, CaseIterable, Identifiable {
-        case decile
-        case percentile
-        public var id: Self { self }
-        public var name: String {
-            switch self {
-            case .decile: return "割"
-            case .percentile: return "%"
-            }
-        }
-        public var discountSuffix: String {
-            switch self {
-            case .decile: return "引"
-            case .percentile: return "off"
-            }
-        }
-        public var denominator: Int {
-            switch self {
-            case .decile: return 10
-            case .percentile: return 100
-            }
-        }
-    }
+public struct SumDiscount: EntityProtocol {
     public struct ID: StringIDProtocol {
         public var rawValue: String
         public init(rawValue: RawValue) {
@@ -39,14 +15,14 @@ public struct SumOption: EntityProtocol {
     public var discountSuffix: String { style.discountSuffix }
     public var denominator: Int { style.denominator }
     public var ratio: BFraction { (BFraction(denominator, 1) - numerator) / denominator }
-    public init(id: ID = .init(rawValue: UUID().uuidString), style: Style = .percentile, _ numerator: Int = 0) {
+    public init(id: ID = .newID, style: Style = .percentile, _ numerator: Int = 0) {
         self.id = id
         self.style = style
         self.numerator = numerator
     }
 }
 
-public extension SumOption {
+public extension SumDiscount {
     var suffix: String { "\(name)\(discountSuffix)"}
     var labelText: String {
         "\(numerator)\(suffix)"
@@ -62,5 +38,33 @@ public extension SumOption {
     }
     static func dummy(_ number: Int) -> Self {
         .init(style: .decile, number % 10)
+    }
+}
+
+extension SumDiscount {
+    public struct Style: Sendable, Hashable, Codable, Identifiable, Equatable {
+        public var id: Self { self }
+        public var name: String
+        public var discountSuffix: String
+        public var denominator: Int
+        public init(name: String, discountSuffix: String, denominator: Int) {
+            precondition(denominator > 0)
+            self.name = name
+            self.discountSuffix = discountSuffix
+            self.denominator = denominator
+        }
+
+        public var selectableRange: Range<Int> { 0..<denominator }
+    }
+}
+
+extension SumDiscount.Style: CaseIterable {
+    public static var decile: Self { .init(name: "割", discountSuffix: "引", denominator: 10) }
+    public static var percentile: Self { .init(name: "%", discountSuffix: "off", denominator: 100) }
+    public static var allCases: [Self] {
+        [
+            .decile,
+            .percentile
+        ]
     }
 }

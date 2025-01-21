@@ -24,6 +24,7 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
                                     item: Binding<SumItem> {
                                         item
                                     } set: { newItem in
+                                        print("⭐️", newItem, note.name, group.name)
                                         store.update(newItem, in: groupID, in: noteID)
                                     },
                                     state: $screenState
@@ -120,7 +121,7 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
                         }
                     }
                 case .edit:
-                    store.update(state.item, in: noteID)
+                    store.update(state.item, in: groupID, in: noteID)
                 }
             }
             .removeItemAlert($screenState) { item in

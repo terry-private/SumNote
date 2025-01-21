@@ -125,7 +125,7 @@ extension SumItem {
     func backgroundColor(_ screenState: ScreenState?) -> Color {
         switch screenState {
         case .discount(let state):
-            if state.id == option.id {
+            if state.id == discount.id {
                 return Color.purple.opacity(0.7)
             }
         case .removeItem(let item):

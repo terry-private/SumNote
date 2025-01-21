@@ -57,8 +57,8 @@ struct SumItemCell: View {
             Button {
                 guard state == nil else { return }
                 state = .discount(
-                    DiscountPickerState(title: "\(item.name) / 値引き", option: item.option) { option in
-                        item.option = option
+                    DiscountPickerState(title: "\(item.name) / 値引き", discount: item.discount) { discount in
+                        item.discount = discount
                         state = nil
                     }
                 )
@@ -82,7 +82,7 @@ struct SumItemCell: View {
 
 extension SumItemCell {
     var hasDiscount: Bool {
-        item.option.numerator != .zero
+        item.discount.numerator != .zero
     }
     func setAlert(title: String, _ keyPath: WritableKeyPath<SumItem, String>) {
         guard state == nil else { return }
@@ -91,8 +91,8 @@ extension SumItemCell {
     func setDiscountPciderState() {
         guard state == nil else { return }
         state = .discount(
-            DiscountPickerState(title: item.name, option: item.option) { option in
-                item.option = option
+            DiscountPickerState(title: item.name, discount: item.discount) { discount in
+                item.discount = discount
                 state = nil
             }
         )

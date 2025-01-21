@@ -6,10 +6,10 @@ public extension SumItem {
         Text("  ")
     }
     var hasDiscount: Bool {
-        option.numerator != .zero
+        discount.numerator != .zero
     }
     var discountText: Text {
-        Text(option.numerator.description).bold().add(suffix: option.suffix)
+        Text(discount.numerator.description).bold().add(suffix: discount.suffix)
     }
     var optionalDiscountText: Text {
         if hasDiscount {
@@ -40,7 +40,7 @@ public extension SumItem {
 
 #Preview {
     VStack {
-        let item = SumItem(name: "test item", unitPrice: 1000, quantity: 10, unitName: "個", option: .init(10))
+        let item = SumItem(name: "test item", unitPrice: 1000, quantity: 10, unitName: "個", discount: .init(10))
         item.calculationDescription
         item.sum.text().add(prefix: "合計", suffix: "円")
     }

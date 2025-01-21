@@ -11,7 +11,7 @@ public struct Folder: EntityProtocol {
     public var name: String
     public var notes: [SumNote]
     public var editedAt: Date
-    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, notes: [SumNote], editedAt: Date = Date()) {
+    public init(id: ID = .newID, name: String, notes: [SumNote], editedAt: Date = Date()) {
         self.id = id
         self.name = name
         self.notes = notes

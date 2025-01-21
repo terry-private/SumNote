@@ -3,26 +3,26 @@ import Entities
 
 public struct DiscountPicker: View {
     let title: String
-    let completion: (SumOption) -> Void
+    let completion: (SumDiscount) -> Void
     let cancel: () -> Void
-    @State var selectedDiscount: SumOption.Style
+    @State var selectedStyle: SumDiscount.Style
     @State var numerator: Int
-    var option: SumOption {
-        .init(style: selectedDiscount, numerator)
+    var discount: SumDiscount {
+        .init(style: selectedStyle, numerator)
     }
-    public init(title: String, option: SumOption, completion: @escaping (SumOption) -> Void, cancel: @escaping () -> Void) {
+    public init(title: String, discount: SumDiscount, completion: @escaping (SumDiscount) -> Void, cancel: @escaping () -> Void) {
         self.title = title
         self.completion = completion
         self.cancel = cancel
-        _selectedDiscount = .init(initialValue: option.style)
-        _numerator = .init(initialValue: option.numerator)
+        _selectedStyle = .init(initialValue: discount.style)
+        _numerator = .init(initialValue: discount.numerator)
     }
     public init(_ state: DiscountPickerState, cancel: @escaping () -> Void) {
         self.title = state.title
         self.completion = state.completion
         self.cancel = cancel
-        _selectedDiscount = .init(initialValue: state.option.style)
-        _numerator = .init(initialValue: state.option.numerator)
+        _selectedStyle = .init(initialValue: state.discount.style)
+        _numerator = .init(initialValue: state.discount.numerator)
     }
     public var body: some View {
         VStack(spacing: 10) {
@@ -42,14 +42,14 @@ public struct DiscountPicker: View {
 
                 // description
                 HStack(alignment: .lastTextBaseline, spacing: 3) {
-                    Text(option.numerator.description)
-                    Text(option.suffix)
+                    Text(discount.numerator.description)
+                    Text(discount.suffix)
                         .font(.caption)
                 }
 
                 // style picker
-                Picker("Style", selection: $selectedDiscount) {
-                    ForEach(SumOption.Style.allCases) { style in
+                Picker("Style", selection: $selectedStyle) {
+                    ForEach(SumDiscount.Style.allCases) { style in
                         Text(style.name)
                     }
                 }
@@ -58,16 +58,8 @@ public struct DiscountPicker: View {
 
                 // numarator picker
                 Picker("Numerator", selection: $numerator) {
-                    switch selectedDiscount {
-                    case .decile:
-                        ForEach(0..<10) { numerator in
-                            Text(numerator.description)
-                        }
-                    case .percentile:
-                        ForEach(0..<100) { numerator in
-                            Text(numerator.description)
-                        }
-                        .pickerStyle(.wheel)
+                    ForEach(selectedStyle.selectableRange, id: \.self) { numerator in
+                        Text(numerator.description)
                     }
                 }
                 .pickerStyle(.wheel)
@@ -75,7 +67,7 @@ public struct DiscountPicker: View {
 
                 // done button
                 Button {
-                    completion(option)
+                    completion(discount)
                 } label: {
                     Text("確定")
                         .frame(maxWidth: .infinity)
@@ -93,8 +85,8 @@ public struct DiscountPicker: View {
         }
         .background(Color(uiColor: .systemGroupedBackground
                          ))
-        .onChange(of: selectedDiscount) {
-            if case .decile = selectedDiscount {
+        .onChange(of: selectedStyle) {
+            if case .decile = selectedStyle {
                 numerator = min(numerator, 9)
             }
         }
@@ -103,8 +95,8 @@ public struct DiscountPicker: View {
 
 #Preview {
     HStack {
-        DiscountPicker(title: "sample", option: .dummy) { option in
-            print(option.description)
+        DiscountPicker(title: "sample", discount: .dummy) { discount in
+            print(discount.description)
         } cancel: {
             print("cancel")
         }
