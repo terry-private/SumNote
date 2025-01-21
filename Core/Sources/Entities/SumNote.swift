@@ -52,29 +52,33 @@ public struct SumNote: EntityProtocol {
                     items: [
                         .init(
                             name: "カルビ",
-                            unitPrice: .init(2885, 1000),
+                            unitPrice: .init(2885, 10),
                             quantity: .init(866,1),
+                            unitOption: .meat,
                             unitName: "g",
                             discount: .init(style: .percentile,15)
                         ),
                         .init(
                             name: "ロース",
-                            unitPrice: .init(29874, 1000),
+                            unitPrice: .init(2987, 10),
                             quantity: .init(841,1),
+                            unitOption: .meat,
                             unitName: "g",
                             discount: .dummy(3)
                         ),
                         .init(
                             name: "鶏肉",
-                            unitPrice: .init(96,100),
+                            unitPrice: .init(96,1),
                             quantity: .init(400,1),
+                            unitOption: .meat,
                             unitName: "g",
                             discount: .dummy(1)
                         ),
                         .init(
                             name: "豚肉",
-                            unitPrice: .init(96,100),
+                            unitPrice: .init(96,1),
                             quantity: .init(400,1),
+                            unitOption: .meat,
                             unitName: "g",
                             discount: .dummy(1)
                         )

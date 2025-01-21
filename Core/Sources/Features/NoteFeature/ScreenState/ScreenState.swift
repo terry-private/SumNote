@@ -126,7 +126,7 @@ extension SumItem {
         switch screenState {
         case .discount(let state):
             if state.id == discount.id {
-                return Color.purple.opacity(0.7)
+                return Color(uiColor: .systemFill)
             }
         case .removeItem(let item):
             if item.id == id {
@@ -134,12 +134,11 @@ extension SumItem {
             }
         case .fraction(let state):
             if state.id == id {
-                switch state.property {
-                case .unitPrice:
-                    return Color.indigo.opacity(0.7)
-                case .quantity:
-                    return Color.green.opacity(0.7)
-                }
+                return Color(uiColor: .systemFill)
+            }
+        case .item(let state):
+            if state.id == id {
+                return Color(uiColor: .systemFill)
             }
         default:
             break

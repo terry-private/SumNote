@@ -73,7 +73,8 @@ public struct EditItemView: View {
                             screenState = nil
                         })
                     } label: {
-                        (item.quantity.text() + Text(item.quantityUnitName).font(.caption).foregroundStyle(.secondary))
+                        item.quantity.text()
+                            .add(suffix: item.quantityUnitName)
                     }
                     .tint(.primary)
                 }
