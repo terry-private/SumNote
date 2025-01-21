@@ -47,6 +47,8 @@ public struct EditItemView: View {
                         .focused($focusPoint, equals: .name)
                         .multilineTextAlignment(.trailing)
                 }
+                UnitOptionPcker($item.unitOption, unitOptions: [.meat])
+                    .tint(.accentColor)
                 HStack {
                     Text("単価")
                     Spacer()
@@ -57,7 +59,7 @@ public struct EditItemView: View {
                             screenState = nil
                         })
                     } label: {
-                        (item.unitPrice.text() + Text("\("円")/\(item.unitName)").font(.caption).foregroundStyle(.secondary))
+                        item.unitPrice.text().add(suffix: item.unitPriceName)
                     }
                     .tint(.primary)
                 }
@@ -71,30 +73,35 @@ public struct EditItemView: View {
                             screenState = nil
                         })
                     } label: {
-                        (item.quantity.text() + Text(item.unitName).font(.caption).foregroundStyle(.secondary))
+                        (item.quantity.text() + Text(item.quantityUnitName).font(.caption).foregroundStyle(.secondary))
                     }
                     .tint(.primary)
                 }
                 HStack(spacing: 10) {
                     Text("単位")
                     Spacer()
-                    Menu {
-                        ForEach(commonUnits, id: \.self) { unit in
-                            Button {
-                                focusPoint = nil
-                                item.unitName = unit
-                            } label: {
-                                Text(unit)
+                    if let unitOption = item.unitOption {
+                        Text(unitOption.baseUnitName)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Menu {
+                            ForEach(commonUnits, id: \.self) { unit in
+                                Button {
+                                    focusPoint = nil
+                                    item.unitName = unit
+                                } label: {
+                                    Text(unit)
+                                }
                             }
+                        } label: {
+                            Image(systemName: "chevron.down")
+                                .padding(8)
                         }
-                    } label: {
-                        Image(systemName: "chevron.down")
-                            .padding(8)
+                        TextField("単位", text: $item.unitName)
+                            .textInputAutocapitalization(.never)
+                            .multilineTextAlignment(.trailing)
+                            .focused($focusPoint, equals: .unitName)
                     }
-                    TextField("単位", text: $item.unitName)
-                        .textInputAutocapitalization(.never)
-                        .multilineTextAlignment(.trailing)
-                        .focused($focusPoint, equals: .unitName)
                 }
                 HStack {
                     Text("値引")
@@ -123,7 +130,7 @@ public struct EditItemView: View {
                     VStack(alignment: .trailing, spacing: 10) {
                         item.calculationDescription
                         + Text("\n")
-                        + item.sum.text()
+                        + item.sum.text().bold()
                             .add(prefix: "小計", suffix: "円")
                     }
                     .foregroundStyle(.secondary)

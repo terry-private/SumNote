@@ -27,17 +27,18 @@ public struct SumItem: EntityProtocol {
     }
 }
 extension SumItem {
-    var baseUnitQuantity: BFraction {
+    public var baseUnitQuantity: BFraction {
         unitOption?.baseUnitQuantity ?? .ONE
     }
     public var subtotal: BFraction { unitPrice / baseUnitQuantity * quantity }
     public var sum: BFraction { (discount.ratio) * subtotal }
 }
 extension SumItem {
-    var baseUnitName: String {
-        unitOption.map { "\($0.baseUnitQuantity.ex.currencyString())\(unitName)" } ?? unitName
+    public var quantityUnitName: String { unitOption?.unitName ?? unitName }
+    public var baseUnitName: String {
+        unitOption?.baseUnitName ?? unitName
     }
-    var unitPriceName: String {
+    public var unitPriceName: String {
         "円/\(baseUnitName)"
     }
 }

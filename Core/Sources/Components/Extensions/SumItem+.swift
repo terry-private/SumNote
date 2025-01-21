@@ -19,7 +19,7 @@ public extension SumItem {
         }
     }
     var calculationDescription: Text {
-        unitPrice.text().bold().add(suffix: "円/\(unitName)")
+        unitPrice.text().bold().add(suffix: unitPriceName)
         + tab
         + Text("\(Image(systemName: "xmark"))").font(.caption).foregroundStyle(.secondary)
         + tab

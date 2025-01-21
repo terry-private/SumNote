@@ -18,14 +18,13 @@ struct SumItemCell: View {
             VStack {
                 HStack {
                     Text(item.name)
-                    + Text("  ")
+                    + Text(" ")
                     + item.optionalDiscountText.foregroundStyle(.secondary)
 
                     Spacer()
 
-                    Text("小計 ").font(.caption).foregroundStyle(.secondary)
-                    + item.sum.text()
-                    + Text(" 円").font(.caption).foregroundStyle(.secondary)
+                    item.sum.text()
+                        .add(prefix: "小計", suffix: "円")
                 }
                 item.calculationDescription
                     .lineLimit(1)

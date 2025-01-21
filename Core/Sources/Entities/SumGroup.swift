@@ -33,14 +33,14 @@ public struct SumGroup: EntityProtocol {
     /// 数量の合計
     /// - Returns: 単位が全て同じなら数量の合計を返す。もし違う単位が混じっているならnilを返す。
     public func totalQuantity() -> (BFraction, String)? {
-        guard let firstUnitName = items.values.first?.unitName else {
+        guard let firstUnitName = items.values.first?.quantityUnitName else {
             return nil
         }
 
         var totalQuantity: BFraction = .ZERO
 
         for item in items.values {
-            guard item.unitName == firstUnitName else {
+            guard item.quantityUnitName == firstUnitName else {
                 return nil
             }
             totalQuantity += item.quantity
