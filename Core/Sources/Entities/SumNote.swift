@@ -54,7 +54,7 @@ public struct SumNote: EntityProtocol {
                             name: "カルビ",
                             unitPrice: .init(2885, 10),
                             quantity: .init(866,1),
-                            unitOption: .meat,
+                            unitOption: .g100,
                             unitName: "g",
                             discount: .init(style: .percentile,15)
                         ),
@@ -62,7 +62,7 @@ public struct SumNote: EntityProtocol {
                             name: "ロース",
                             unitPrice: .init(2987, 10),
                             quantity: .init(841,1),
-                            unitOption: .meat,
+                            unitOption: .g100,
                             unitName: "g",
                             discount: .dummy(3)
                         ),
@@ -70,7 +70,7 @@ public struct SumNote: EntityProtocol {
                             name: "鶏肉",
                             unitPrice: .init(96,1),
                             quantity: .init(400,1),
-                            unitOption: .meat,
+                            unitOption: .g100,
                             unitName: "g",
                             discount: .dummy(1)
                         ),
@@ -78,7 +78,7 @@ public struct SumNote: EntityProtocol {
                             name: "豚肉",
                             unitPrice: .init(96,1),
                             quantity: .init(400,1),
-                            unitOption: .meat,
+                            unitOption: .g100,
                             unitName: "g",
                             discount: .dummy(1)
                         )

@@ -19,11 +19,18 @@ public struct UnitOption: Sendable, Codable, Hashable, Identifiable, Equatable {
 }
 
 public extension UnitOption {
-    static var meat: UnitOption {
+    static var g100: UnitOption {
         .init(
-            name: "肉系",
+            name: "100g",
             baseUnitQuantity: 100,
             unitName: "g"
+        )
+    }
+    static var kg1: UnitOption {
+        .init(
+            name: "1kg",
+            baseUnitQuantity: 1,
+            unitName: "kg"
         )
     }
 }

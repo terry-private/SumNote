@@ -23,7 +23,7 @@ public extension SumItem {
         + tab
         + Text("\(Image(systemName: "xmark"))").font(.caption).foregroundStyle(.secondary)
         + tab
-        + quantity.text().bold().add(suffix: unitName)
+        + quantity.text().bold().add(suffix: quantityUnitName)
         + tab
         + Text("\(Image(systemName: "equal"))").font(.caption).foregroundStyle(.secondary)
         + tab

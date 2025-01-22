@@ -48,5 +48,5 @@ public struct UnitOptionPcker: View {
 
 #Preview {
     @Previewable @State var unitOption: UnitOption? = nil
-    UnitOptionPcker($unitOption, unitOptions: [.meat])
+    UnitOptionPcker($unitOption, unitOptions: [.g100])
 }

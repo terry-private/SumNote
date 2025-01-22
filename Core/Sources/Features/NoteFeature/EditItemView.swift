@@ -47,7 +47,7 @@ public struct EditItemView: View {
                         .focused($focusPoint, equals: .name)
                         .multilineTextAlignment(.trailing)
                 }
-                UnitOptionPcker($item.unitOption, unitOptions: [.meat])
+                UnitOptionPcker($item.unitOption, unitOptions: [.g100])
                     .tint(.accentColor)
                 HStack {
                     Text("単価")
