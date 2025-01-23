@@ -33,6 +33,12 @@ public extension SumDiscount {
     var description: String {
         numerator == .zero ? "" : "x \(ratio.ex.currencyString()) (\(labelText))"
     }
+    func discountPrice(_ price: BFraction) -> BFraction {
+        BFraction(numerator, .init(denominator)) * price
+    }
+    func discountPriceDescription(_ price: BFraction) -> String {
+        numerator == .zero ? "" : "- \(discountPrice(price).ex.currencyString())円(\(labelText))"
+    }
     static var dummy: Self {
         .init(style: .percentile, 15)
     }

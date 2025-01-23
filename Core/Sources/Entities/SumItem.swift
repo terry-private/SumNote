@@ -51,7 +51,7 @@ extension SumItem {
         let items: [String?] = [
             "\(name) \(unitPriceDescription)".indent(indent, spaces: spaces),
             quantityDescription.indent(indent + 1, spaces: spaces),
-            discount.numerator == .zero ? nil : discount.description.indent(indent + 1, spaces: spaces),
+            discount.numerator == .zero ? nil : discount.discountPriceDescription(subtotal).indent(indent + 1, spaces: spaces),
             sumDescription.indent(indent + 1, spaces: spaces),
         ]
         return items.compactMap{ $0 }.joined(separator: "\n")

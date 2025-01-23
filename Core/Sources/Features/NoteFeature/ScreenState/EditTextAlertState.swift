@@ -51,16 +51,19 @@ public struct EditTextAlert: View {
                 isPresented: .init(from: $screenState),
                 presenting: screenState?.textState
             ) { state in
-                TextField("テキストフィールド", text: .init {
+                TextField(state.title, text: .init {
                     tmpText ?? state.text
                 } set: {
                     tmpText = $0
                 })
-                Button("Cancel") {
+                Button("キャンセル", role: .cancel) {
                     self.tmpText = nil
                 }
-                Button("OK") {
-                    guard let tmpText, !tmpText.isBlank() else { return }
+                Button("確定") {
+                    guard let tmpText, !tmpText.isBlank() else {
+                        self.tmpText = nil
+                        return
+                    }
                     state.completion(tmpText)
                     self.tmpText = nil
                 }
