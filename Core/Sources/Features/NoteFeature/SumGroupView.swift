@@ -88,12 +88,8 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
                 HStack {
                     Menu {
                         Button("新規アイテム作成", systemImage: "note.text.badge.plus") {
-                            let item = SumItem(name: "新規アイテム", unitPrice: 0, quantity: 1, unitName: "個")
-                            withAnimation {
-                                _ = store.update(item, in: groupID, in: noteID)
-                            } completion: {
-                                scrollTarget = item.id
-                            }
+                            let item = SumItem(name: "", unitPrice: 0, quantity: 1, unitName: "個")
+                            screenState = .item(.init(item: item, mode: .create))
                         }
                         Button("テンプレートから作成", systemImage: "note.text.badge.plus") {
                         }
@@ -116,7 +112,7 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
                     Task { @MainActor in
                         try await Task.sleep(for: .seconds(0.3))
                         withAnimation {
-                            store.update(state.item, in: noteID)
+                            store.update(state.item, in: groupID, in: noteID)
                             scrollTarget = state.item.id
                         }
                     }
