@@ -62,7 +62,7 @@ struct SumItemCell: View {
                     }
                 )
             } label: {
-                Image(systemName: "tag.slash.fill")
+                Text("値引き")
             }
             .tint(.purple)
         }
