@@ -27,15 +27,27 @@ public struct DiscountPicker: View {
     public var body: some View {
         VStack(spacing: 10) {
             // top bar
-            HStack {
-                Text(title)
-                Spacer()
-                Button("キャンセル") {
+            HStack(spacing: 0) {
+                Button {
                     cancel()
+                } label: {
+                    Text("キャンセル")
+                        .lineLimit(1)
                 }
+                .layoutPriority(3)
+                Spacer()
+//                .frame(maxWidth: .infinity, alignment: .leading)
+                Text(title)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .layoutPriority(2)
+                Spacer()
+                Text("キャンセル")
+                    .lineLimit(1)
+                    .opacity(0)
             }
             .padding(10)
-            .background(Color(uiColor: .tertiarySystemBackground))
+            .background(Color(UIColor.secondarySystemBackground))
 
             // contents
             VStack(spacing: 10)  {
@@ -83,12 +95,8 @@ public struct DiscountPicker: View {
 
             Spacer(minLength: 10)
         }
-        .background(Color(uiColor: .systemGroupedBackground
-                         ))
-        .onChange(of: selectedStyle) {
-            if case .decile = selectedStyle {
-                numerator = min(numerator, 9)
-            }
+        .onChange(of: selectedStyle) { oldValue, newValue in
+            numerator = numerator * newValue.denominator / oldValue.denominator
         }
     }
 }

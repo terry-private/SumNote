@@ -9,7 +9,7 @@ public extension SumItem {
         discount.numerator != .zero
     }
     var discountText: Text {
-        Text(discount.numerator.description).bold().add(suffix: discount.suffix)
+        Text("\(discount.numerator)").bold().add(suffix: discount.suffix)
     }
     var optionalDiscountText: Text {
         if hasDiscount {
@@ -43,5 +43,7 @@ public extension SumItem {
         let item = SumItem(name: "test item", unitPrice: 1000, quantity: 10, unitName: "個", discount: .init(10))
         item.calculationDescription
         item.sum.text().add(prefix: "合計", suffix: "円")
+        item.optionalDiscountText
+        item.discountText.foregroundStyle(.secondary).background(Color.teal)
     }
 }

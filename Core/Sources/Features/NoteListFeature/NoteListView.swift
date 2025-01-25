@@ -15,7 +15,15 @@ public struct NoteListView<Dependency: DependencyProtocol>: View {
                     Button {
                         selected = note
                     } label: {
-                        Text("\(note.name)")
+                        HStack {
+                            Image(systemName: "folder")
+                            Text("\(note.name)")
+                                .tint(.primary)
+                            Spacer()
+                            Text(DateString.from(note.editedAt))
+                                .font(.caption)
+                                .tint(.secondary)
+                        }
                     }
                 }
                 .onDelete { indexSet in

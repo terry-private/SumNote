@@ -16,12 +16,24 @@ public struct CalculatorInputView: View {
     }
     public var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Text(title)
-                Spacer()
-                Button("キャンセル") {
+            HStack(spacing: 0) {
+                Button {
                     state.cancel()
+                } label: {
+                    Text("キャンセル")
+                        .lineLimit(1)
                 }
+                .layoutPriority(3)
+                Spacer()
+//                .frame(maxWidth: .infinity, alignment: .leading)
+                Text(title)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .layoutPriority(2)
+                Spacer()
+                Text("キャンセル")
+                    .lineLimit(1)
+                    .opacity(0)
             }
             .padding(10)
             .background(Color(UIColor.secondarySystemBackground))
@@ -105,7 +117,7 @@ extension CalculatorInputView {
         let size = CalculatorLayoutLogics.displaySize(maxSize: proxy.size)
         Color.clear
             .overlay {
-                CalculatorInputView(value: .init(1357, 100), size: size) {
+                CalculatorInputView(title: "test test test test test test test test test test test", value: .init(1357, 100), size: size) {
                     print($0)
                 } cancel: {
                     print("cancel tapped")
