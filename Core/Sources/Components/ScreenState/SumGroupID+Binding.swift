@@ -1,7 +1,7 @@
 import SwiftUI
 import Entities
 
-extension Binding where Value == SumGroup.ID? {
+public extension Binding where Value == SumGroup.ID? {
     @MainActor
     init(from screenState: Binding<ScreenState?>) {
         self = Binding<SumGroup.ID?> {

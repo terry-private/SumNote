@@ -1,6 +1,5 @@
 import SwiftUI
 import Entities
-import Components
 
 public enum ScreenState {
     case text(EditTextAlertState)
@@ -32,7 +31,7 @@ public enum ScreenState {
             nil
         }
     }
-    var removeGroup: SumGroup? {
+    public var removeGroup: SumGroup? {
         if case .removeGroup(let group) = self {
             group
         } else {
@@ -42,7 +41,7 @@ public enum ScreenState {
 }
 
 // MARK: - calculatorInputState
-extension Binding where Value == ScreenState? {
+public extension Binding where Value == ScreenState? {
     @MainActor
     var calculatorInputState: Binding<CalculatorInputState?> {
         Binding<CalculatorInputState?> {
@@ -58,7 +57,7 @@ extension Binding where Value == ScreenState? {
 }
 
 // MARK: - discountPickerState
-extension Binding where Value == ScreenState? {
+public extension Binding where Value == ScreenState? {
     @MainActor
     var discountState: Binding<DiscountPickerState?> {
         Binding<DiscountPickerState?> {
@@ -74,7 +73,7 @@ extension Binding where Value == ScreenState? {
 }
 
 // MARK: - removeItemAlertState
-extension Binding where Value == ScreenState? {
+public extension Binding where Value == ScreenState? {
     @MainActor
     var removeItemAlertState: Binding<Bool> {
         Binding<Bool> {
@@ -88,7 +87,7 @@ extension Binding where Value == ScreenState? {
 }
 
 // MARK: - removeGroupAlertState
-extension Binding where Value == ScreenState? {
+public extension Binding where Value == ScreenState? {
     @MainActor
     var removeGroupAlertState: Binding<Bool> {
         Binding<Bool> {
@@ -102,7 +101,7 @@ extension Binding where Value == ScreenState? {
 }
 
 // MARK: - item
-extension Binding where Value == ScreenState? {
+public extension Binding where Value == ScreenState? {
     @MainActor
     var item: Binding<EditItemState?> {
         Binding<EditItemState?> {
@@ -118,31 +117,5 @@ extension Binding where Value == ScreenState? {
                 wrappedValue = nil
             }
         }
-    }
-}
-
-extension SumItem {
-    func backgroundColor(_ screenState: ScreenState?) -> Color {
-        switch screenState {
-        case .discount(let state):
-            if state.id == discount.id {
-                return Color(uiColor: .systemFill)
-            }
-        case .removeItem(let item):
-            if item.id == id {
-                return Color.red.opacity(0.7)
-            }
-        case .fraction(let state):
-            if state.id == id {
-                return Color(uiColor: .systemFill)
-            }
-        case .item(let state):
-            if state.id == id {
-                return Color(uiColor: .systemFill)
-            }
-        default:
-            break
-        }
-        return Color.clear
     }
 }

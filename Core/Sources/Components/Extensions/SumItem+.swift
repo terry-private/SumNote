@@ -38,6 +38,32 @@ public extension SumItem {
     }
 }
 
+public extension SumItem {
+    func backgroundColor(_ screenState: ScreenState?) -> Color {
+        switch screenState {
+        case .discount(let state):
+            if state.id == discount.id {
+                return Color(uiColor: .systemFill)
+            }
+        case .removeItem(let item):
+            if item.id == id {
+                return Color.red.opacity(0.7)
+            }
+        case .fraction(let state):
+            if state.id == id {
+                return Color(uiColor: .systemFill)
+            }
+        case .item(let state):
+            if state.id == id {
+                return Color(uiColor: .systemFill)
+            }
+        default:
+            break
+        }
+        return Color.clear
+    }
+}
+
 #Preview {
     VStack {
         let item = SumItem(name: "test item", unitPrice: 1000, quantity: 10, unitName: "個", discount: .init(10))

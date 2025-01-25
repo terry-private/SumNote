@@ -4,16 +4,6 @@ import CoreProtocols
 import Components
 
 public struct EditItemView: View {
-    public enum Mode {
-        case create
-        case edit
-        var title: String {
-            switch self {
-            case .create: "新規作成"
-            case .edit: "編集"
-            }
-        }
-    }
     enum FocusPoint {
         case name
         case unitName
@@ -21,7 +11,7 @@ public struct EditItemView: View {
     @State var screenState: ScreenState?
     @State var item: SumItem
     @FocusState var focusPoint: FocusPoint?
-    let mode: Mode
+    let mode: EditItemState.Mode
     let completion: (SumItem) -> Void
     let dismiss: () -> Void
     var dismissButtonTitle: String {
@@ -31,7 +21,7 @@ public struct EditItemView: View {
         }
     }
     let commonUnits = ["個", "袋", "箱", "本", "g", "kg", "ml", "L"]
-    public init(item: SumItem, mode: Mode, completion: @escaping (SumItem) -> Void, dismiss: @escaping () -> Void) {
+    public init(item: SumItem, mode: EditItemState.Mode, completion: @escaping (SumItem) -> Void, dismiss: @escaping () -> Void) {
         self._item = .init(initialValue: item)
         self.mode = mode
         self.completion = completion
