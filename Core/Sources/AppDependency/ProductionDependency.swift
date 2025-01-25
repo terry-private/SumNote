@@ -13,9 +13,6 @@ public enum ProductionDependency: DependencyProtocol {
             noteListView()
         }
     }
-    @MainActor public static func folderListView() -> FolderListView<Self> {
-        FolderList.FolderListView<Self>()
-    }
     @MainActor public static func noteListView() -> NoteListView<Self> {
         NoteListFeature.NoteListView<Self>()
     }
@@ -23,7 +20,6 @@ public enum ProductionDependency: DependencyProtocol {
         NoteFeature.NoteView<Self>(noteID)
     }
     // MARK: - Stores
-    @MainActor public static let folderStore = Stores.FolderStore()
     @MainActor public static let noteStore = Stores.NoteStore<NoteRepository>()
     // MARK: - Repositories
     public typealias NoteRepository = Repositories.NoteRepository
