@@ -1,6 +1,6 @@
 import SwiftUI
 
-// 使ってないので消して良いかも
+// FIXME: 削除予定
 public struct RoundedBackground: ViewModifier {
     let contentMaxHeight: CGFloat
     let padding: CGFloat

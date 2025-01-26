@@ -19,11 +19,9 @@ enum  CurrentState {
         switch self {
         case .fraction(let fraction): return fraction
         case .edit(var editingValue):
-            print("editingValue:", editingValue)
             if editingValue.last == "." {
                 editingValue = String(editingValue.dropLast())
             }
-            print("editingValue:", editingValue)
             return BFraction(editingValue) ?? BFraction(0, 1)
         }
     }

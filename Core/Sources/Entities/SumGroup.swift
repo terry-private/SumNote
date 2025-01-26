@@ -1,5 +1,6 @@
 import Foundation
 import BigInt
+import Collections
 
 public struct SumGroup: EntityProtocol {
     public struct ID: StringIDProtocol {
@@ -10,43 +11,51 @@ public struct SumGroup: EntityProtocol {
     }
     public let id: ID
     public var name: String
-    public var items: [SumItem]
-    public var sum: BFraction {
-        items.reduce(.ZERO) {
-            $0 + $1.sum
-        }
-    }
-
-    public init(id: ID = .init(rawValue: UUID().uuidString), name: String, items: [SumItem]) {
+    public var items: OrderedDictionary<SumItem.ID, SumItem>
+    public init(id: ID = .ID(rawValue: UUID().uuidString), name: String, items: OrderedDictionary<SumItem.ID, SumItem>) {
         self.id = id
         self.name = name
         self.items = items
     }
-}
-
-extension SumGroup: CustomStringConvertible {
-    public func description(with indent: Int = 0) -> String {
-        var rowTexts: [String] = [name.indent(indent)]
-        for row in items {
-            rowTexts.append(row.description(with: indent + 1))
+    public init(id: ID = .ID(rawValue: UUID().uuidString), name: String, items: [SumItem]) {
+        self.id = id
+        self.name = name
+        self.items = items.reduce(into: OrderedDictionary<SumItem.ID, SumItem>()) {
+            $0[$1.id] = $1
         }
-        rowTexts.append("合計 \(sum.ex.currencyString()) 円".indent(indent + 1))
+    }
+    public func sum() -> BFraction {
+        items.values.reduce(.ZERO) {
+            $0 + $1.sum
+        }
+    }
+
+    /// 数量の合計
+    /// - Returns: 単位が全て同じなら数量の合計を返す。もし違う単位が混じっているならnilを返す。
+    public func totalQuantity() -> (BFraction, String)? {
+        guard let firstUnitName = items.values.first?.quantityUnitName else {
+            return nil
+        }
+
+        var totalQuantity: BFraction = .ZERO
+
+        for item in items.values {
+            guard item.quantityUnitName == firstUnitName else {
+                return nil
+            }
+            totalQuantity += item.quantity
+        }
+
+        return (totalQuantity, firstUnitName)
+    }
+
+    public func description(with indent: Int = 0, spaces: Int = 2) -> String {
+        var rowTexts: [String] = [name.indent(indent, spaces: spaces)]
+        for item in items.values {
+            rowTexts.append(item.description(with: indent + 1))
+        }
+        rowTexts.append("合計 \(sum().ex.currencyString()) 円".indent(indent + 1))
         return rowTexts.joined(separator: "\n")
     }
 
-    public var description: String {
-        """
-        \(name)
-         \(items.flatMap {
-            $0.description.split(separator: "\n")
-            }.joined(separator: "\n ")
-        )
-        合計 \(sum.ex.currencyString()) 円
-        """
-    }
-}
-public extension SumGroup {
-    static func dummy(_ index: Int) -> Self {
-        SumGroup(name: "table_\(index)", items: (1...index).map { .dummy($0) })
-    }
 }

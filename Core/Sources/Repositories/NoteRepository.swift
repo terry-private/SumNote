@@ -8,7 +8,7 @@ public enum NoteRepository: NoteRepositoryProtocol {
         do {
             return .init(
                 modelContainer: try .init(
-                    for: SumNoteModel.self, SumGroupModel.self,
+                    for: SumNoteModel.self,
                     storageType: .file()
                 )
             )
@@ -29,7 +29,7 @@ public enum NoteRepository: NoteRepositoryProtocol {
     public static func create(_ note: SumNote) async throws {
         try await database.insert(note, as: SumNoteModel.self)
     }
-    public static func update(note: SumNote) async throws {
+    public static func update(_ note: SumNote) async throws {
         try await database.update(note, as: SumNoteModel.self)
     }
     public static func delete(_ id: SumNote.ID) async throws {
@@ -51,10 +51,10 @@ public enum NoteRepository: NoteRepositoryProtocol {
 //                model.groups.remove(at: index)
 //            }
 //        }
-        try await database.delete(
-            where: #Predicate { (model: SumGroupModel) -> Bool in
-                model.id == id.rawValue
-            }
-        )
+//        try await database.delete(
+//            where: #Predicate { (model: SumGroupModel) -> Bool in
+//                model.id == id.rawValue
+//            }
+//        )
     }
 }

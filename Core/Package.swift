@@ -10,7 +10,8 @@ let package = Package(
     ],
     products: Module.allCases.map(\.library),
     dependencies: [
-        .package(path: "../BigIntExtensions")
+        .package(path: "../BigIntExtensions"),
+        .package(url: "https://github.com/apple/swift-collections", from: "1.1.4")
     ],
     targets: Module.allCases.map(\.target) + TestModule.allCases.map(\.target)
 )
@@ -21,6 +22,7 @@ extension Target.Dependency {
         self = module.dependency
     }
     static var bInt: Self { .product(name: "BigIntExtensions", package: "BigIntExtensions") }
+    static var swiftCollections: Self { .product(name: "Collections", package: "swift-collections")}
 }
 
 // MARK: モジュール親ディレクトリ
@@ -35,7 +37,7 @@ enum Module: String, CaseIterable {
     case coreProtocols
     case stores
     case components
-    case folderList
+    case editItemFeature
     case noteListFeature
     case noteFeature
     case appDependency
@@ -45,7 +47,8 @@ enum Module: String, CaseIterable {
         return switch self {
         case .entities: target(
             dependencies: [
-                .bInt
+                .bInt,
+                .swiftCollections
             ]
         )
         // MARK: - Core -
@@ -66,10 +69,11 @@ enum Module: String, CaseIterable {
         case .components: target(
             dependencies: [
                 .bInt,
+                .init(.entities)
             ]
         )
         // MARK: - Features -
-        case .folderList: target(
+        case .editItemFeature: target(
             dependencies: [
                 .init(.entities),
                 .init(.coreProtocols),
@@ -93,6 +97,7 @@ enum Module: String, CaseIterable {
                 .init(.coreProtocols),
                 .init(.components),
                 .init(.stores),
+                .init(.editItemFeature)
             ],
             path: .features
         )
@@ -101,7 +106,6 @@ enum Module: String, CaseIterable {
             dependencies: [
                 .init(.entities),
                 .init(.coreProtocols),
-                .init(.folderList),
                 .init(.noteListFeature),
                 .init(.noteFeature),
                 .init(.repositories),
@@ -128,7 +132,6 @@ enum TestModule: String, CaseIterable {
             dependencies: [
                 .init(.entities),
                 .init(.coreProtocols),
-                .init(.folderList),
                 .init(.noteListFeature),
                 .init(.noteFeature),
                 .init(.stores)

@@ -5,105 +5,155 @@ import CoreProtocols
 import Components
 import Combine
 import Stores
-
-struct EditAlert<T> {
-    var title: String
-    var binding: Binding<T>
-}
-struct EditFractionState: Identifiable {
-    var id: String
-    var title: String
-    var fraction: BFraction
-    var completion: (BFraction) -> Void
-}
+import Collections
 
 public struct NoteView<Dependency: DependencyProtocol>: View {
-    @Environment(\.editMode) private var editMode
     @State var store = Dependency.noteStore
-    @State var note: SumNote
-    @State var editNameAlert: EditAlert<String>?
-    @State var editNameAlertText: String = ""
-    @State var addedTableID: SumGroup.ID?
-    @State var editFractionState: EditFractionState?
-    public init(note: SumNote) {
-        _note = .init(wrappedValue: note)
+    let noteID: SumNote.ID
+    @State var screenState: ScreenState?
+    @State var scrollTargetItem: SumItem.ID?
+    @State var scrollTargetGroup: SumGroup.ID?
+    public init(_ noteID: SumNote.ID) {
+        self.noteID = noteID
     }
     public var body: some View {
-        VStack(spacing: 0) {
-            ScrollViewReader { scrollProxy in
-                List {
-                    groups()
-                }
-                .listStyle(.insetGrouped)
-                .onChange(of: addedTableID) {
-                    guard let addedTableID else { return }
-                    withAnimation {
-                        scrollProxy.scrollTo(addedTableID)
-                    }
-                }
-            }
-            // MARK: - 総計 -
-            HStack {
-                Spacer()
-                HStack {
-                    Text("総計:")
-                    BFractionText(fraction: note.sum)
-                    Text("円")
-                }
-                .padding()
-                Spacer()
-            }
-            .ignoresSafeArea()
-            .background(.ultraThinMaterial)
-        }
-        // MARK: - Alert -
-        .alert(editNameAlert?.title ?? "", isPresented: Binding(get: { editNameAlert != nil}, set: { if !$0 { editNameAlert = nil }})) {
-            if let editNameAlert {
-                TextField("テキストフィールド", text: $editNameAlertText)
-                Button("Cancel", action: {})
-                Button("OK") {
-                    guard !editNameAlertText.isBlank() else { return }
-                    editNameAlert.binding.wrappedValue = editNameAlertText
-                }
-            }
-        }
-        .sheet(item: $editFractionState) { state in
-            CalculatorInputView(
-                title: state.title,
-                value: state.fraction,
-                completion: state.completion
-            ) {
-                editFractionState = nil
-            }
-            .presentationDetents([.height(CalculatorLayoutLogics.displaySize(maxSize: UIScreen.main.bounds.size).height)]
-            )
-        }
-        // MARK: - toolbar -
-        .toolbar {
-            if editMode?.wrappedValue.isEditing == true {
-                Button("完了") {
-                    withAnimation {
-                        editMode?.wrappedValue = .inactive
-                    }
-                }
-            } else {
-                Menu {
-                    Button("表編集") {
-                        withAnimation {
-                            editMode?.wrappedValue = .active
+        if let note = store.note(by: noteID) {
+            VStack(spacing: 0) {
+                ScrollViewReader { scrollProxy in
+                    List {
+                        Section {
+                            groups(note)
+                            items(note)
+                        } header: {
+                            // MARK: - 総計 -
+                            HStack {
+                                Spacer()
+                                HStack(alignment: .lastTextBaseline) {
+                                    Text("総計")
+                                    BFractionText(fraction: note.sum(), textStyle: .headline)
+                                        .foregroundStyle(Color(uiColor: .label))
+                                    Text("円")
+                                }
+                                .font(.headline)
+                                .padding(5)
+                                Spacer()
+                            }
                         }
-                    }
-                    Button("ノート名を編集", systemImage: "square.and.pencil") {
-                        setAlert(title: "表題を編集", binding: $note.name)
-                    }
-                    Button("空の表を追加", systemImage: "note.text.badge.plus") {
-                        withAnimation {
-                            let newTable = SumGroup(name: "表", items: [.init(name: "品名", unitPrice: .ZERO, quantity: .ONE, unitName: "個")])
-                            note.groups.append(newTable)
-                            addedTableID = newTable.id
-                        }
-                    }
 
+                    }
+                    .listStyle(.plain)
+                    .onChange(of: scrollTargetItem) { _, newValue in
+                        withAnimation {
+                            scrollProxy.scrollTo(newValue)
+                        } completion: {
+                            scrollTargetItem = nil
+                        }
+                    }
+                    .onChange(of: scrollTargetGroup) { _, newValue in
+                        withAnimation {
+                            scrollProxy.scrollTo(newValue)
+                        }
+                    }
+                }
+                HStack {
+                    Menu {
+                        Button("新規作成", systemImage: "note.text.badge.plus") {
+                            let item = SumItem(name: "", unitPrice: 0, quantity: 1, unitName: "個")
+                            screenState = .item(.init(item: item, mode: .create))
+                        }
+                        Button("テンプレートから作成", systemImage: "note.text.badge.plus") {
+                        }
+                    } label: {
+                        Label("商品を追加", systemImage: "plus.circle.fill")
+                            .padding(.vertical, 15)
+                            .padding(.horizontal, 25)
+                    }
+                    Spacer()
+                    Button {
+                        guard screenState == nil else { return }
+                        let editTextAlertState: EditTextAlertState = .init(
+                            id: note.id.rawValue,
+                            title: "新規リスト名",
+                            text: "リストを追加") { groupName in
+                                let group = SumGroup(name: groupName, items: [])
+                                withAnimation {
+                                    store.update(group, in: noteID)
+                                    scrollTargetGroup = group.id
+                                } completion: {
+                                    Task { @MainActor in
+                                        try await Task.sleep(for: .seconds(0.3))
+                                        screenState = .group(group.id)
+                                    }
+                                }
+                            }
+                        screenState = .text(editTextAlertState)
+                    } label: {
+                        Text("リストを追加")
+                            .padding(.vertical, 15)
+                            .padding(.horizontal, 25)
+                    }
+                }
+            }
+            .background(Color(uiColor: .systemGroupedBackground))
+            .caluculatorInputSheet($screenState.calculatorInputState)
+            // MARK: - Alert -
+            .editTextAlert(screenState: $screenState)
+            .discountPckerSheet($screenState.discountState)
+            .navigationDestination(item: Binding<SumGroup.ID?>(from: $screenState)) { groupID in
+                SumGroupView<Dependency>(noteID: noteID, groupID: groupID)
+            }
+            .showEditItemView($screenState.item) { state in
+                switch state.mode {
+                case .create:
+                    Task { @MainActor in
+                        try await Task.sleep(for: .seconds(0.3))
+                        withAnimation {
+                            store.update(state.item, in: noteID)
+                            scrollTargetItem = state.item.id
+                        }
+                    }
+                case .edit:
+                    store.update(state.item, in: noteID)
+                }
+            }
+            .alert(
+                "リストを削除",
+                isPresented: $screenState.removeGroupAlertState,
+                presenting: screenState?.removeGroup
+            ) { group in
+                Button("キャンセル", role: .cancel) {
+                    screenState = nil
+                }
+                Button("削除", role: .destructive) {
+                    var note = note
+                    note.groups.removeValue(forKey: group.id)
+                    withAnimation {
+                        _ = store.update(note)
+                    }
+                }
+            } message: { group in
+                Text("\(group.name)を削除しますか？")
+            }
+            .removeItemAlert($screenState) { item in
+                var note = note
+                note.items.removeValue(forKey: item.id)
+                withAnimation {
+                    _ = store.update(note)
+                }
+            }
+            // MARK: - toolbar -
+            .toolbar {
+                Menu {
+                    Button("ノート名を編集", systemImage: "square.and.pencil") {
+                        guard screenState == nil else { return }
+                        screenState = .text(
+                            .init(id: note.id.rawValue, title: "ノート名", text: note.name) {
+                                var note = note
+                                note.name = $0
+                                store.update(note)
+                            }
+                        )
+                    }
                     Button("テキストコピー", systemImage: "pencil") {
                         UIPasteboard.general.string = note.description()
                     }
@@ -111,25 +161,8 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                     Label("menu", systemImage: "line.3.horizontal.circle")
                 }
             }
-        }
-        // MARK: - navigationTitle -
-        .navigationTitle(note.name)
-        // MARK: - onChange -
-        .onChange(of: note) {
-            Task { @MainActor in
-                try await store.update(note)
-            }
-        }
-    }
-}
-
-// MARK: - set alert -
-extension NoteView {
-    func setAlert(title: String, binding: Binding<String>) {
-        editNameAlert = nil
-        Task { @MainActor in
-            editNameAlertText = binding.wrappedValue
-            editNameAlert = .init(title: title, binding: binding)
+            // MARK: - navigationTitle -
+            .navigationTitle(note.name)
         }
     }
 }
@@ -137,221 +170,112 @@ extension NoteView {
 // MARK: - ViewBuilders -
 extension NoteView {
     @ViewBuilder
-    func groups() -> some View {
-        ForEach($note.groups) { $table in
-            if editMode?.wrappedValue.isEditing == true {
-                VStack {
-                    HStack {
-                        Text(table.name)
-                            .font(.headline)
-                        Spacer()
+    func groups(_ note: SumNote) -> some View {
+        ForEach(note.groups.values.elements) { group in
+            Button {
+                guard screenState == nil else { return }
+                screenState = .group(group.id)
+            } label: {
+                HStack(spacing: 5) {
+                    SystemIcon(systemName: "list.bullet.rectangle.portrait", color: .orange, size: 32)
+                        .foregroundStyle(.white)
+                        .padding(.trailing, 5)
+                    Text(group.name)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                    if let (totalQuantity, unitName) = group.totalQuantity() {
+                        HStack(alignment: .lastTextBaseline, spacing: 2) {
+                            Text("(")
+                            BFractionText(fraction: totalQuantity, textStyle: .footnote)
+                            Text(unitName)
+                                .font(.caption2)
+                            Text(")")
+                        }
+                        .font(.footnote)
+                        .layoutPriority(-1)
+                        .minimumScaleFactor(0.5)
+                        .foregroundStyle(Color(uiColor: .secondaryLabel))
                     }
-                    footer(table: $table)
+                    Spacer()
+                    HStack(alignment: .lastTextBaseline, spacing: 2) {
+                        Text("合計")
+                            .font(.caption)
+                            .foregroundStyle(Color(uiColor: .secondaryLabel))
+                        BFractionText(fraction: group.sum())
+                        Text("円")
+                            .font(.caption)
+                            .foregroundStyle(Color(uiColor: .secondaryLabel))
+                    }
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.trailing, -10)
                 }
-            } else {
-                Section(header: header(table: $table), footer: footer(table: $table)) {
-                    ForEach($table.items) { $row in
-                        tableRow(tableName: table.name, $row)
-                    }
-                    .onMove { indexSet, index in
-                        table.items.move(fromOffsets: indexSet, toOffset: index)
-                    }
-                    .onDelete { indexSet in
-                        table.items.remove(atOffsets: indexSet)
-                    }
-                }
+                .padding(.vertical, 3)
             }
+            .listRowBackground(groupBackgroundColor(group.id))
+            .foregroundStyle(Color(uiColor: .label))
+            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                Button {
+                    guard screenState == nil else { return }
+                    screenState = .removeGroup(group)
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .tint(.red)
+            }
+            .id(group.id)
         }
         .onMove { indexSet, index in
-            note.groups.move(fromOffsets: indexSet, toOffset: index)
+            var groups = note.groups.values.elements
+            groups.move(fromOffsets: indexSet, toOffset: index)
+            var note = note
+            note.groups = groups.reduce(into: [:]) { $0[$1.id] = $1 }
+            store.update(note)
         }
         .onDelete { indexSet in
-            note.groups.remove(atOffsets: indexSet)
+            var groups = note.groups.values.elements
+            groups.remove(atOffsets: indexSet)
+            var note = note
+            note.groups = groups.reduce(into: [:]) { $0[$1.id] = $1 }
+            store.update(note)
         }
     }
-    
-    // MARK: - header footer -
     @ViewBuilder
-    func header(table: Binding<SumGroup>) -> some View {
-        HStack {
-            Menu {
-                Button("表題を編集", systemImage: "square.and.pencil") {
-                    setAlert(title: "表題を編集", binding: table.name)
-                }
-                Button("テキストコピー", systemImage: "pencil") {
-                    UIPasteboard.general.string = table.wrappedValue.description()
-                }
-            } label: {
-                Text(table.wrappedValue.name)
-                    .font(.headline)
-                    .padding(20) // タップ範囲を広げる
-            }
-            .padding(-20) // タップ範囲を広げてもレイアウトサイズはそのままにする
-            Spacer()
-            Menu {
-                Button("空の行を追加", systemImage: "square.badge.plus") {
-                    withAnimation {
-                        table.wrappedValue.items.append(.init(name: "品名", unitPrice: .ZERO, quantity: .ONE, unitName: "個"))
-                    }
-                }
-                Button("テンプレートから追加", systemImage: "macwindow.badge.plus") {
-                    
-                }
-            } label: {
-                Image(systemName: "plus")
-                    .padding(20) // タップ範囲を広げる
-            }
-            .padding(-20) // タップ範囲を広げてもレイアウトサイズはそのままにする
+    func items(_ note: SumNote) -> some View {
+        ForEach(note.items.values) { item in
+            SumItemCell(
+                item: .init(get: {
+                    item
+                }, set: {
+                    store.update($0, in: noteID)
+                }),
+                state: $screenState
+            )
+            .listRowBackground(item.backgroundColor(screenState))
+        }
+        .onMove { indexSet, index in
+            var items = note.items.values.elements
+            items.move(fromOffsets: indexSet, toOffset: index)
+            var note = note
+            note.items = items.reduce(into: [:]) { $0[$1.id] = $1 }
+            store.update(note)
         }
     }
-    func footer(table: Binding<SumGroup>) -> some View {
-        HStack(alignment: .lastTextBaseline) {
-            Spacer()
-            Text("合計")
-            BFractionText(fraction: table.wrappedValue.sum, textStyle: .body, rounded: 2)
-                .bold()
-            Text("円")
-                .font(.caption)
-        }
-        .foregroundStyle(Color.primary)
-    }
-    
-    // MARK: - table row -
-    @ViewBuilder
-    func tableRow(tableName: String, _ row: Binding<SumItem>) -> some View {
-        VStack {
-            // MARK: - row name-
-            HStack {
-                Menu {
-                    Button("品名を編集", systemImage: "square.and.pencil") {
-                        setAlert(title: "品名を編集", binding: row.name)
-                    }
-                    Button("単位を編集", systemImage: "square.and.pencil") {
-                        setAlert(title: "単位を編集", binding: row.unitName)
-                    }
-                    Button("オプションを追加", systemImage: "circle.badge.plus") {
-                        row.wrappedValue.options.append(.init(name: "10% OFF", ratio: .init(9, 10)))
-                    }
-                } label: {
-                    Text(row.wrappedValue.name)
-                        .font(.headline)
-                        .padding(20) // タップ範囲を広げる
-                }
-                .padding(-20) // タップ範囲を広げてもレイアウトサイズはそのままにする
-                Spacer()
-            }
-            // MARK: - row -
-            HStack(alignment: .lastTextBaseline, spacing: 0) {
-                Button {
-                    editFractionState = .init(
-                        id: row.wrappedValue.id.rawValue,
-                        title: "\(tableName) / \(row.wrappedValue.name) / 単価",
-                        fraction: row.wrappedValue.unitPrice
-                    ) { fraction in
-                        row.wrappedValue.unitPrice = fraction
-                        editFractionState = nil
-                    }
-                } label: {
-                    BFractionText(fraction: row.wrappedValue.unitPrice)
-                }
-                
-                Text("円/\(row.wrappedValue.unitName)")
-                    .font(.caption)
-                
-                Spacer()
-                
-                Text(String("x"))
-                    .font(.caption)
-                    .foregroundStyle(Color.secondary)
-                
-                Spacer()
-                
-                Button {
-                    editFractionState = .init(
-                        id: row.wrappedValue.id.rawValue,
-                        title: "\(tableName) / \(row.wrappedValue.name) / 数量",
-                        fraction: row.wrappedValue.quantity
-                    ) { fraction in
-                        row.wrappedValue.quantity = fraction
-                        editFractionState = nil
-                    }
-                } label: {
-                    BFractionText(fraction: row.wrappedValue.quantity)
-                }
-                
-                Text(row.wrappedValue.unitName)
-                    .font(.caption)
-                
-                Spacer()
-                
-                Text("=")
-                    .font(.caption)
-                    .foregroundStyle(Color.secondary)
 
-                Spacer()
-                
-                BFractionText(fraction: row.wrappedValue.subtotal)
-
-                Text("円")
-                    .font(.caption)
-            }
-            .buttonStyle(BorderlessButtonStyle())
-            .padding(.vertical, 3)
-
-            ForEach(row.options) { option in
-                HStack {
-                    Spacer()
-                    Text(String("x"))
-                        .font(.caption)
-                        .foregroundStyle(Color.secondary)
-                    Menu {
-                        Button("オプション名を編集", systemImage: "square.and.pencil") {
-                            setAlert(title: "オプション名を編集", binding: option.name)
-                        }
-                        Button("割合を編集", systemImage: "square.and.pencil") {
-                            editFractionState = .init(
-                                id: option.wrappedValue.id.rawValue,
-                                title: "\(tableName) / \(row.wrappedValue.name) / \(option.wrappedValue.name)",
-                                fraction: option.wrappedValue.ratio
-                            ) { fraction in
-                                option.wrappedValue.ratio = fraction
-                                editFractionState = nil
-                            }
-                        }
-                        Button("オプションを削除", role: .destructive) {
-                            guard let index = row.wrappedValue.options.firstIndex(of: option.wrappedValue) else { return }
-                            row.wrappedValue.options.remove(at: index)
-                        }
-
-                    } label: {
-                        HStack {
-                            BFractionText(fraction: option.wrappedValue.ratio)
-
-                            Text("(\(option.wrappedValue.name))")
-                                .font(.caption)
-                        }
-                    }
-                }
-            }
-            if !row.options.isEmpty {
-                HStack {
-                    Spacer()
-
-                    Text(String("="))
-                        .font(.caption)
-                        .foregroundStyle(Color.secondary)
-                    BFractionText(fraction: row.wrappedValue.sum)
-                    Text("円")
-                        .font(.caption)
-                }
-                .padding(.top, 3)
-            }
+    func groupBackgroundColor(_ id: SumGroup.ID) -> Color {
+        if screenState?.removeGroup?.id == id {
+            Color.red.opacity(0.2)
+        } else {
+            Color.clear
         }
     }
 }
 
 #Preview {
     NavigationStack {
-        NoteView<DummyDependency>(note: .dummy(5))
+        let noteID = DummyDependency.noteStore.notes.first!.id
+        NoteView<DummyDependency>(noteID)
     }
 }
+

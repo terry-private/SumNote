@@ -19,7 +19,9 @@ struct ButtonPad<Content: View>: View {
     public var body: some View {
         Color.clear
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .onChangeFrame {
+            .onGeometryChange(for: CGSize.self) { proxy in
+                proxy.size
+            } action: {
                 size = CalculatorLayoutLogics.padSize(viewSize: $0, spacing: spacing)
             }
             .overlay {
