@@ -35,7 +35,7 @@ struct SumItemCell: View {
         .tint(.primary)
         .lineLimit(1)
         .minimumScaleFactor(0.5)
-        .buttonStyle(BorderlessButtonStyle())
+//        .buttonStyle(BorderlessButtonStyle())
         .swipeActions(edge: .leading, allowsFullSwipe: false) {
             Button {
                 setEditFraction(.unitPrice)

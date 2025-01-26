@@ -57,14 +57,14 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                 }
                 HStack {
                     Menu {
-                        Button("新規アイテム作成", systemImage: "note.text.badge.plus") {
+                        Button("新規作成", systemImage: "note.text.badge.plus") {
                             let item = SumItem(name: "", unitPrice: 0, quantity: 1, unitName: "個")
                             screenState = .item(.init(item: item, mode: .create))
                         }
                         Button("テンプレートから作成", systemImage: "note.text.badge.plus") {
                         }
                     } label: {
-                        Label("新規", systemImage: "plus.circle.fill")
+                        Label("商品を追加", systemImage: "plus.circle.fill")
                             .padding(.vertical, 15)
                             .padding(.horizontal, 25)
                     }
@@ -74,7 +74,7 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
                         let editTextAlertState: EditTextAlertState = .init(
                             id: note.id.rawValue,
                             title: "新規リスト名",
-                            text: "新規リスト") { groupName in
+                            text: "リストを追加") { groupName in
                                 let group = SumGroup(name: groupName, items: [])
                                 withAnimation {
                                     store.update(group, in: noteID)
@@ -215,7 +215,6 @@ extension NoteView {
             }
             .listRowBackground(groupBackgroundColor(group.id))
             .foregroundStyle(Color(uiColor: .label))
-            .buttonStyle(BorderlessButtonStyle())
             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                 Button {
                     guard screenState == nil else { return }

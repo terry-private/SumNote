@@ -148,9 +148,11 @@ public struct EditItemView: View {
         .navigationTitle(mode.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            Button(dismissButtonTitle) {
-                focusPoint = nil
-                dismiss()
+            ToolbarItem(placement: .topBarLeading) {
+                Button(dismissButtonTitle) {
+                    focusPoint = nil
+                    dismiss()
+                }
             }
         }
         .onChange(of: item) {
@@ -166,7 +168,7 @@ public struct EditItemView: View {
     }
 }
 
-extension View {
+public extension View {
     func showEditItemView(_ state: Binding<EditItemState?>, completion: @escaping (EditItemState) -> Void) -> some View {
         fullScreenCover(item: state) { targetState in
             NavigationStack {

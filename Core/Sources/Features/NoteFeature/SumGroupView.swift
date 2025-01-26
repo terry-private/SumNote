@@ -2,6 +2,7 @@ import SwiftUI
 import Entities
 import CoreProtocols
 import Components
+import EditItemFeature
 
 public struct SumGroupView<Dependency: DependencyProtocol>: View {
     @State var store = Dependency.noteStore
