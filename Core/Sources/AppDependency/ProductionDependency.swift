@@ -1,5 +1,4 @@
 import CoreProtocols
-import FolderList
 import NoteListFeature
 import NoteFeature
 import SwiftUI
