@@ -102,7 +102,6 @@ public struct SumGroupView<Dependency: DependencyProtocol>: View {
                     Spacer()
                 }
             }
-            .background(Color(uiColor: .systemGroupedBackground))
             // MARK: - Screen
             .editTextAlert(screenState: $screenState)
             .caluculatorInputSheet($screenState.calculatorInputState)

@@ -17,16 +17,21 @@ public struct NoteListView<Dependency: DependencyProtocol>: View {
                         selected = note
                     } label: {
                         HStack {
-                            Image(systemName: "folder")
-                            Text("\(note.name)")
-                                .tint(.primary)
+                            Image(systemName: "note.text")
+                            VStack(alignment: .leading) {
+                                Text("\(note.name)")
+                                    .tint(.primary)
+                                Text(DateString.humanize(note.editedAt))
+                                    .font(.caption)
+                                    .tint(.secondary)
+                            }
                             Spacer()
-                            Text(DateString.from(note.editedAt))
-                                .font(.caption)
+                            note.sum().text()
+                                .add(prefix: "総額", suffix: "円")
                                 .tint(.secondary)
                         }
                     }
-                    .listRowBackground(removingNote?.id == note.id ? Color.red.opacity(0.7) : nil)
+                    .listRowBackground(removingNote?.id == note.id ? Color(uiColor: .systemFill) : nil)
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button {
                             removingNote = note
@@ -63,11 +68,14 @@ public struct NoteListView<Dependency: DependencyProtocol>: View {
         .navigationTitle("ノートリスト")
         .toolbar {
             Menu {
-                Button("空のノートを追加", systemImage: "note.text.badge.plus") {
+                Button("新規作成", systemImage: "doc.badge.plus") {
+                    store.create(.dummy())
+                }
+                Button("テンプレートから作成", systemImage: "tray.and.arrow.up") {
                     store.create(.dummy())
                 }
             } label: {
-                Label("menu", systemImage: "line.3.horizontal.circle")
+                Label("add", systemImage: "square.and.pencil")
             }
         }
     }

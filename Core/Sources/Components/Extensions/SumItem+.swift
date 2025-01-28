@@ -19,11 +19,11 @@ public extension SumItem {
         }
     }
     var calculationDescription: Text {
-        unitPrice.text().bold().add(suffix: unitPriceName)
+        unitPrice.text().add(suffix: unitPriceName)
         + tab
         + Text("\(Image(systemName: "xmark"))").font(.caption).foregroundStyle(.secondary)
         + tab
-        + quantity.text().bold().add(suffix: quantityUnitName)
+        + quantity.text().add(suffix: quantityUnitName)
         + tab
         + Text("\(Image(systemName: "equal"))").font(.caption).foregroundStyle(.secondary)
         + tab
@@ -39,28 +39,12 @@ public extension SumItem {
 }
 
 public extension SumItem {
-    func backgroundColor(_ screenState: ScreenState?) -> Color {
-        switch screenState {
-        case .discount(let state):
-            if state.id == discount.id {
-                return Color(uiColor: .systemFill)
-            }
-        case .removeItem(let item):
-            if item.id == id {
-                return Color.red.opacity(0.7)
-            }
-        case .fraction(let state):
-            if state.id == id {
-                return Color(uiColor: .systemFill)
-            }
-        case .item(let state):
-            if state.id == id {
-                return Color(uiColor: .systemFill)
-            }
-        default:
-            break
+    func backgroundColor(_ screenState: ScreenState?) -> Color? {
+        if screenState?.isShow(self) == true {
+            Color(uiColor: .systemFill)
+        } else {
+            nil
         }
-        return Color.clear
     }
 }
 

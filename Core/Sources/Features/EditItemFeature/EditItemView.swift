@@ -32,6 +32,7 @@ public struct EditItemView: View {
             Section {
                 HStack {
                     Text("商品名")
+                        .font(.callout)
                     TextField("", text: $item.name)
                         .textInputAutocapitalization(.never)
                         .focused($focusPoint, equals: .name)
@@ -41,6 +42,7 @@ public struct EditItemView: View {
                     .tint(.accentColor)
                 HStack {
                     Text("単価")
+                        .font(.callout)
                     Spacer()
                     Button {
                         focusPoint = nil
@@ -55,6 +57,7 @@ public struct EditItemView: View {
                 }
                 HStack {
                     Text("数量")
+                        .font(.callout)
                     Spacer()
                     Button {
                         focusPoint = nil
@@ -70,6 +73,7 @@ public struct EditItemView: View {
                 }
                 HStack(spacing: 10) {
                     Text("単位")
+                        .font(.callout)
                     Spacer()
                     if let unitOption = item.unitOption {
                         Text(unitOption.baseUnitName)
@@ -96,6 +100,7 @@ public struct EditItemView: View {
                 }
                 HStack {
                     Text("値引")
+                        .font(.callout)
                     Spacer()
                     Button {
                         focusPoint = nil

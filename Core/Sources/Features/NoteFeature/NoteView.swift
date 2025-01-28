@@ -18,83 +18,86 @@ public struct NoteView<Dependency: DependencyProtocol>: View {
     }
     public var body: some View {
         if let note = store.note(by: noteID) {
-            VStack(spacing: 0) {
-                ScrollViewReader { scrollProxy in
-                    List {
-                        Section {
-                            groups(note)
-                            items(note)
-                        } header: {
-                            // MARK: - 総計 -
-                            HStack {
-                                Spacer()
-                                HStack(alignment: .lastTextBaseline) {
-                                    Text("総計")
-                                    BFractionText(fraction: note.sum(), textStyle: .headline)
-                                        .foregroundStyle(Color(uiColor: .label))
-                                    Text("円")
-                                }
-                                .font(.headline)
-                                .padding(5)
-                                Spacer()
+            ScrollViewReader { scrollProxy in
+                List {
+                    Section {
+                        groups(note)
+                        items(note)
+                        Color.clear.frame(height: 44)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                    } header: {
+                        // MARK: - 総計 -
+                        HStack {
+                            Spacer()
+                            HStack(alignment: .lastTextBaseline) {
+                                Text("総計")
+                                BFractionText(fraction: note.sum(), textStyle: .title)
+                                    .foregroundStyle(Color(uiColor: .label))
+                                Text("円")
                             }
+                            .font(.headline)
+                            .padding(5)
+                            Spacer()
                         }
+                    }
 
-                    }
-                    .listStyle(.plain)
-                    .onChange(of: scrollTargetItem) { _, newValue in
-                        withAnimation {
-                            scrollProxy.scrollTo(newValue)
-                        } completion: {
-                            scrollTargetItem = nil
-                        }
-                    }
-                    .onChange(of: scrollTargetGroup) { _, newValue in
-                        withAnimation {
-                            scrollProxy.scrollTo(newValue)
-                        }
+                }
+                .listStyle(.plain)
+                .onChange(of: scrollTargetItem) { _, newValue in
+                    withAnimation {
+                        scrollProxy.scrollTo(newValue)
+                    } completion: {
+                        scrollTargetItem = nil
                     }
                 }
-                HStack {
-                    Menu {
-                        Button("新規作成", systemImage: "note.text.badge.plus") {
-                            let item = SumItem(name: "", unitPrice: 0, quantity: 1, unitName: "個")
-                            screenState = .item(.init(item: item, mode: .create))
-                        }
-                        Button("テンプレートから作成", systemImage: "note.text.badge.plus") {
-                        }
-                    } label: {
-                        Label("商品を追加", systemImage: "plus.circle.fill")
-                            .padding(.vertical, 15)
-                            .padding(.horizontal, 25)
+                .onChange(of: scrollTargetGroup) { _, newValue in
+                    withAnimation {
+                        scrollProxy.scrollTo(newValue)
                     }
-                    Spacer()
-                    Button {
-                        guard screenState == nil else { return }
-                        let editTextAlertState: EditTextAlertState = .init(
-                            id: note.id.rawValue,
-                            title: "新規リスト名",
-                            text: "リストを追加") { groupName in
-                                let group = SumGroup(name: groupName, items: [])
-                                withAnimation {
-                                    store.update(group, in: noteID)
-                                    scrollTargetGroup = group.id
-                                } completion: {
-                                    Task { @MainActor in
-                                        try await Task.sleep(for: .seconds(0.3))
-                                        screenState = .group(group.id)
+                }
+                .overlay(alignment: .bottomTrailing) {
+                    Menu {
+                        Menu("商品") {
+                            Button("テンプレートから作成", systemImage: "tray.and.arrow.up") {
+                            }
+                            Button("新規作成", systemImage: "doc.badge.plus") {
+                                let item = SumItem(name: "", unitPrice: 0, quantity: 1, unitName: "個")
+                                screenState = .item(.init(item: item, mode: .create))
+                            }
+                        }
+                        Button {
+                            guard screenState == nil else { return }
+                            let editTextAlertState: EditTextAlertState = .init(
+                                id: note.id.rawValue,
+                                title: "新規リスト名",
+                                text: "") { groupName in
+                                    let group = SumGroup(name: groupName, items: [])
+                                    withAnimation {
+                                        store.update(group, in: noteID)
+                                        scrollTargetGroup = group.id
+                                    } completion: {
+                                        Task { @MainActor in
+                                            try await Task.sleep(for: .seconds(0.3))
+                                            screenState = .group(group.id)
+                                        }
                                     }
                                 }
-                            }
-                        screenState = .text(editTextAlertState)
+                            screenState = .text(editTextAlertState)
+                        } label: {
+                            Text("リスト")
+                                .padding(.vertical, 15)
+                                .padding(.horizontal, 25)
+                        }
                     } label: {
-                        Text("リストを追加")
-                            .padding(.vertical, 15)
-                            .padding(.horizontal, 25)
+                        SystemIcon(systemName: "plus", color: .blue, size: 60)
+                            .foregroundStyle(Color.white)
+                            .shadow(color: Color.black.opacity(0.1), radius: 10)
                     }
+                    .padding()
+                    .padding(.trailing, 10)
                 }
             }
-            .background(Color(uiColor: .systemGroupedBackground))
             .caluculatorInputSheet($screenState.calculatorInputState)
             // MARK: - Alert -
             .editTextAlert(screenState: $screenState)
@@ -252,7 +255,7 @@ extension NoteView {
                 }),
                 state: $screenState
             )
-            .listRowBackground(item.backgroundColor(screenState))
+            .listRowBackground(screenState?.isShow(item) == true ? Color(uiColor: .systemFill) : .clear)
         }
         .onMove { indexSet, index in
             var items = note.items.values.elements
@@ -263,12 +266,20 @@ extension NoteView {
         }
     }
 
-    func groupBackgroundColor(_ id: SumGroup.ID) -> Color {
-        if screenState?.removeGroup?.id == id {
-            Color.red.opacity(0.2)
-        } else {
-            Color.clear
+    func groupBackgroundColor(_ id: SumGroup.ID) -> Color? {
+        switch screenState {
+        case .group(let groupID):
+            if groupID == id {
+                return Color(uiColor: .systemFill)
+            }
+        case .removeGroup(let group):
+            if group.id == id {
+                return Color.red.opacity(0.7)
+            }
+        default:
+            break
         }
+        return nil
     }
 }
 

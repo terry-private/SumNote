@@ -38,6 +38,30 @@ public enum ScreenState {
             nil
         }
     }
+    public func isShow(_ target: SumItem) -> Bool {
+        switch self {
+            case .item(let state):
+            state.id == target.id
+        case .fraction(let state):
+            state.id == target.id
+        case .discount(let state):
+            state.id == target.discount.id
+        case .removeItem(let item):
+            item.id == target.id
+        case .text, .group, .removeGroup:
+            false
+        }
+    }
+    public func isShow(_ target: SumGroup) -> Bool {
+        switch self {
+        case .group(let id):
+            id == target.id
+        case .removeGroup(let group):
+            group.id == target.id
+        case .item, .fraction, .discount, .removeItem, .text:
+            false
+        }
+    }
 }
 
 // MARK: - calculatorInputState
