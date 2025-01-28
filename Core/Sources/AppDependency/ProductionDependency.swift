@@ -1,4 +1,5 @@
 import CoreProtocols
+import MainTabFeature
 import NoteListFeature
 import NoteFeature
 import SwiftUI
@@ -8,9 +9,10 @@ import Stores
 
 public enum ProductionDependency: DependencyProtocol {
     @MainActor public static func rootView() -> some View {
-        NavigationStack {
-            noteListView()
-        }
+        mainTabView()
+    }
+    @MainActor public static func mainTabView() -> some View {
+        MainTabFeature.MainTabView<Self>()
     }
     @MainActor public static func noteListView() -> NoteListView<Self> {
         NoteListFeature.NoteListView<Self>()

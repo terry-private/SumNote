@@ -38,6 +38,7 @@ enum Module: String, CaseIterable {
     case stores
     case components
     case editItemFeature
+    case mainTabFeature
     case noteListFeature
     case noteFeature
     case appDependency
@@ -82,6 +83,15 @@ enum Module: String, CaseIterable {
             ],
             path: .features
         )
+        case .mainTabFeature: target(
+            dependencies: [
+                .init(.entities),
+                .init(.coreProtocols),
+                .init(.components),
+                .init(.stores),
+            ],
+            path: .features
+        )
         case .noteListFeature: target(
             dependencies: [
                 .init(.entities),
@@ -106,6 +116,7 @@ enum Module: String, CaseIterable {
             dependencies: [
                 .init(.entities),
                 .init(.coreProtocols),
+                .init(.mainTabFeature),
                 .init(.noteListFeature),
                 .init(.noteFeature),
                 .init(.repositories),

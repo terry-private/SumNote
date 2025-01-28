@@ -27,6 +27,7 @@ struct SumItemCell: View {
                         .add(prefix: "小計", suffix: "円")
                 }
                 item.calculationDescription
+                    .font(.caption)
                     .lineLimit(1)
                     .foregroundStyle(.secondary)
                     .padding(5)
